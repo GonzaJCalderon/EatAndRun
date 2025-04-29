@@ -1,0 +1,11 @@
+{
+  "lunes": [
+    { "nombre": "Milanesa con ensalada", "img": "/assets/platos/milanesa.jpg" },
+    { "nombre": "Pastel de papa", "img": "/assets/platos/pastel.jpg" },
+    { "nombre": "Ensalada EAT de atún" }
+  ],
+  "martes": [
+    { "nombre": "Zapallitos rellenos" },
+    { "nombre": "Tarta de JYQ", "img": "/assets/platos/tarta.jpg" }
+  ]
+}
