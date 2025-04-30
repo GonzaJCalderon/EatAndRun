@@ -1,11 +1,24 @@
 {
   "lunes": [
-    { "nombre": "Milanesa con ensalada", "img": "/assets/platos/milanesa.jpg" },
-    { "nombre": "Pastel de papa", "img": "/assets/platos/pastel.jpg" },
-    { "nombre": "Ensalada EAT de atún" }
+    { "nombre": "Milanesa con ensalada", "img": "/assets/platos/milanesas_con_ensaladas.jpg" },
+    { "nombre": "Pastel de papa", "img": "/assets/platos/pastel_de_papas.jpg" },
+    { "nombre": "Ensalada EAT de pollo", "img": "/assets/platos/ensalada_eat_pollo.jpg" }
   ],
   "martes": [
-    { "nombre": "Zapallitos rellenos" },
-    { "nombre": "Tarta de JYQ", "img": "/assets/platos/tarta.jpg" }
+    { "nombre": "Zapallitos rellenos", "img": "/assets/platos/zapallitos_rellenos.jpg" },
+    { "nombre": "Tarta de JYQ", "img": "/assets/platos/tarta_jamon_queso.jpg" }
+  ],
+  "miércoles": [
+    { "nombre": "Ravioles con fileto", "img": "/assets/platos/ravioles_con_fileto.jpg" },
+    { "nombre": "Tarta caprese", "img": "/assets/platos/tarta_caprese.jpg" },
+    { "nombre": "Ensalada EAT de atún", "img": "/assets/platos/ensalada_eat_atun.jpg" }
+  ],
+  "jueves": [
+    { "nombre": "Carne a la olla", "img": "/assets/platos/carne_a_la_olla.jpg" },
+    { "nombre": "Ñoquis con bolognesa", "img": "/assets/platos/ñoquis_con_bolognesa.jpg" }
+  ],
+  "viernes": [
+    { "nombre": "Suprema con puré", "img": "/assets/platos/suprema_con_pure.jpg" },
+    { "nombre": "Tarta caprese", "img": "/assets/platos/tarta_caprese.jpg" }
   ]
 }
