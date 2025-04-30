@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { TextField, Button, Box, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
-import logoEatAndRun from '../assets/eatandrun-logo.jpg'; // 👈🏼 Asegurate que esté en /src/assets/logo.png
+
+
+const logo = '/assets/eatandrun-logo.jpg'; // ✅ Ruta pública válida
+
 
 const LoginForm = ({ onLogin }) => {
   const [form, setForm] = useState({
