@@ -1,8 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { resolve } from 'path';
-import fs from 'fs';
-
+import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
   plugins: [
