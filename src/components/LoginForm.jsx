@@ -40,8 +40,8 @@ const LoginForm = ({ onLogin }) => {
     >
       {/* 🥗 Logo animado */}
       <motion.img
-        src={logoEatAndRun}
-        alt="Eat & Run Logo"
+  src={logo}
+  alt="Eat & Run Logo"
         style={{
           width: 120,
           height: 120,
