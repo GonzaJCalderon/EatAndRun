@@ -12,7 +12,8 @@ import { motion } from 'framer-motion';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import DayMenuCard from './components/DayMenuCard';
 import LoginForm from './components/LoginForm';
-import logo from './assets/eatandrun-logo.jpg';
+const logo = '/assets/eatandrun-logo.jpg';
+
 import WhatsAppButton from './components/WhatsAppButton';
 import PedidoConfirmado from './components/PedidoConfirmado'; // ✅ NUEVO componente
 
