@@ -12,7 +12,11 @@ import { motion } from 'framer-motion';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import DayMenuCard from './components/DayMenuCard';
 import LoginForm from './components/LoginForm';
+
+import menuSemana from './data/menusemana.json';
+
 const logo = '/assets/eatandrun-logo.jpg';
+
 
 import WhatsAppButton from './components/WhatsAppButton';
 import PedidoConfirmado from './components/PedidoConfirmado'; // ✅ NUEVO componente
@@ -27,38 +31,9 @@ function App() {
   const [guardando, setGuardando] = useState(false); // Loader
 
   useEffect(() => {
-    const data = localStorage.getItem('menu_eatandrun');
-    if (data) {
-      setMenuData(JSON.parse(data));
-    } else {
-      const menuInicial = {
-        lunes: [
-          { nombre: "Milanesa con ensalada", img: "/assets/platos/milanesas_con_ensaladas.jpg" },
-          { nombre: "Pastel de papa", img: "/assets/platos/patel de papas.jpg" },
-          { nombre: "Ensalada EAT de atún", img: "/assets/platos/ensalada eat pollo.jpg" }
-        ],
-        martes: [
-          { nombre: "Zapallitos rellenos", img: "/assets/platos/zapallitos rellenos.jpg" },
-          { nombre: "Tarta de jamón y queso", img: "/assets/platos/tarta jamon y queso.jpg" }
-        ],
-        miércoles: [
-          { nombre: "Suprema con puré", img: "/assets/platos/suprema con pure.jpg" },
-          { nombre: "Tarta caprese", img: "/assets/platos/tarta caprese.jpg" }
-        ],
-        jueves: [
-          { nombre: "Ñoquis con bolognesa", img: "/assets/platos/ñoquis con bolognesa.jpg" },
-          { nombre: "Ensalada EAT de pollo", img: "/assets/platos/ensalada eat pollo.jpg" }
-        ],
-        viernes: [
-          { nombre: "Ravioles con fileto", img: "/assets/platos/ravioles con fileto.jpg" },
-          { nombre: "Carne a la olla", img: "/assets/platos/carne a la olla.jpg" }
-        ]
-      };
-  
-      localStorage.setItem('menu_eatandrun', JSON.stringify(menuInicial));
-      setMenuData(menuInicial);
-    }
+    setMenuData(menuSemana);
   }, []);
+  
   
 
   useEffect(() => {
