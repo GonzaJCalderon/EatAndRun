@@ -12,7 +12,7 @@ import { motion } from 'framer-motion';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import DayMenuCard from './components/DayMenuCard';
 import LoginForm from './components/LoginForm';
-
+import PagoSection from './components/PagoSection';
 import menuSemana from './data/menusemana.json';
 
 const logo = '/assets/eatandrun-logo.jpg';
@@ -29,6 +29,10 @@ function App() {
   const [observaciones, setObservaciones] = useState('');
   const [menuData, setMenuData] = useState({});
   const [guardando, setGuardando] = useState(false); // Loader
+  const [metodoPago, setMetodoPago] = useState('');
+const [extras, setExtras] = useState('');
+const [comprobante, setComprobante] = useState(null);
+
 
   useEffect(() => {
     setMenuData(menuSemana);
@@ -67,37 +71,52 @@ function App() {
 
   const handleGuardarPedido = () => {
     if (!tienePlatosSeleccionados(selecciones)) return;
-
+  
     setGuardando(true);
-
-    setTimeout(() => {
+  
+    const leerComprobante = () => {
+      return new Promise((resolve) => {
+        if (!comprobante) return resolve(null);
+  
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result); // base64 result
+        reader.readAsDataURL(comprobante);
+      });
+    };
+  
+    leerComprobante().then((comprobanteBase64) => {
       const pedidoCompleto = {
         usuario: user,
         pedido: selecciones,
+        extras,
+        metodoPago,
+        comprobanteNombre: comprobante?.name || '',
+        comprobanteBase64: comprobanteBase64 || '',
         observaciones: observaciones.trim(),
         fecha: new Date().toISOString()
       };
-
+  
       const pedidosExistentes = JSON.parse(localStorage.getItem("pedidos_eatandrun")) || [];
       const pedidosFiltrados = pedidosExistentes.filter(p => p.usuario.email !== user.email);
       pedidosFiltrados.push(pedidoCompleto);
-
+  
       localStorage.setItem("pedidos_eatandrun", JSON.stringify(pedidosFiltrados));
       localStorage.setItem(`pedido_${user.email}`, JSON.stringify(pedidoCompleto));
-
+  
       setGuardando(false);
       setPedidoGuardado(true);
       setSelecciones({});
       setObservaciones('');
-
-      // 🔥 Auto ocultar a los 5s
+      setExtras('');
+      setMetodoPago('');
+      setComprobante(null);
+  
       setTimeout(() => {
         setPedidoGuardado(false);
       }, 5000);
-
-    }, 2000); // Simula 2 segundos de carga
+    });
   };
-
+  
   const handleLogout = () => {
     localStorage.removeItem('eatAndRunUser');
     setUser(null);
@@ -189,15 +208,12 @@ function App() {
               </Typography>
             ) : (
               <>
-                {Object.entries(menuData).map(([dia, opciones]) => (
-                  <DayMenuCard
-                    key={dia}
-                    day={dia}
-                    options={opciones}
-                    selected={selecciones[dia] || ""}
-                    onSelect={handleSelect}
-                  />
-                ))}
+              <TabsMenuContainer
+  menuData={menuData}
+  selecciones={selecciones}
+  onSelect={handleSelect}
+/>
+
 
                 <Typography variant="h6" sx={{ mt: 3 }}>
                   📝 Observaciones / Aclaraciones
@@ -211,6 +227,13 @@ function App() {
                   onChange={(e) => setObservaciones(e.target.value)}
                   sx={{ mt: 1, mb: 2 }}
                 />
+                <PagoSection
+  metodoPago={metodoPago}
+  onExtrasChange={setExtras}
+  onMetodoPagoChange={setMetodoPago}
+  onComprobanteChange={setComprobante}
+/>
+
 
                 <Button
                   onClick={handleGuardarPedido}

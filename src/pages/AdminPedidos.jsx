@@ -155,7 +155,7 @@ const AdminPedidos = () => {
                 <FormControl size="small" sx={{ mt: 1 }}>
                   <InputLabel>Estado</InputLabel>
                   <Select
-                    value={p.estado}
+                    value={p.estado || 'pendiente'}
                     label="Estado"
                     onChange={(e) => cambiarEstadoPedido(i, e.target.value)}
                   >
@@ -184,6 +184,31 @@ const AdminPedidos = () => {
                   <Typography variant="body2" sx={{ mt: 2 }}>
                     ✏️ Observaciones: {p.observaciones}
                   </Typography>
+                )}
+
+                {/* Mostrar comprobante si existe */}
+                {p.comprobanteBase64 && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="subtitle2" fontWeight="bold">📎 Comprobante:</Typography>
+                    <img
+                      src={p.comprobanteBase64}
+                      alt={`Comprobante de ${p.usuario?.nombre || 'usuario'}`}
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: 200,
+                        borderRadius: 6,
+                        marginTop: 8,
+                        boxShadow: '0 0 8px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                    <a
+                      href={p.comprobanteBase64}
+                      download={p.comprobanteNombre || 'comprobante.jpg'}
+                      style={{ display: 'inline-block', marginTop: 10 }}
+                    >
+                      <Button size="small" variant="outlined">Descargar</Button>
+                    </a>
+                  </Box>
                 )}
               </CardContent>
             </Card>
