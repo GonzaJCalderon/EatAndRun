@@ -7,7 +7,8 @@ import {
   FormControlLabel,
   Radio,
   InputLabel,
-  Button
+  Button,
+  Paper
 } from '@mui/material';
 
 const PagoSection = ({ onExtrasChange, onMetodoPagoChange, onComprobanteChange, metodoPago }) => {
@@ -15,8 +16,9 @@ const PagoSection = ({ onExtrasChange, onMetodoPagoChange, onComprobanteChange, 
   const [archivo, setArchivo] = useState(null);
 
   const handleExtras = (e) => {
-    setExtras(e.target.value);
-    onExtrasChange(e.target.value);
+    const value = e.target.value;
+    setExtras(value);
+    onExtrasChange(value);
   };
 
   const handleMetodoPago = (e) => {
@@ -32,34 +34,31 @@ const PagoSection = ({ onExtrasChange, onMetodoPagoChange, onComprobanteChange, 
   return (
     <Box sx={{ mt: 5, background: '#f2fef5', borderRadius: 3, p: 3 }}>
       <Typography variant="h6" fontWeight="bold" color="success.main" sx={{ mb: 2 }}>
-        💵 ¿CUÁNTO PAGAR?
+        💰 ¿CUÁNTO PAGAR?
       </Typography>
-      <Typography variant="body2" sx={{ whiteSpace: 'pre-line', fontSize: 14, color: '#333' }}>
-        {`
-Info sobre los planes y sus respectivos valores:
 
-Básico Almuerzo $6300 + envío $900 = $7.200
-
-Almuerzo x2 días + envío $12.600 + $1800
-Almuerzo x3 días + envío $18.900 + $2700
-Almuerzo x4 días + envío $25.200 + $3600
-Pack 5 días
-*Almuerzo x5 días + envío $34.500*
-
-Costo envío diario $900.
-Precio postre $2.800 c/u
-
-Extras Fit - colaciones
-- Ensalada de frutas $2800
-- Extra proteínas $3500 = 100 gr
-
-Tarta 8 porciones $13.500
-Opciones: ACELGA, JyQ, CAPRESSE, POLLO, VERDURAS
-`}
-      </Typography>
+      <Paper elevation={1} sx={{ p: 2, backgroundColor: '#ffffff', mb: 2 }}>
+        <Typography variant="body2" sx={{ color: '#333', fontSize: 14 }}>
+          <strong>🍱 Planes semanales:</strong><br />
+          - 1 día: $6300 + 🚚 envío $900 = <strong>$7200</strong><br />
+          - 2 días: $12600 + envío $1800 = <strong>$14400</strong><br />
+          - 3 días: $18900 + envío $2700 = <strong>$21600</strong><br />
+          - 4 días: $25200 + envío $3600 = <strong>$28800</strong><br />
+          - 5 días: <strong>$34500 (con envío)</strong><br />
+          <br />
+          <strong>🍰 Extras:</strong><br />
+          - Postre: $2800<br />
+          - Ensalada de frutas: $2800<br />
+          - Extra proteína (100g): $3500<br />
+          <br />
+          <strong>🥧 Tartas (8 porciones):</strong> $13500<br />
+          Opciones: Acelga, JyQ, Capresse, Pollo, Verduras
+        </Typography>
+      </Paper>
 
       <TextField
         label="Extras o tartas (opcional)"
+        placeholder="Ej: 1 postre, 1 ensalada de frutas, tarta JyQ"
         multiline
         fullWidth
         rows={3}
@@ -69,7 +68,7 @@ Opciones: ACELGA, JyQ, CAPRESSE, POLLO, VERDURAS
       />
 
       <Typography variant="h6" sx={{ mt: 4, mb: 1 }}>
-        💳 ¿Cómo pagás?
+        💳 ¿Cómo vas a pagar?
       </Typography>
       <RadioGroup value={metodoPago} onChange={handleMetodoPago} row>
         <FormControlLabel value="transferencia" control={<Radio />} label="Transferencia" />
@@ -77,31 +76,30 @@ Opciones: ACELGA, JyQ, CAPRESSE, POLLO, VERDURAS
       </RadioGroup>
 
       {metodoPago === 'transferencia' && (
-        <>
-          <Box sx={{ mt: 2, backgroundColor: '#e0f7fa', p: 2, borderRadius: 2 }}>
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>
-              Banco Santander
-            </Typography>
-            <Typography variant="body2">CBU: <strong>072006878000038359572</strong></Typography>
-            <Typography variant="body2">Alias: <strong>MOLINAGUERRA</strong></Typography>
-            <Typography variant="body2">
-              Titular: <strong>Molina Guerra Matías Mauricio</strong>
-            </Typography>
-            <Typography variant="body2">
-              Cuenta: <strong>068-383595/7</strong> - DNI: <strong>32224452</strong>
-            </Typography>
-          </Box>
+        <Box sx={{ mt: 3 }}>
+          <InputLabel sx={{ mb: 1, fontWeight: 'bold' }}>📎 Subí el comprobante de pago</InputLabel>
+          <Button
+            component="label"
+            variant="outlined"
+            color="success"
+            fullWidth
+            sx={{ mb: 1 }}
+          >
+            Seleccionar archivo
+            <input
+              type="file"
+              hidden
+              accept="image/*,application/pdf"
+              onChange={handleArchivo}
+            />
+          </Button>
 
-          <Box sx={{ mt: 2 }}>
-            <InputLabel sx={{ mb: 1 }}>📎 Subí tu comprobante (PDF o imagen)</InputLabel>
-            <input type="file" accept="image/*,application/pdf" onChange={handleArchivo} />
-            {archivo && (
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Archivo cargado: {archivo.name}
-              </Typography>
-            )}
-          </Box>
-        </>
+          {archivo && (
+            <Typography variant="body2" color="text.secondary">
+              Archivo cargado: <strong>{archivo.name}</strong>
+            </Typography>
+          )}
+        </Box>
       )}
     </Box>
   );
