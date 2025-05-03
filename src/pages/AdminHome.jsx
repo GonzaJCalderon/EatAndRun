@@ -1,75 +1,99 @@
-import { Container, Typography, Button, Box } from '@mui/material';
+import { Container, Typography, Box, Grid } from '@mui/material';
 import { motion } from 'framer-motion';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 import PrintIcon from '@mui/icons-material/Print';
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn'; // 💰 icono coherente
 
 const AdminHome = () => {
+  const colorTexto = '#fff';
+
+  const opciones = [
+    {
+      label: 'Ver pedidos',
+      icon: <ListAltIcon sx={{ fontSize: 40 }} />,
+      href: '/admin/ver-pedidos',
+      color: '#1976d2'
+    },
+    {
+      label: 'Editar menú semanal',
+      icon: <RestaurantMenuIcon sx={{ fontSize: 40 }} />,
+      href: '/admin/editar-menu',
+      color: '#0288d1'
+    },
+    {
+      label: '📈 Ver estadísticas',
+      icon: <DashboardIcon sx={{ fontSize: 40 }} />,
+      href: '/admin/dashboard',
+      color: '#7b1fa2'
+    },
+    {
+      label: '📋 Producción semanal',
+      icon: <PrintIcon sx={{ fontSize: 40 }} />,
+      href: '/admin/produccion',
+      color: '#2e7d32'
+    },
+    {
+      label: 'Editar precios',
+      icon: <MonetizationOnIcon sx={{ fontSize: 40 }} />,
+      href: '/admin/editar-precios',
+      color: '#ed6c02'
+    },
+    {
+      label: 'Volver a la app',
+      icon: <ArrowBackIcon sx={{ fontSize: 40 }} />,
+      href: '/',
+      color: '#616161'
+    }
+  ];
+
   return (
     <Container sx={{ mt: 6, pb: 8 }}>
       <Typography variant="h4" gutterBottom textAlign="center">
         🛠️ Panel de Administración
       </Typography>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 4 }}>
-        <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.3 }}>
-          <Button
-            variant="contained"
-            fullWidth
-            startIcon={<ListAltIcon />}
-            onClick={() => window.location.href = "/admin/ver-pedidos"}
-          >
-            Ver pedidos
-          </Button>
-        </motion.div>
-
-        <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.3 }}>
-          <Button
-            variant="contained"
-            fullWidth
-            startIcon={<RestaurantMenuIcon />}
-            onClick={() => window.location.href = "/admin/editar-menu"}
-          >
-            Editar menú semanal
-          </Button>
-        </motion.div>
-
-        <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.3 }}>
-          <Button
-            variant="contained"
-            fullWidth
-            startIcon={<DashboardIcon />}
-            onClick={() => window.location.href = "/admin/dashboard"}
-          >
-            📈 Ver estadísticas
-          </Button>
-        </motion.div>
-
-        <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.3 }}>
-          <Button
-            variant="contained"
-            fullWidth
-            color="success"
-            startIcon={<PrintIcon />}
-            onClick={() => window.location.href = "/admin/produccion"}
-          >
-            📋 Producción semanal
-          </Button>
-        </motion.div>
-
-        <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.3 }}>
-          <Button
-            variant="outlined"
-            fullWidth
-            startIcon={<ArrowBackIcon />}
-            onClick={() => window.location.href = "/"}
-          >
-            Volver a la app
-          </Button>
-        </motion.div>
-      </Box>
+      <Grid container spacing={3} sx={{ mt: 4 }}>
+        {opciones.map(({ label, icon, href, color }, index) => (
+          <Grid item xs={12} sm={6} key={index} sx={{ display: 'flex' }}>
+            <motion.div
+              style={{ flexGrow: 1, width: '100%' }}
+              whileHover={{ scale: 1.03 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Box
+                onClick={() => window.location.href = href}
+                sx={{
+                  height: 160,
+                  width: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 3,
+                  bgcolor: color,
+                  color: colorTexto,
+                  cursor: 'pointer',
+                  boxShadow: 4,
+                  fontWeight: 'bold',
+                  fontSize: '1.1rem',
+                  textAlign: 'center',
+                  p: 2,
+                  transition: 'all 0.3s ease-in-out',
+                  ':hover': {
+                    boxShadow: 8
+                  }
+                }}
+              >
+                {icon && <Box sx={{ mb: 1 }}>{icon}</Box>}
+                {label}
+              </Box>
+            </motion.div>
+          </Grid>
+        ))}
+      </Grid>
     </Container>
   );
 };

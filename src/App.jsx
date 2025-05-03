@@ -74,14 +74,15 @@ function App() {
 
   const estimarTotal = () => {
     let total = 0;
-    const precios = {
+    const precios = JSON.parse(localStorage.getItem('precios_eatandrun')) || {
       plato: 6300,
       envio: 900,
       postre: 2800,
       ensalada: 2800,
       proteina: 3500,
-      tarta: 13500,
+      tarta: 13500
     };
+    
 
     const dias = Object.values(selecciones);
     dias.forEach(dia => {

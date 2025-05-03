@@ -16,6 +16,8 @@ import DashboardAdmin from './pages/DashboardAdmin';
 import AdminHome from './pages/AdminHome'; 
 import HistorialAdmin from './pages/HistorialAdmin';
 import ProduccionResumen from './pages/ProduccionResumen';
+import EditarPrecios from "./pages/EditarPrecios"; 
+
 
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -31,6 +33,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/admin/dashboard" element={<DashboardAdmin />} />
         <Route path="/admin/historial" element={<HistorialAdmin />} />
         <Route path="/admin/produccion" element={<ProduccionResumen />} />
+        <Route path="/admin/editar-precios" element={<EditarPrecios />} />
       </Routes>
     </Router>
   </ThemeProvider>
