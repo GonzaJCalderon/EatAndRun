@@ -1,23 +1,12 @@
 import { useEffect, useState } from "react";
 import {
-  Container,
-  Typography,
-  Card,
-  CardContent,
-  Divider,
-  TextField,
-  MenuItem,
-  Button,
-  Select,
-  FormControl,
-  InputLabel,
-  Grid,
-  Pagination,
-  Box
+  Container, Typography, Card, CardContent, Divider, TextField, MenuItem,
+  Button, Select, FormControl, InputLabel, Grid, Pagination, Box
 } from "@mui/material";
 import { saveAs } from "file-saver";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { motion } from "framer-motion";
+import API from "../api/api";
 
 const HistorialAdmin = () => {
   const [pedidos, setPedidos] = useState([]);
@@ -28,47 +17,44 @@ const HistorialAdmin = () => {
   const pedidosPorPagina = 10;
 
   useEffect(() => {
-    const data = localStorage.getItem("pedidos_eatandrun");
-    if (data) {
-      const parsed = JSON.parse(data);
-      const ordenados = parsed.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)); // 🧠 Más nuevos primero
-      setPedidos(ordenados);
-    }
+    fetchPedidos();
   }, []);
 
+  const fetchPedidos = async () => {
+    try {
+      const res = await API.get("/orders/all");
+      const ordenados = res.data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+      setPedidos(ordenados);
+    } catch (err) {
+      console.error("❌ Error al obtener pedidos:", err);
+    }
+  };
+
   const exportarCSV = () => {
-    let csv = "Nombre;Email;Estado;Fecha;Pedido\n";
+    let csv = "Nombre;Email;Estado;Fecha;Pedido;ComprobanteURL\n";
     pedidosFiltrados.forEach(p => {
-      const pedidoStr = Object.entries(p.pedido)
+      const pedidoStr = Object.entries(p.pedido || {})
         .map(([dia, platos]) =>
           `${dia}: ${Object.entries(platos).map(([platoKey, datos]) => {
-            const nombreMostrar = datos?.nombreOriginal || platoKey;
-            const cantidadMostrar = typeof datos === 'object' ? datos?.cantidad ?? 0 : datos;
-            return `${nombreMostrar} x${cantidadMostrar}`;
-          }).join(", ")}`
+            const nombre = datos?.nombreOriginal || platoKey;
+            const cantidad = typeof datos === 'object' ? datos?.cantidad ?? 0 : datos;
+            return `${nombre} x${cantidad}`;
+          }).join(", ")}`.trim()
         ).join(" | ");
-      csv += `${p.usuario.nombre};${p.usuario.email};${p.estado || 'pendiente'};${new Date(p.fecha).toLocaleDateString()};${pedidoStr}\n`;
+
+      csv += `${p.usuario?.nombre || 'N/A'};${p.usuario?.email || 'N/A'};${p.estado || 'pendiente'};${new Date(p.fecha).toLocaleDateString()};${pedidoStr};${p.comprobanteUrl || ''}\n`;
     });
 
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     saveAs(blob, `historial-pedidos-${new Date().toISOString().slice(0, 10)}.csv`);
   };
 
-  const cambiarEstado = (indexGlobal, nuevoEstado) => {
-    const nuevos = [...pedidos];
-    nuevos[indexGlobal].estado = nuevoEstado;
-    setPedidos(nuevos);
-    localStorage.setItem("pedidos_eatandrun", JSON.stringify(nuevos));
-  };
-
   const pedidosFiltrados = pedidos.filter(p => {
-    const matchBusqueda = p.usuario.nombre.toLowerCase().includes(filtroBusqueda.toLowerCase()) ||
-      p.usuario.email.toLowerCase().includes(filtroBusqueda.toLowerCase());
+    const matchBusqueda = `${p.usuario?.nombre || ''} ${p.usuario?.email || ''}`.toLowerCase().includes(filtroBusqueda.toLowerCase());
     const matchEstado = filtroEstado ? (p.estado || "pendiente") === filtroEstado : true;
     return matchBusqueda && matchEstado;
   });
 
-  // PAGINACIÓN
   const indexInicio = (paginaActual - 1) * pedidosPorPagina;
   const indexFin = indexInicio + pedidosPorPagina;
   const pedidosPaginados = pedidosFiltrados.slice(indexInicio, indexFin);
@@ -77,18 +63,14 @@ const HistorialAdmin = () => {
 
   const obtenerColorCard = (estado) => {
     switch (estado) {
-      case 'realizado':
-        return '#e0f2f1'; // Verde suave
-      case 'cancelado':
-        return '#ffebee'; // Rojo suave
-      default:
-        return '#fffde7'; // Amarillo suave
+      case 'realizado': return '#e0f2f1';
+      case 'cancelado': return '#ffebee';
+      default: return '#fffde7';
     }
   };
 
   return (
     <Container sx={{ mt: 4, pb: 8 }}>
-      {/* BOTÓN VOLVER */}
       <Button
         variant="outlined"
         startIcon={<ArrowBackIcon />}
@@ -98,12 +80,11 @@ const HistorialAdmin = () => {
         Volver al admin
       </Button>
 
-      {/* TITULO */}
       <Typography variant="h4" gutterBottom textAlign="center">
         📜 Historial de Pedidos
       </Typography>
 
-      {/* FILTROS */}
+      {/* Filtros */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={12} md={6}>
           <TextField
@@ -113,7 +94,7 @@ const HistorialAdmin = () => {
             value={filtroBusqueda}
             onChange={(e) => {
               setFiltroBusqueda(e.target.value);
-              setPaginaActual(1); // 👈 Al filtrar, vuelve a página 1
+              setPaginaActual(1);
             }}
           />
         </Grid>
@@ -125,7 +106,7 @@ const HistorialAdmin = () => {
               label="Filtrar por estado"
               onChange={(e) => {
                 setFiltroEstado(e.target.value);
-                setPaginaActual(1); // 👈 Al filtrar, vuelve a página 1
+                setPaginaActual(1);
               }}
             >
               <MenuItem value="">Todos</MenuItem>
@@ -147,7 +128,7 @@ const HistorialAdmin = () => {
         </Grid>
       </Grid>
 
-      {/* LISTADO DE PEDIDOS */}
+      {/* Lista de pedidos */}
       {pedidosPaginados.length === 0 ? (
         <Typography variant="body1" color="text.secondary">
           No hay pedidos que coincidan con los filtros.
@@ -159,40 +140,26 @@ const HistorialAdmin = () => {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            viewport={{ once: true }}
           >
             <Card sx={{ mb: 3, backgroundColor: obtenerColorCard(p.estado || "pendiente") }}>
               <CardContent>
                 <Typography variant="h6">
-                  👤 {p.usuario.nombre} ({p.usuario.email})
+                  👤 {p.usuario?.nombre} ({p.usuario?.email})
                 </Typography>
                 <Typography variant="body2" sx={{ mb: 1 }}>
                   📅 Fecha: {new Date(p.fecha).toLocaleDateString()}
                 </Typography>
 
-                {/* Cambiar Estado */}
-                <FormControl size="small" sx={{ mb: 2 }}>
-                  <Select
-                    value={p.estado || "pendiente"}
-                    onChange={(e) => cambiarEstado((paginaActual - 1) * pedidosPorPagina + i, e.target.value)}
-                  >
-                    <MenuItem value="pendiente">🟡 Pendiente</MenuItem>
-                    <MenuItem value="realizado">✅ Realizado</MenuItem>
-                    <MenuItem value="cancelado">❌ Cancelado</MenuItem>
-                  </Select>
-                </FormControl>
-
                 <Divider sx={{ my: 2 }} />
 
-                {/* Pedido Detallado */}
-                {Object.entries(p.pedido).map(([dia, platos], idx) => (
+                {Object.entries(p.pedido || {}).map(([dia, platos], idx) => (
                   <div key={idx}>
                     <Typography variant="subtitle2" sx={{ mt: 2 }}>
                       📅 {dia.toUpperCase()}
                     </Typography>
                     {Object.entries(platos).map(([platoKey, datos], k) => {
                       const nombreMostrar = datos?.nombreOriginal || platoKey;
-                      const cantidadMostrar = typeof datos === 'object' ? datos?.cantidad ?? 0 : datos;
+                      const cantidadMostrar = datos?.cantidad ?? 0;
                       return (
                         <Typography variant="body2" key={k}>
                           🍽️ {nombreMostrar}: {cantidadMostrar} unidad{cantidadMostrar > 1 ? 'es' : ''}
@@ -202,11 +169,35 @@ const HistorialAdmin = () => {
                   </div>
                 ))}
 
-                {/* Observaciones */}
                 {p.observaciones && (
                   <Typography variant="body2" sx={{ mt: 2 }}>
                     ✏️ Observaciones: {p.observaciones}
                   </Typography>
+                )}
+
+                {p.comprobanteUrl && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="subtitle2" fontWeight="bold">📎 Comprobante:</Typography>
+                    <img
+                      src={p.comprobanteUrl}
+                      alt="Comprobante"
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: 200,
+                        borderRadius: 6,
+                        marginTop: 8
+                      }}
+                    />
+                    <a
+                      href={p.comprobanteUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download={p.comprobanteNombre || 'comprobante.jpg'}
+                      style={{ display: 'inline-block', marginTop: 10 }}
+                    >
+                      <Button size="small" variant="outlined">Descargar</Button>
+                    </a>
+                  </Box>
                 )}
               </CardContent>
             </Card>
@@ -214,7 +205,7 @@ const HistorialAdmin = () => {
         ))
       )}
 
-      {/* PAGINADOR */}
+      {/* Paginación */}
       {totalPaginas > 1 && (
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
           <Pagination

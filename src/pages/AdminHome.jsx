@@ -5,7 +5,8 @@ import ListAltIcon from '@mui/icons-material/ListAlt';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 import PrintIcon from '@mui/icons-material/Print';
-import MonetizationOnIcon from '@mui/icons-material/MonetizationOn'; // 💰 icono coherente
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
+import AddBoxIcon from '@mui/icons-material/AddBox';
 
 const AdminHome = () => {
   const colorTexto = '#fff';
@@ -24,10 +25,35 @@ const AdminHome = () => {
       color: '#0288d1'
     },
     {
+      label: '📆 Crear menú del día',
+      icon: <AddBoxIcon sx={{ fontSize: 40 }} />,
+      href: '/admin/crear-dia',
+      color: '#009688'
+    },
+  {
+  label: '✏️ Editar menú del día',
+  icon: <RestaurantMenuIcon sx={{ fontSize: 40 }} />,
+  href: '/admin/editar-menu-del-dia',
+  color: '#ff7043'
+},
+{
+  label: '🧩 Crear menú del día empresa',
+  icon: <AddBoxIcon sx={{ fontSize: 40 }} />,
+  href: '/admin/empresa/especial',
+  color: '#d81b60'
+},
+
+    {
       label: '📈 Ver estadísticas',
       icon: <DashboardIcon sx={{ fontSize: 40 }} />,
       href: '/admin/dashboard',
       color: '#7b1fa2'
+    },
+    {
+      label: '👤 Gestión de usuarios',
+      icon: <DashboardIcon sx={{ fontSize: 40 }} />,
+      href: '/admin/dashboard',
+      color: '#6a1b9a'
     },
     {
       label: '📋 Producción semanal',
@@ -44,8 +70,14 @@ const AdminHome = () => {
     {
       label: 'Volver a la app',
       icon: <ArrowBackIcon sx={{ fontSize: 40 }} />,
-      href: '/',
+      href: '/App',
       color: '#616161'
+    },
+    {
+      label: '📋 Ver menú semanal',
+      icon: <RestaurantMenuIcon sx={{ fontSize: 40 }} />,
+      href: '/admin/ver-menu',
+      color: '#4caf50'
     }
   ];
 
@@ -57,14 +89,14 @@ const AdminHome = () => {
 
       <Grid container spacing={3} sx={{ mt: 4 }}>
         {opciones.map(({ label, icon, href, color }, index) => (
-          <Grid item xs={12} sm={6} key={index} sx={{ display: 'flex' }}>
+          <Grid item xs={12} sm={6} md={4} key={index} sx={{ display: 'flex' }}>
             <motion.div
               style={{ flexGrow: 1, width: '100%' }}
               whileHover={{ scale: 1.03 }}
               transition={{ duration: 0.3 }}
             >
               <Box
-                onClick={() => window.location.href = href}
+                onClick={() => window.location.assign(href)}
                 sx={{
                   height: 160,
                   width: '100%',

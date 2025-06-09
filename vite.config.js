@@ -3,11 +3,15 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  base: './', // 👈 Importante si deployás en GitHub Pages o carpetas
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'robots.txt', 'logo192.png', 'logo512.png'],
+      includeAssets: [
+        'favicon.ico', 'robots.txt',
+        'logo192.png', 'logo512.png'
+      ],
       manifest: {
         name: 'Eat & Run',
         short_name: 'Eat&Run',
@@ -31,5 +35,24 @@ export default defineConfig({
         ]
       }
     })
-  ]
+  ],
+  server: {
+    port: 5173,
+    open: true, // Abre el navegador automáticamente
+    fs: {
+      strict: true
+    }
+  },
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    rollupOptions: {
+      input: './index.html' // 👈 Siempre usar ruta relativa aquí
+    }
+  },
+  resolve: {
+    alias: {
+      '@': '/src'
+    }
+  }
 });

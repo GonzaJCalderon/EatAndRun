@@ -10,6 +10,7 @@ import {
   Button,
   Paper
 } from '@mui/material';
+import CopyText from './CopyText'; // Asegurate de tener este componente
 
 const PagoSection = ({ onExtrasChange, onMetodoPagoChange, onComprobanteChange, metodoPago }) => {
   const [extras, setExtras] = useState('');
@@ -56,16 +57,7 @@ const PagoSection = ({ onExtrasChange, onMetodoPagoChange, onComprobanteChange, 
         </Typography>
       </Paper>
 
-      <TextField
-        label="Extras o tartas (opcional)"
-        placeholder="Ej: 1 postre, 1 ensalada de frutas, tarta JyQ"
-        multiline
-        fullWidth
-        rows={3}
-        value={extras}
-        onChange={handleExtras}
-        sx={{ mt: 2 }}
-      />
+ 
 
       <Typography variant="h6" sx={{ mt: 4, mb: 1 }}>
         💳 ¿Cómo vas a pagar?
@@ -76,30 +68,62 @@ const PagoSection = ({ onExtrasChange, onMetodoPagoChange, onComprobanteChange, 
       </RadioGroup>
 
       {metodoPago === 'transferencia' && (
-        <Box sx={{ mt: 3 }}>
-          <InputLabel sx={{ mb: 1, fontWeight: 'bold' }}>📎 Subí el comprobante de pago</InputLabel>
-          <Button
-            component="label"
-            variant="outlined"
-            color="success"
-            fullWidth
-            sx={{ mb: 1 }}
-          >
-            Seleccionar archivo
-            <input
-              type="file"
-              hidden
-              accept="image/*,application/pdf"
-              onChange={handleArchivo}
-            />
-          </Button>
+        <>
+          <Box sx={{ mt: 3 }}>
+            <InputLabel sx={{ mb: 1, fontWeight: 'bold' }}>📎 Subí el comprobante de pago</InputLabel>
+            <Button
+              component="label"
+              variant="outlined"
+              color="success"
+              fullWidth
+              sx={{ mb: 1 }}
+            >
+              Seleccionar archivo
+              <input
+                type="file"
+                hidden
+                accept="image/*,application/pdf"
+                onChange={handleArchivo}
+              />
+            </Button>
 
-          {archivo && (
-            <Typography variant="body2" color="text.secondary">
-              Archivo cargado: <strong>{archivo.name}</strong>
+            {archivo && (
+              <Typography variant="body2" color="text.secondary">
+                Archivo cargado: <strong>{archivo.name}</strong>
+              </Typography>
+            )}
+          </Box>
+
+          {/* Datos bancarios */}
+          <Box
+            sx={{
+              backgroundColor: '#f4f6f8',
+              mt: 3,
+              p: 2,
+              border: '1px dashed #999',
+              borderRadius: 2
+            }}
+          >
+            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+              🏦 Datos para Transferencia
             </Typography>
-          )}
-        </Box>
+            <Typography variant="body2">Banco: <strong>Santander</strong></Typography>
+            <Typography variant="body2">Tipo de cuenta: <strong>Caja de Ahorro en Pesos</strong></Typography>
+            <Typography variant="body2">Titular: <strong>Molina Guerra Matias Mauricio</strong></Typography>
+            <Typography variant="body2">DNI: <strong>32224452</strong></Typography>
+
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body2">
+                <strong>CBU:</strong>{' '}
+                <CopyText text="0720068788000038359572" />
+              </Typography>
+              <Typography variant="body2">
+                <strong>Alias:</strong>{' '}
+                <CopyText text="MOLINAGUERRA" />
+              </Typography>
+            </Box>
+          </Box>
+        </>
       )}
     </Box>
   );

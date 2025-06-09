@@ -1,53 +1,85 @@
 // src/components/TabsMenuContainer.jsx
-import React, { useState } from 'react';
-import { Tabs, Tab, Box } from '@mui/material';
-import DayMenuCard from './DayMenuCard';
+import React, { useState, useEffect } from 'react';
+import { Tabs, Tab, Box, Typography } from '@mui/material';
+import { motion } from 'framer-motion';
+import UnifiedDayMenuGallery from './UnifiedDayMenuGallery';
+import ExtrasSection from './ExtrasSection';
 
-const diasOrdenados = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
+const diasSemana = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
 
-const capitalizar = (str) => str.charAt(0).toUpperCase() + str.slice(1);
+const prettyName = (key) => key?.charAt(0).toUpperCase() + key.slice(1);
 
 const TabsMenuContainer = ({ menuData, selecciones, onSelect }) => {
   const [tabIndex, setTabIndex] = useState(0);
+  const [diasDisponibles, setDiasDisponibles] = useState([]);
 
-  const handleTabChange = (_, newValue) => {
-    setTabIndex(newValue);
+  useEffect(() => {
+    const diasConPlatos = diasSemana.filter(
+      (dia) =>
+        menuData[dia] &&
+        (menuData[dia].fijos?.length > 0 || menuData[dia].especiales?.length > 0)
+    );
+    setDiasDisponibles(diasConPlatos);
+    if (tabIndex >= diasConPlatos.length) setTabIndex(0);
+  }, [menuData]);
+
+  const diaActual = diasDisponibles[tabIndex];
+  const platosFijos = menuData[diaActual]?.fijos || [];
+  const platosEspeciales = menuData[diaActual]?.especiales || [];
+  const seleccionDia = selecciones[diaActual] || {};
+
+  const handleSelectCambio = (nuevaSeleccion) => {
+    if (typeof onSelect === 'function') {
+      const nuevoEstadoCompleto = {
+        ...selecciones,
+        [diaActual]: nuevaSeleccion
+      };
+      onSelect(nuevoEstadoCompleto);
+    }
   };
-
-  const diaActual = diasOrdenados[tabIndex];
-  const platosDelDia = menuData[diaActual] || [];
 
   return (
     <Box sx={{ width: '100%', mt: 3 }}>
-      <Tabs
-        value={tabIndex}
-        onChange={handleTabChange}
-        variant="scrollable"
-        scrollButtons="auto"
-        allowScrollButtonsMobile
-        aria-label="Seleccionar día de la semana"
-        sx={{
-          borderBottom: 1,
-          borderColor: 'divider',
-          mb: 2
-        }}
-      >
-        {diasOrdenados.map((dia, index) => (
-          <Tab
-            key={dia}
-            label={capitalizar(dia)}
-            id={`tab-${index}`}
-            aria-controls={`tabpanel-${index}`}
-          />
-        ))}
-      </Tabs>
+      {diasDisponibles.length === 0 ? (
+        <Typography align="center" variant="body1" color="text.secondary">
+          No hay platos disponibles esta semana.
+        </Typography>
+      ) : (
+        <>
+          <Tabs
+            value={tabIndex}
+            onChange={(_, newValue) => setTabIndex(newValue)}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
+            sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}
+          >
+            {diasDisponibles.map((dia, i) => (
+              <Tab key={dia} label={prettyName(dia)} id={`tab-${i}`} />
+            ))}
+          </Tabs>
 
-      <DayMenuCard
-        day={diaActual}
-        options={platosDelDia}
-        selected={selecciones[diaActual] || {}}
-        onSelect={onSelect}
-      />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <UnifiedDayMenuGallery
+              day={diaActual}
+              fijos={platosFijos}
+              especiales={platosEspeciales}
+              selected={seleccionDia}
+              onChange={handleSelectCambio}
+            />
+          </motion.div>
+
+          <ExtrasSection
+            dia={diaActual}
+            selectedGlobal={selecciones}
+            onSelect={onSelect}
+          />
+        </>
+      )}
     </Box>
   );
 };

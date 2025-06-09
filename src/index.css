@@ -1,3 +1,7 @@
+
+/* index.css o main.css */
+@import "leaflet/dist/leaflet.css";
+
 :root {
   font-family: 'Poppins', system-ui, sans-serif;
   line-height: 1.5;
