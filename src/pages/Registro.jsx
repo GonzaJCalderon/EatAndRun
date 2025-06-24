@@ -16,17 +16,19 @@ import API from '../api/api';
 import registerImage from '../assets/imgs/register-ilustration.png';
 
 const Registro = ({ onRegister }) => {
-  const [form, setForm] = useState({
-    nombre: '',
-    email: '',
-    password: '',
-    role: 'usuario',
-    telefono: '',
-    direccion: '',
-    direccionAlt: '',
-    razonSocial: '',
-    cuit: ''
-  });
+const [form, setForm] = useState({
+  nombre: '',
+  apellido: '', 
+  email: '',
+  password: '',
+  role: 'usuario',
+  telefono: '',
+  direccion: '',
+  direccionAlt: '',
+  razonSocial: '',
+  cuit: ''
+});
+
 
   const [loading, setLoading] = useState(false);
 
@@ -46,10 +48,11 @@ const navigate = useNavigate();
  const handleSubmit = async (e) => {
   e.preventDefault();
 
-  if (!form.nombre || !form.email || !form.password || !form.telefono || !form.direccion) {
-    enqueueSnackbar('❗ Todos los campos personales son obligatorios', { variant: 'warning' });
-    return;
-  }
+ if (!form.nombre || !form.apellido || !form.email || !form.password || !form.telefono || !form.direccion) {
+  enqueueSnackbar('❗ Todos los campos personales son obligatorios', { variant: 'warning' });
+  return;
+}
+
 
   if (form.role === 'empresa' && (!form.razonSocial || !form.cuit)) {
     enqueueSnackbar('❗ Razón social y CUIT son obligatorios para empresas', { variant: 'warning' });
@@ -59,19 +62,21 @@ const navigate = useNavigate();
   setLoading(true);
 
   try {
-    const res = await API.post('/auth/register', {
-      name: form.nombre,
-      email: form.email,
-      password: form.password,
-      role: form.role,
-      telefono: form.telefono,
-      direccion_principal: form.direccion,
-      direccion_alternativa: form.direccionAlt,
-      empresa: form.role === 'empresa' ? {
-        razonSocial: form.razonSocial,
-        cuit: form.cuit
-      } : null
-    });
+  const res = await API.post('/auth/register', {
+  name: form.nombre,
+  apellido: form.apellido, // 👈 AGREGADO
+  email: form.email,
+  password: form.password,
+  role: form.role,
+  telefono: form.telefono,
+  direccion_principal: form.direccion,
+  direccion_alternativa: form.direccionAlt,
+  empresa: form.role === 'empresa' ? {
+    razonSocial: form.razonSocial,
+    cuit: form.cuit
+  } : null
+});
+
 
     if (res.data) {
       localStorage.setItem('eatAndRunUser', JSON.stringify(res.data));
@@ -128,7 +133,25 @@ const navigate = useNavigate();
           </motion.div>
 
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
-            <TextField label="Nombre completo" name="nombre" fullWidth required value={form.nombre} onChange={handleChange} sx={{ mb: 2 }} />
+           <TextField
+  label="Nombre"
+  name="nombre"
+  fullWidth
+  required
+  value={form.nombre}
+  onChange={handleChange}
+  sx={{ mb: 2 }}
+/>
+<TextField
+  label="Apellido"
+  name="apellido"
+  fullWidth
+  required
+  value={form.apellido}
+  onChange={handleChange}
+  sx={{ mb: 2 }}
+/>
+
             <TextField label="Email" name="email" type="email" fullWidth required value={form.email} onChange={handleChange} sx={{ mb: 2 }} />
             <TextField label="Contraseña" name="password" type="password" fullWidth required value={form.password} onChange={handleChange} sx={{ mb: 2 }} />
             <TextField label="Teléfono" name="telefono" fullWidth required value={form.telefono} onChange={handleChange} sx={{ mb: 2 }} />

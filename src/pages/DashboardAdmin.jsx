@@ -31,6 +31,10 @@ const DashboardAdmin = () => {
   const [semanaActiva, setSemanaActiva] = useState(null);
 const [nuevaFechaCierre, setNuevaFechaCierre] = useState('');
 const [loadingSemana, setLoadingSemana] = useState(false);
+const [nuevaFechaInicio, setNuevaFechaInicio] = useState('');
+const [nuevaFechaFin, setNuevaFechaFin] = useState('');
+
+
 
 
 useEffect(() => {
@@ -40,8 +44,12 @@ useEffect(() => {
 const fetchSemanaActiva = async () => {
   try {
     const res = await api.get('/menu/semana/actual');
-    setSemanaActiva(res.data);
-    setNuevaFechaCierre(res.data.cierre?.split('T')[0] || '');
+ setNuevaFechaInicio(res.data.semana_inicio?.split('T')[0] || '');
+setNuevaFechaFin(res.data.semana_fin?.split('T')[0] || '');
+
+setNuevaFechaCierre(res.data.cierre?.split('T')[0] || '');
+setSemanaActiva(res.data);
+
   } catch (err) {
     console.error('❌ Error al obtener semana activa:', err);
   }
@@ -62,20 +70,22 @@ const fetchSemanaActiva = async () => {
   moderador: 5
 };
 
-
-const actualizarCierre = async () => {
+const actualizarFechasSemana = async () => {
   try {
-  await api.put('/menu/semana/habilitar', {
-  habilitado: !(semanaActiva.habilitado === true || semanaActiva.habilitado === 'true')
-});
+    await api.put('/menu/semana', {
+      fecha_inicio: nuevaFechaInicio,
+      fecha_fin: nuevaFechaFin,
+      cierre: nuevaFechaCierre
+    });
 
     fetchSemanaActiva();
-    alert('✅ Fecha de cierre actualizada');
+    alert('✅ Semana actualizada correctamente');
   } catch (err) {
-    console.error('❌ Error al actualizar fecha de cierre:', err);
-    alert('Error al actualizar fecha');
+    console.error('❌ Error al actualizar fechas de semana:', err);
+    alert('Error al actualizar las fechas de la semana');
   }
 };
+
 
 const toggleHabilitacion = async () => {
   try {
@@ -237,20 +247,46 @@ const cambiarRol = async (userId, nuevoRol) => {
   <Typography variant="h5" gutterBottom>⚙️ Gestión de Semana Activa</Typography>
   {semanaActiva ? (
     <>
-      <Typography>📅 Semana: <strong>{semanaActiva.fecha_inicio}</strong> al <strong>{semanaActiva.fecha_fin}</strong></Typography>
-      <Typography>🕔 Cierre actual: <strong>{semanaActiva.cierre?.split('T')[0]}</strong></Typography>
+<Typography>
+  📅 Semana actual: <strong>{semanaActiva.fecha_inicio}</strong> al <strong>{semanaActiva.fecha_fin}</strong>
+</Typography>
+
+      <Typography>🕔 Cierre: <strong>{semanaActiva.cierre?.split('T')[0]}</strong></Typography>
       <Typography>🚦 Estado: <strong>{semanaActiva.habilitado ? 'Habilitado ✅' : 'Cerrado ❌'}</strong></Typography>
 
-      <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+      <Box sx={{ mt: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
         <TextField
-          label="Nueva fecha de cierre"
+          label="📅 Inicio de semana"
+          type="date"
+          value={nuevaFechaInicio}
+          onChange={(e) => setNuevaFechaInicio(e.target.value)}
+          InputLabelProps={{ shrink: true }}
+        />
+        <TextField
+          label="📅 Fin de semana"
+          type="date"
+          value={nuevaFechaFin}
+          onChange={(e) => setNuevaFechaFin(e.target.value)}
+          InputLabelProps={{ shrink: true }}
+        />
+        <TextField
+          label="🕒 Fecha de cierre"
           type="date"
           value={nuevaFechaCierre}
           onChange={(e) => setNuevaFechaCierre(e.target.value)}
           InputLabelProps={{ shrink: true }}
         />
-        <Button onClick={actualizarCierre} variant="outlined">🕒 Cambiar cierre</Button>
-        <Button onClick={toggleHabilitacion} variant="contained" color={semanaActiva.habilitado ? 'error' : 'success'}>
+      </Box>
+
+      <Box sx={{ mt: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        <Button variant="contained" color="primary" onClick={actualizarFechasSemana}>
+          💾 Guardar semana
+        </Button>
+        <Button
+          onClick={toggleHabilitacion}
+          variant="contained"
+          color={semanaActiva.habilitado ? 'error' : 'success'}
+        >
           {semanaActiva.habilitado ? '❌ Bloquear pedidos' : '✅ Habilitar pedidos'}
         </Button>
       </Box>
@@ -259,6 +295,7 @@ const cambiarRol = async (userId, nuevoRol) => {
     <Typography>Cargando semana activa...</Typography>
   )}
 </Card>
+
 
       <Grid container spacing={3}>
         <Grid item xs={12} md={4}>

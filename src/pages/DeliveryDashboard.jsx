@@ -430,6 +430,7 @@ const pedidosCancelados = pedidosAsignados.filter(
         color="success"
         sx={{ mt: 2 }}
         onClick={() => cambiarEstado(pedido.id, 'entregado')}
+        
       >
         ✅ Cambiar a entregado
       </Button>

@@ -20,6 +20,7 @@ import EditarMenuDelDia from './pages/EditarMenuDelDia';
 import DeliveryDashboard from './pages/DeliveryDashboard';
 import AdminMenuPreview from './components/AdminMenuPreview';
 import CrearMenuEspecialEmpresa from './pages/CrearMenuEspecialEmpresa';
+import PerfilUsuario from './components/PerfilUsuario';
 
 const App = () => (
   <Routes>
@@ -30,6 +31,7 @@ const App = () => (
     <Route element={<Layout />}>
       <Route path="/app" element={<MainApp />} />
       <Route path="/quienes-somos" element={<QuienesSomos />} />
+      <Route path="/perfil" element={<PerfilUsuario />} />
     </Route>
 
     {/* 👉 Login / Registro sin layout */}
@@ -49,7 +51,6 @@ const App = () => (
     <Route path="/admin/editar-menu-del-dia" element={<EditarMenuDelDia />} />
     <Route path="/admin/ver-menu" element={<AdminMenuPreview />} />
     <Route path="/admin/empresa/especial" element={<CrearMenuEspecialEmpresa />} />
-
 
     {/* 👉 Delivery Dashboard */}
     <Route path="/delivery" element={<DeliveryDashboard />} />

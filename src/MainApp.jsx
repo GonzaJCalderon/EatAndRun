@@ -84,17 +84,20 @@ function MainApp() {
 
 
   useEffect(() => {
-    const fetchSemanaActiva = async () => {
-      try {
-        const res = await fetch('http://localhost:4000/api/menu/semana/actual');
-        const data = await res.json();
-        setSemanaActiva(data);
-      } catch {
-        console.warn("⚠️ No se pudo obtener semana activa");
-      } finally {
-        setSemanaCargada(true);
-      }
-    };
+const fetchSemanaActiva = async () => {
+  try {
+    const res = await fetch('http://localhost:4000/api/menu/semana/actual');
+    const data = await res.json();
+
+    // 🔥 ESTA LÍNEA CAMBIA:
+    setSemanaActiva(data.semana || data); // por compatibilidad con ambas respuestas
+  } catch {
+    console.warn("⚠️ No se pudo obtener semana activa");
+  } finally {
+    setSemanaCargada(true);
+  }
+};
+
 
     fetchSemanaActiva();
   }, []);
@@ -378,104 +381,122 @@ useEffect(() => {
     return total;
   };
 
-  const handleGuardarPedido = async () => {
-    if (!semanaActiva?.habilitado) {
-      enqueueSnackbar('🚫 Semana no habilitada', { variant: 'error' });
-      return;
+const handleGuardarPedido = async () => {
+  if (!semanaActiva?.habilitado) {
+    enqueueSnackbar('🚫 Semana no habilitada', { variant: 'error' });
+    return;
+  }
+
+  if (semanaCerrada) {
+    enqueueSnackbar('⏰ El plazo ya cerró', { variant: 'error' });
+    return;
+  }
+
+  const items = [];
+
+  const parseItemId = (key, p) => {
+    if (typeof p?.id === 'number') return p.id;
+    if (!p?.id && key.startsWith('extra-')) {
+      return Number(key.replace('extra-', ''));
     }
-
-    if (semanaCerrada) {
-      enqueueSnackbar('⏰ El plazo ya cerró', { variant: 'error' });
-      return;
-    }
-
-    const items = [];
-
-    Object.entries(activeSelecciones).forEach(([dia, platos]) => {
-      Object.entries(platos).forEach(([key, p]) => {
-        if (!p || parseInt(p.cantidad) <= 0) return;
-
-        const cantidad = parseInt(p.cantidad);
-        const tipo = p.tipo || 'daily';
-
-        if (tipo === 'skip') {
-          items.push({
-            item_type: 'skip',
-            item_id: null,
-            quantity: 1,
-            dia
-          });
-        } else if (tipo === 'extra') {
-          let itemId = Number(p.id);
-          if (isNaN(itemId)) {
-            itemId = key.startsWith('extra-') ? Number(key.replace('extra-', '')) : Number(key);
-          }
-          if (isNaN(itemId)) return;
-          items.push({
-            item_type: 'extra',
-            item_id: itemId,
-            quantity: cantidad,
-            precio: p.precio,
-            dia
-          });
-        } else {
-          items.push({
-            item_type: tipo,
-            item_id: p.id || key,
-            quantity: cantidad,
-            dia
-          });
-        }
-      });
-    });
-
-    Object.entries(tartasSeleccionadas).forEach(([tipo, cantidad]) => {
-      if (cantidad > 0) {
-        items.push({
-          item_type: 'tarta',
-          item_id: tartaLabelMap[tipo] || tipo,
-          quantity: cantidad
-        });
-      }
-    });
-
-    const hayItemsValidos = items.some(i => i.quantity > 0 && i.item_type !== 'skip');
-    if (!hayItemsValidos) {
-      enqueueSnackbar('❌ No seleccionaste nada válido para guardar', { variant: 'warning' });
-      return;
-    }
-
-    setGuardando(true);
-    try {
-      const fechaEntregaFinal = semanaActiva?.semana_inicio;
-      const total = estimarTotal();
-
-      const res = await api.post('/orders', {
-        items,
-        total,
-        fecha_entrega: fechaEntregaFinal,
-        observaciones
-      });
-
-      const orderId = res.data.id;
-
-      if (metodoPago === 'transferencia' && comprobante) {
-        const imageUrl = await subirComprobanteCloudinary(comprobante);
-        await api.put(`/orders/${orderId}/comprobante`, { comprobanteUrl: imageUrl });
-      }
-enqueueSnackbar('✅ Pedido guardado con éxito', { variant: 'success' });
-setPedidoGuardado(true);
-setConfirmando(false);
-setPedidoExitoso(true); // mostrar pantalla de éxito
-
-
-    } catch (err) {
-      console.error('❌ Error al guardar pedido:', err?.response?.data || err);
-      enqueueSnackbar('❌ Error al enviar el pedido', { variant: 'error' });
-    } finally {
-      setGuardando(false);
-    }
+    const parsed = Number(p?.id || key);
+    return isNaN(parsed) ? null : parsed;
   };
+
+  Object.entries(activeSelecciones).forEach(([dia, platos]) => {
+    Object.entries(platos).forEach(([key, p]) => {
+      if (!p || parseInt(p.cantidad) <= 0) return;
+
+      const cantidad = parseInt(p.cantidad);
+      const tipo = p.tipo || 'daily';
+
+      if (tipo === 'skip') {
+        items.push({
+          item_type: 'skip',
+          item_id: null,
+          quantity: 1,
+          dia
+        });
+        return;
+      }
+
+      if (tipo === 'extra') {
+        const itemId = parseItemId(key, p);
+        if (itemId === null) {
+          console.warn('❌ Extra con ID inválido:', key, p);
+          return;
+        }
+
+        items.push({
+          item_type: 'extra',
+          item_id: itemId,
+          quantity: cantidad,
+          precio: p.precio,
+          dia
+        });
+        return;
+      }
+
+      // tipo 'daily' o 'fijo'
+      items.push({
+        item_type: tipo,
+        item_id: p.id || key,
+        quantity: cantidad,
+        dia
+      });
+    });
+  });
+
+  Object.entries(tartasSeleccionadas).forEach(([tipo, cantidad]) => {
+    if (cantidad > 0) {
+      items.push({
+        item_type: 'tarta',
+        item_id: tartaLabelMap[tipo] || tipo,
+        quantity: cantidad
+      });
+    }
+  });
+
+  const hayItemsValidos = items.some(i => i.quantity > 0 && i.item_type !== 'skip');
+  if (!hayItemsValidos) {
+    enqueueSnackbar('❌ No seleccionaste nada válido para guardar', { variant: 'warning' });
+    return;
+  }
+
+  console.log("🧾 Payload items:", items); // ✅ DEBUG antes de enviar
+
+  setGuardando(true);
+  try {
+    const fechaEntregaFinal = semanaActiva?.semana_inicio;
+    const total = estimarTotal();
+
+    const res = await api.post('/orders', {
+      items,
+      total,
+      fecha_entrega: fechaEntregaFinal,
+      observaciones,
+      metodoPago
+    });
+
+    const orderId = res.data.id;
+
+    if (metodoPago === 'transferencia' && comprobante) {
+      const imageUrl = await subirComprobanteCloudinary(comprobante);
+      await api.put(`/orders/${orderId}/comprobante`, { comprobanteUrl: imageUrl });
+    }
+
+    enqueueSnackbar('✅ Pedido guardado con éxito', { variant: 'success' });
+    setPedidoGuardado(true);
+    setConfirmando(false);
+    setPedidoExitoso(true);
+  } catch (err) {
+    console.error('❌ Error al guardar pedido:', err?.response?.data || err);
+    enqueueSnackbar('❌ Error al enviar el pedido', { variant: 'error' });
+  } finally {
+    setGuardando(false);
+  }
+};
+
 
   if (cargandoUsuario) {
     return (
