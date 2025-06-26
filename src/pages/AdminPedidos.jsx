@@ -7,6 +7,7 @@ import {
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Autocomplete from '@mui/material/Autocomplete';
+import Modal from '@mui/material/Modal';
 import { saveAs } from 'file-saver';
 
 const diasSemana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
@@ -19,6 +20,8 @@ const extraMap = {
   "ID:2": "🥗 Ensalada",
   "ID:3": "💪 Proteína"
 };
+
+
 
 
 const exportarResumenCSV = (resumen) => {
@@ -48,21 +51,24 @@ const agruparPedidosPorDiaConDetalle = (pedidos) => {
 
     const dias = new Set();
 
-    const detalle = {
-      id,
-      nombreCompleto,
-      direccion,
-      subdireccion,
-      telefono,
-      email,
-      estado,
-      delivery: p.delivery || {},
-      esEmpresa,
-      fecha,
-      platos: [],
-      extras: [],
-      tartas: []
-    };
+   const detalle = {
+  id,
+  nombreCompleto,
+  direccion,
+  subdireccion,
+  telefono,
+  email,
+  estado,
+  delivery: p.delivery || {},
+  esEmpresa,
+  fecha,
+  metodoPago: p.metodoPago || null,               // ✅ AÑADIR ESTO
+  comprobanteUrl: p.comprobanteUrl || null,       // ✅ AÑADIR ESTO
+  platos: [],
+  extras: [],
+  tartas: []
+};
+
 
     for (const [dia, items] of Object.entries(pedido.diarios || {})) {
       dias.add(dia);
@@ -103,6 +109,9 @@ const AdminPedidos = () => {
   const [semanaActiva, setSemanaActiva] = useState(null);
   const [tabDia, setTabDia] = useState('lunes');
   const [opcionesDelivery, setOpcionesDelivery] = useState({});
+  const [modalOpen, setModalOpen] = useState(false);
+const [comprobanteUrl, setComprobanteUrl] = useState(null);
+
 
   useEffect(() => {
     api.get('/admin/orders').then(res => {
@@ -173,6 +182,34 @@ const asignarDelivery = async (id, delivery) => {
   );
 
 
+const handleVerComprobante = async (pedido) => {
+  if (!pedido.comprobanteUrl) return;
+
+  try {
+    const url = pedido.comprobanteUrl;
+
+    // ✅ Extrae todo el path relativo desde `upload/` hasta antes de la extensión
+    const matches = url.match(/\/upload\/(?:v\d+\/)?([^.?]+)\.(pdf|jpg|jpeg|png)$/i);
+    const publicId = matches?.[1];
+
+
+
+ setComprobanteUrl(pedido.comprobanteUrl);
+
+    setModalOpen(true);
+
+    console.log("✅ Public ID CORRECTO:", publicId);
+    console.log("🔗 Signed URL:", res.data.signedUrl);
+
+  } catch (err) {
+
+  }
+};
+
+
+
+
+
 
   return (
     <Container sx={{ mt: 4 }}>
@@ -211,7 +248,32 @@ const asignarDelivery = async (id, delivery) => {
                   <Typography>📍 {pedido.direccion}</Typography>
                   {pedido.subdireccion && <Typography>📍 {pedido.subdireccion}</Typography>}
                   <Typography>📞 {pedido.telefono}</Typography>
-                  <Typography>📧 {pedido.email}</Typography>
+    <Typography>📧 {pedido.email}</Typography>
+
+{console.log("📎 Comprobante info:", {
+  metodoPago: pedido.metodoPago,
+  comprobanteUrl: pedido.comprobanteUrl,
+  pedidoId: pedido.id
+})}
+
+{pedido.metodoPago && (
+  <Typography>💳 Método de pago: {pedido.metodoPago}</Typography>
+)}
+{pedido.comprobanteUrl && (
+  <Button
+    variant="outlined"
+    color="primary"
+    sx={{ mt: 1 }}
+    onClick={() => handleVerComprobante(pedido)}
+  >
+    📎 Ver comprobante
+  </Button>
+)}
+
+
+
+
+
 
                   {pedido.delivery?.nombre ? (
                     <>
@@ -316,10 +378,49 @@ const asignarDelivery = async (id, delivery) => {
                 <Typography>📅 {new Date(p.fecha).toLocaleDateString('es-AR')}</Typography>
                 <Typography>📌 {mostrarEstado(p.estado)}</Typography>
               </CardContent>
+              
             </Card>
           ))}
         </>
+      )} 
+
+      {comprobanteUrl && (
+
+<Modal open={modalOpen} onClose={() => {
+  setModalOpen(false);
+  setComprobanteUrl(null); // ⬅️ Limpia al cerrar
+}}>
+
+    <Box sx={{
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      bgcolor: 'background.paper',
+      boxShadow: 24,
+      p: 2,
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      overflow: 'auto'
+    }}>
+      {comprobanteUrl.endsWith('.pdf') ? (
+        <iframe
+          src={comprobanteUrl}
+          width="100%"
+          height="600px"
+          title="Comprobante PDF"
+        />
+      ) : (
+        <img
+          src={comprobanteUrl}
+          alt="Comprobante"
+          style={{ maxWidth: '100%' }}
+        />
       )}
+    </Box>
+  </Modal>
+)}
+
     </Container>
   );
 };

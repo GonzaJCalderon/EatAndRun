@@ -9,7 +9,6 @@ import ExcelJS from 'exceljs';
 import { useSnackbar } from 'notistack';
 import api from "../api/api";
 import ProduccionEditablePorDia from "../components/ProduccionEditablePorDia";
-import { getSemanaActualRange } from '../utils/date';
 
 const ProduccionResumen = () => {
   const [pedidos, setPedidos] = useState([]);
@@ -17,48 +16,110 @@ const ProduccionResumen = () => {
   const [observaciones, setObservaciones] = useState({});
   const [totalProduccion, setTotalProduccion] = useState({});
   const [tipoMenu, setTipoMenu] = useState('todos');
+  const [filtroTiempo, setFiltroTiempo] = useState("semana");
+  const [usarRangoPersonalizado, setUsarRangoPersonalizado] = useState(false);
+  const [fechaDesde, setFechaDesde] = useState('');
+  const [fechaHasta, setFechaHasta] = useState('');
   const [cargando, setCargando] = useState(true);
   const [filasLibres, setFilasLibres] = useState({});
-  const [semanaActual, setSemanaActual] = useState({ lunes: null, viernes: null }); // 💡 nuevo
+  const [semanaActual, setSemanaActual] = useState({ lunes: null, viernes: null });
 
   const { enqueueSnackbar } = useSnackbar();
 
   const handleFiltroChange = (e) => setTipoMenu(e.target.value);
+  const handleFiltroTiempoChange = (e) => setFiltroTiempo(e.target.value);
+
+  const handleResumenEditado = ({ resumen, observaciones, total }) => {
+  setResumen(resumen);
+  setObservaciones(observaciones);
+  setTotalProduccion(total);
+};
+
+const extraMap = {
+  "1": "🍰 Postre",
+  "2": "🥗 Ensalada",
+  "3": "💪 Proteína"
+};
+
+
+
+  const getRangoFecha = () => {
+    if (usarRangoPersonalizado && fechaDesde && fechaHasta) {
+      const desde = new Date(fechaDesde);
+      const hasta = new Date(fechaHasta);
+      return { desde, hasta };
+    }
+
+    const hoy = new Date();
+    const inicio = new Date(hoy);
+    const fin = new Date(hoy);
+
+    switch (filtroTiempo) {
+      case "mes":
+        inicio.setDate(1);
+        fin.setMonth(inicio.getMonth() + 1);
+        fin.setDate(0);
+        break;
+      case "año":
+        inicio.setMonth(0, 1);
+        fin.setMonth(11, 31);
+        break;
+      default: {
+        const dia = hoy.getDay();
+        const lunes = new Date(hoy);
+        lunes.setDate(hoy.getDate() - ((dia + 6) % 7));
+        const viernes = new Date(lunes);
+        viernes.setDate(lunes.getDate() + 4);
+        return { desde: lunes, hasta: viernes };
+      }
+    }
+
+    return { desde: inicio, hasta: fin };
+  };
 
   useEffect(() => {
     fetchPedidos();
-  }, [tipoMenu]);
+  }, [tipoMenu, filtroTiempo, usarRangoPersonalizado, fechaDesde, fechaHasta]);
 
-const fetchPedidos = async () => {
-  try {
-    setCargando(true);
-    const res = await api.get("/admin/orders");
+  const fetchPedidos = async () => {
+    try {
+      setCargando(true);
+      const res = await api.get("/admin/orders");
 
-    const { lunes, viernes } = getSemanaActualRange();
-    setSemanaActual({ lunes, viernes });
+      const { desde, hasta } = getRangoFecha();
 
-    const pedidosFiltrados = res.data
-      .filter(p => {
-        const fecha = new Date(p.fecha_entrega);
-        return (
-          fecha >= lunes &&
-          fecha <= viernes &&
-          (tipoMenu === 'todos' || p.tipo_menu === tipoMenu)
+      const inicio = new Date(desde);
+      inicio.setHours(0, 0, 0, 0);
+      const fin = new Date(hasta);
+      fin.setHours(23, 59, 59, 999);
+
+      setSemanaActual({ lunes: inicio, viernes: fin });
+
+      const pedidosFiltrados = res.data
+        .filter(p => {
+          const raw = p.fecha_entrega || p.created_at;
+          if (!raw) return false;
+
+          const fecha = new Date(raw);
+          return (
+            fecha >= inicio &&
+            fecha <= fin &&
+            (tipoMenu === 'todos' || p.tipo_menu === tipoMenu)
+          );
+        })
+        .sort((a, b) =>
+          new Date(b.fecha_entrega || b.created_at) - new Date(a.fecha_entrega || a.created_at)
         );
-      })
-      .sort((a, b) => new Date(b.fecha_entrega) - new Date(a.fecha_entrega));
 
-    console.log("📦 Pedidos filtrados:", pedidosFiltrados);
-
-    setPedidos(pedidosFiltrados);
-    calcularResumen(pedidosFiltrados);
-  } catch (err) {
-    console.error("❌ Error al obtener pedidos:", err);
-  } finally {
-    setCargando(false);
-  }
-};
-
+      console.log("📦 Pedidos filtrados:", pedidosFiltrados);
+      setPedidos(pedidosFiltrados);
+      calcularResumen(pedidosFiltrados);
+    } catch (err) {
+      console.error("❌ Error al obtener pedidos:", err);
+    } finally {
+      setCargando(false);
+    }
+  };
 
   const handleFilaLibreChange = (nuevasFilas) => {
     setFilasLibres(nuevasFilas);
@@ -68,13 +129,11 @@ const fetchPedidos = async () => {
     const resumenTemp = {};
     const obsTemp = {};
     const totalTemp = {};
-  const extraMap = {
-  "1": "🍰 Postre",
-  "2": "🥗 Ensalada",
-  "3": "💪 Proteína"
-};
-
-
+    const extraMap = {
+      "1": "🍰 Postre",
+      "2": "🥗 Ensalada",
+      "3": "💪 Proteína"
+    };
 
     pedidos.forEach((p) => {
       const pedido = p.pedido || {};
@@ -100,21 +159,19 @@ const fetchPedidos = async () => {
             const key = dia.toUpperCase();
             if (!resumenTemp[key]) resumenTemp[key] = {};
             if (!obsTemp[key]) obsTemp[key] = [];
-Object.entries(platos).forEach(([plato, cantidad]) => {
-  const cantidadNum = Number(cantidad);
 
-  // 🧠 Mapear nombre solo si es EXTRA
-  let nombrePlato = plato;
-  if (categoria === 'extras') {
-    const idNormalizado = plato.replace(/^ID:/, '');
-    nombrePlato = extraMap[idNormalizado] || `Extra ${idNormalizado}`;
-  }
+            Object.entries(platos).forEach(([plato, cantidad]) => {
+              const cantidadNum = Number(cantidad);
+              let nombrePlato = plato;
 
-  // ✅ Guardar en resumen y total usando el nombre mapeado
-  resumenTemp[key][nombrePlato] = (resumenTemp[key][nombrePlato] || 0) + cantidadNum;
-  totalTemp[nombrePlato] = (totalTemp[nombrePlato] || 0) + cantidadNum;
-});
+              if (categoria === 'extras') {
+                const idNormalizado = plato.replace(/^ID:/, '');
+                nombrePlato = extraMap[idNormalizado] || `Extra ${idNormalizado}`;
+              }
 
+              resumenTemp[key][nombrePlato] = (resumenTemp[key][nombrePlato] || 0) + cantidadNum;
+              totalTemp[nombrePlato] = (totalTemp[nombrePlato] || 0) + cantidadNum;
+            });
 
             if (p.observaciones) {
               obsTemp[key].push(`• ${nombre}: ${p.observaciones}`);
@@ -129,88 +186,136 @@ Object.entries(platos).forEach(([plato, cantidad]) => {
     setTotalProduccion(totalTemp);
   };
 
+
   const exportarExcel = async () => {
-    const workbook = new ExcelJS.Workbook();
-    const styles = {
-      header: {
-        font: { bold: true },
-        fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFCCE5FF' } },
-        border: { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } }
-      },
-      rowBorder: {
-        border: { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } }
-      },
-      total: {
-        font: { bold: true },
-        fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } },
-        border: { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } }
-      }
-    };
+  const workbook = new ExcelJS.Workbook();
+  const dias = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
 
-    Object.entries(resumen).forEach(([dia, platos]) => {
-      const sheet = workbook.addWorksheet(dia);
-      sheet.columns = [
-        { header: "Plato", key: "plato", width: 35 },
-        { header: "Cantidad", key: "cantidad", width: 15 }
-      ];
-      sheet.getRow(1).eachCell(cell => Object.assign(cell, styles.header));
+  const estiloTituloPlato = {
+    font: { bold: true, name: 'Calibri' }
+  };
 
-      let total = 0;
-      Object.entries(platos).forEach(([plato, cantidad]) => {
-        const row = sheet.addRow({ plato, cantidad });
-        row.eachCell(cell => Object.assign(cell, styles.rowBorder));
-        total += cantidad;
+  dias.forEach((dia) => {
+    const sheet = workbook.addWorksheet(dia.toUpperCase());
+
+    let fila = 1;
+    const platosPorDia = {};
+
+    pedidos.forEach(pedido => {
+      const usuario = `${pedido.usuario?.nombre || ''} ${pedido.usuario?.apellido || ''}`.trim();
+      const tipoMenu = pedido.tipo_menu?.toUpperCase() || '';
+const notasPorDia = pedido.notas || {};
+const notaLibre = notasPorDia[dia] || '';
+
+
+
+      const platos = pedido.pedido?.diarios?.[dia] || {};
+
+      Object.entries(platos).forEach(([nombrePlato, cantidad]) => {
+        if (!platosPorDia[nombrePlato]) platosPorDia[nombrePlato] = [];
+
+       platosPorDia[nombrePlato].push({
+  usuario: `${usuario} - ${tipoMenu}`,
+  cantidad,
+  nota: notaLibre,
+  observacion,
+  esExtra: false
+});
+
       });
 
+      const extras = pedido.pedido?.extras?.[dia] || {};
+      Object.entries(extras).forEach(([extraId, cantidad]) => {
+        const nombre = extraMap[extraId.replace(/^ID:/, '')] || `Extra ${extraId}`;
+        if (!platosPorDia[nombre]) platosPorDia[nombre] = [];
+
+      platosPorDia[nombre].push({
+  usuario: `${usuario} - ${tipoMenu}`,
+  cantidad,
+  nota: notaLibre,
+  observacion,
+  esExtra: true
+});
+
+      });
+    });
+
+    // Encabezado
+sheet.columns = [
+  { header: 'Usuario', key: 'usuario', width: 35 },
+  { header: 'Tipo', key: 'tipo', width: 10 },
+  { header: 'Cantidad', key: 'cantidad', width: 12 },
+  { header: 'Nota libre', key: 'nota', width: 40 },
+  { header: 'Observación', key: 'observacion', width: 40 }
+];
+
+
+    // Escribir por plato
+    Object.entries(platosPorDia).forEach(([nombrePlato, usuarios]) => {
+      // Título del plato
       sheet.addRow([]);
-      const totalRow = sheet.addRow(["TOTAL", total]);
-      totalRow.eachCell(cell => Object.assign(cell, styles.total));
+      const tituloRow = sheet.addRow([nombrePlato.toUpperCase()]);
+      tituloRow.font = estiloTituloPlato;
 
-      if (observaciones[dia]) {
-        sheet.addRow([]);
-        const title = sheet.addRow(["OBSERVACIONES"]);
-        sheet.mergeCells(`A${title.number}:B${title.number}`);
-        title.getCell(1).font = { italic: true, bold: true };
+      usuarios.forEach(u => {
+     sheet.addRow({
+  usuario: u.usuario,
+  tipo: u.esExtra ? 'E' : 'A',
+  cantidad: u.cantidad,
+  nota: u.nota || '',
+  observacion: u.observacion || ''
+});
 
-        observaciones[dia].forEach((obs) => {
-          const row = sheet.addRow([obs]);
-          sheet.mergeCells(`A${row.number}:B${row.number}`);
-          row.getCell(1).font = { italic: true, size: 11 };
-        });
-      }
+      });
 
-      if (filasLibres[dia.toLowerCase()]) {
-        sheet.addRow([]);
-        const libre = sheet.addRow([`🔓 Fila libre: ${filasLibres[dia.toLowerCase()]}`]);
-        sheet.mergeCells(`A${libre.number}:B${libre.number}`);
-        libre.getCell(1).font = { italic: true };
-      }
+      sheet.addRow([]); // Espacio entre bloques
     });
+  });
 
-    const resumenSheet = workbook.addWorksheet("RESUMEN SEMANAL");
-    resumenSheet.columns = [
-      { header: "Plato", key: "plato", width: 35 },
-      { header: "Total Semana", key: "cantidad", width: 20 }
-    ];
-    resumenSheet.getRow(1).eachCell(cell => Object.assign(cell, styles.header));
+  // Hoja de resumen
+  const resumenSheet = workbook.addWorksheet("RESUMEN");
+  resumenSheet.columns = [
+    { header: "PLATO", key: "plato", width: 40 },
+    { header: "CANTIDAD", key: "cantidad", width: 15 },
+    { header: "TOTAL", key: "total", width: 15 },
+  ];
 
-    Object.entries(totalProduccion).forEach(([plato, cantidad]) => {
-      const row = resumenSheet.addRow({ plato, cantidad });
-      row.eachCell(cell => Object.assign(cell, styles.rowBorder));
+  Object.entries(totalProduccion).forEach(([plato, cantidad]) => {
+    resumenSheet.addRow({ plato, cantidad, total: cantidad });
+  });
+
+  // 📌 Agregar sección de observaciones generales
+resumenSheet.addRow([]);
+resumenSheet.addRow([{ value: "📝 OBSERVACIONES POR CATEGORÍA", font: { bold: true } }]);
+
+Object.entries(observaciones).forEach(([categoria, obsLista]) => {
+  resumenSheet.addRow([]);
+  resumenSheet.addRow([{ value: `📅 ${categoria}`, font: { bold: true, italic: true } }]);
+
+  if (obsLista.length === 0) {
+    resumenSheet.addRow(["(Sin observaciones)"]);
+  } else {
+    obsLista.forEach(obs => {
+      resumenSheet.addRow([obs]);
     });
+  }
+});
 
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], {
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    });
-    saveAs(blob, `produccion-${new Date().toISOString().slice(0, 10)}.xlsx`);
-  };
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  });
+  saveAs(blob, `produccion-${new Date().toISOString().slice(0, 10)}.xlsx`);
+};
+
+
 
   const handleGuardarCambios = async (pedidoId, nuevosItems) => {
     try {
       await api.put(`/orders/${pedidoId}/update-items`, { items: nuevosItems });
       enqueueSnackbar('✅ Cambios guardados', { variant: 'success' });
-      fetchPedidos(); // actualizar
+      fetchPedidos();
     } catch (err) {
       enqueueSnackbar('❌ Error al guardar', { variant: 'error' });
     }
@@ -228,13 +333,54 @@ Object.entries(platos).forEach(([plato, cantidad]) => {
         </Button>
       </Box>
 
-      <Box className="no-print" sx={{ mb: 3, display: 'flex', justifyContent: 'center' }}>
-        <label style={{ marginRight: '8px', fontWeight: 500 }}>Filtrar por tipo de menú:</label>
-        <select value={tipoMenu} onChange={handleFiltroChange}>
-          <option value="todos">Todos</option>
-          <option value="usuario">Usuarios individuales</option>
-          <option value="empresa">Empresas</option>
-        </select>
+      <Box className="no-print" sx={{ mb: 3, display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <label><strong>Filtrar por menú:</strong></label>
+          <select value={tipoMenu} onChange={handleFiltroChange}>
+            <option value="todos">Todos</option>
+            <option value="usuario">Usuarios individuales</option>
+            <option value="empresa">Empresas</option>
+          </select>
+
+          <label><strong>Filtrar por:</strong></label>
+          <select value={filtroTiempo} onChange={handleFiltroTiempoChange} disabled={usarRangoPersonalizado}>
+            <option value="semana">Semana</option>
+            <option value="mes">Mes</option>
+            <option value="año">Año</option>
+          </select>
+        </Box>
+
+        <Box>
+          <label>
+            <input
+              type="checkbox"
+              checked={usarRangoPersonalizado}
+              onChange={(e) => setUsarRangoPersonalizado(e.target.checked)}
+            />{" "}
+            Usar rango personalizado
+          </label>
+        </Box>
+
+        {usarRangoPersonalizado && (
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box>
+              <label>Desde:</label>
+              <input
+                type="date"
+                value={fechaDesde}
+                onChange={(e) => setFechaDesde(e.target.value)}
+              />
+            </Box>
+            <Box>
+              <label>Hasta:</label>
+              <input
+                type="date"
+                value={fechaHasta}
+                onChange={(e) => setFechaHasta(e.target.value)}
+              />
+            </Box>
+          </Box>
+        )}
       </Box>
 
       <Typography variant="h4" textAlign="center" gutterBottom>
@@ -243,7 +389,7 @@ Object.entries(platos).forEach(([plato, cantidad]) => {
 
       {semanaActual.lunes && semanaActual.viernes && (
         <Typography variant="subtitle1" textAlign="center" gutterBottom>
-          Semana actual: del {semanaActual.lunes.toLocaleDateString()} al {semanaActual.viernes.toLocaleDateString()}
+          {`Rango: del ${semanaActual.lunes.toLocaleDateString()} al ${semanaActual.viernes.toLocaleDateString()}`}
         </Typography>
       )}
 
@@ -265,12 +411,12 @@ Object.entries(platos).forEach(([plato, cantidad]) => {
           <Card sx={{ mt: 4, backgroundColor: '#f0f0f0' }}>
             <CardContent>
               <Typography variant="h5" textAlign="center" sx={{ mb: 2 }}>
-                📦 Total Producción Semanal
+                📦 Total Producción
               </Typography>
               <Divider sx={{ mb: 2 }} />
               {Object.entries(totalProduccion).map(([plato, cantidad], idx) => (
                 <Typography key={idx} textAlign="center" sx={{ mb: 1 }}>
-                  🍽️ <strong>{plato}</strong>: {typeof cantidad === 'object' ? JSON.stringify(cantidad) : cantidad}
+                  🍽️ <strong>{plato}</strong>: {cantidad}
                 </Typography>
               ))}
             </CardContent>
@@ -278,11 +424,13 @@ Object.entries(platos).forEach(([plato, cantidad]) => {
 
           <Box sx={{ mt: 6 }}>
             <Typography variant="h5" sx={{ mb: 2 }}>📝 Edición por día</Typography>
-            <ProduccionEditablePorDia
-              pedidos={pedidos}
-              onGuardarCambios={handleGuardarCambios}
-              onFilaLibreChange={handleFilaLibreChange}
-            />
+           <ProduccionEditablePorDia
+  pedidos={pedidos}
+  onGuardarCambios={handleGuardarCambios}
+  onFilaLibreChange={handleFilaLibreChange}
+  onResumenEditado={handleResumenEditado}
+/>
+
           </Box>
         </>
       )}

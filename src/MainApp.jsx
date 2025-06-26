@@ -482,7 +482,7 @@ const handleGuardarPedido = async () => {
 
     if (metodoPago === 'transferencia' && comprobante) {
       const imageUrl = await subirComprobanteCloudinary(comprobante);
-      await api.put(`/orders/${orderId}/comprobante`, { comprobanteUrl: imageUrl });
+ await api.post(`/orders/${orderId}/comprobante`, { comprobanteUrl: imageUrl });
     }
 
     enqueueSnackbar('✅ Pedido guardado con éxito', { variant: 'success' });

@@ -13,7 +13,7 @@ import {
   Button
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const diasSemana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
 
@@ -26,25 +26,28 @@ const extraMap = {
   "ID:3": "💪 Proteína"
 };
 
-const ProduccionEditablePorDia = ({ pedidos, onGuardarCambios }) => {
+const ProduccionEditablePorDia = ({ pedidos, onGuardarCambios, onResumenEditado }) => {
   const [edit, setEdit] = useState({});
 
   const isDirty = (pedidoId) => !!edit[pedidoId];
 
   const handleCantidadChange = (pedidoId, dia, tipo, nombre, nuevaCantidad) => {
-    setEdit(prev => ({
-      ...prev,
-      [pedidoId]: {
-        ...(prev[pedidoId] || {}),
-        [dia]: {
-          ...(prev[pedidoId]?.[dia] || {}),
-          [tipo]: {
-            ...(prev[pedidoId]?.[dia]?.[tipo] || {}),
-            [nombre]: nuevaCantidad
+    setEdit(prev => {
+      const updated = {
+        ...prev,
+        [pedidoId]: {
+          ...(prev[pedidoId] || {}),
+          [dia]: {
+            ...(prev[pedidoId]?.[dia] || {}),
+            [tipo]: {
+              ...(prev[pedidoId]?.[dia]?.[tipo] || {}),
+              [nombre]: nuevaCantidad
+            }
           }
         }
-      }
-    }));
+      };
+      return updated;
+    });
   };
 
   const handleObservacionChange = (pedidoId, value) => {
@@ -80,6 +83,77 @@ const ProduccionEditablePorDia = ({ pedidos, onGuardarCambios }) => {
       return nuevo;
     });
   };
+
+  // 🧠 Generador de resumen actualizado en base a datos + edición
+  const calcularResumenActual = () => {
+    const resumen = {};
+    const observaciones = {};
+    const total = {};
+
+    pedidos.forEach(pedido => {
+      const id = pedido.id;
+      const usuario = pedido.usuario || {};
+      const nombreUsuario = `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim();
+
+      diasSemana.forEach(dia => {
+        const platos = pedido.pedido?.diarios?.[dia] || {};
+        const extras = pedido.pedido?.extras?.[dia] || {};
+        const tartas = pedido.pedido?.tartas || {};
+
+        const editPedido = edit[id]?.[dia] || {};
+
+        const editPlatos = editPedido.platos || {};
+        const editExtras = editPedido.extras || {};
+        const editTartas = edit[id]?.[dia]?.tartas || {};
+
+        const platosFinal = { ...platos, ...editPlatos };
+        const extrasFinal = { ...extras, ...editExtras };
+        const tartasFinal = { ...tartas, ...editTartas };
+
+        const keyDia = dia.toUpperCase();
+        if (!resumen[keyDia]) resumen[keyDia] = {};
+        if (!observaciones[keyDia]) observaciones[keyDia] = [];
+
+        Object.entries(platosFinal).forEach(([nombre, cantidad]) => {
+          const cantidadNum = Number(cantidad);
+          resumen[keyDia][nombre] = (resumen[keyDia][nombre] || 0) + cantidadNum;
+          total[nombre] = (total[nombre] || 0) + cantidadNum;
+        });
+
+        Object.entries(extrasFinal).forEach(([nombre, cantidad]) => {
+          const cantidadNum = Number(cantidad);
+          const idNorm = nombre.replace(/^ID:/, '');
+          const nombrePlato = extraMap[nombre] || extraMap[idNorm] || `Extra ${idNorm}`;
+          resumen[keyDia][nombrePlato] = (resumen[keyDia][nombrePlato] || 0) + cantidadNum;
+          total[nombrePlato] = (total[nombrePlato] || 0) + cantidadNum;
+        });
+
+        Object.entries(tartasFinal).forEach(([nombre, cantidad]) => {
+          const cantidadNum = Number(cantidad);
+          if (!resumen["TARTAS"]) resumen["TARTAS"] = {};
+          resumen["TARTAS"][nombre] = (resumen["TARTAS"][nombre] || 0) + cantidadNum;
+          total[nombre] = (total[nombre] || 0) + cantidadNum;
+        });
+
+        const obs = edit[id]?.observaciones || pedido.observaciones;
+        if (obs) {
+          if (Object.keys(tartasFinal).length > 0) {
+            if (!observaciones["TARTAS"]) observaciones["TARTAS"] = [];
+            observaciones["TARTAS"].push(`• ${nombreUsuario}: ${obs}`);
+          } else {
+            observaciones[keyDia].push(`• ${nombreUsuario}: ${obs}`);
+          }
+        }
+      });
+    });
+
+    onResumenEditado?.({ resumen, observaciones, total });
+  };
+
+  // ⚙️ Recalcular automáticamente al editar
+  useEffect(() => {
+    calcularResumenActual();
+  }, [edit, pedidos]);
 
   return (
     <Box>
