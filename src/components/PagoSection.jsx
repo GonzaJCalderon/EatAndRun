@@ -26,11 +26,24 @@ const PagoSection = ({ onExtrasChange, onMetodoPagoChange, onComprobanteChange, 
     onMetodoPagoChange(e.target.value);
   };
 
-  const handleArchivo = (e) => {
-    const file = e.target.files[0];
-    setArchivo(file);
-    onComprobanteChange(file);
-  };
+const handleArchivo = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const tiposValidos = ['image/jpeg', 'image/png', 'image/jpg'];
+
+  if (!tiposValidos.includes(file.type)) {
+    alert('❌ Solo se permiten imágenes (JPG o PNG) como comprobante.');
+    e.target.value = ''; // Limpia el input
+    setArchivo(null);
+    onComprobanteChange(null); // borra también en el padre
+    return;
+  }
+
+  setArchivo(file);
+  onComprobanteChange(file);
+};
+
 
   return (
     <Box sx={{ mt: 5, background: '#f2fef5', borderRadius: 3, p: 3 }}>
@@ -79,12 +92,13 @@ const PagoSection = ({ onExtrasChange, onMetodoPagoChange, onComprobanteChange, 
               sx={{ mb: 1 }}
             >
               Seleccionar archivo
-              <input
-                type="file"
-                hidden
-                accept="image/*,application/pdf"
-                onChange={handleArchivo}
-              />
+             <input
+  type="file"
+  hidden
+  accept="image/jpeg,image/png,image/jpg"
+  onChange={handleArchivo}
+/>
+
             </Button>
 
             {archivo && (

@@ -30,30 +30,23 @@ const AdminHome = () => {
       href: '/admin/crear-dia',
       color: '#009688'
     },
-  {
-  label: '✏️ Editar menú del día',
-  icon: <RestaurantMenuIcon sx={{ fontSize: 40 }} />,
-  href: '/admin/editar-menu-del-dia',
-  color: '#ff7043'
-},
-{
-  label: '🧩 Crear menú del día empresa',
-  icon: <AddBoxIcon sx={{ fontSize: 40 }} />,
-  href: '/admin/empresa/especial',
-  color: '#d81b60'
-},
-
     {
-      label: '📈 Ver estadísticas',
+      label: '✏️ Editar menú del día',
+      icon: <RestaurantMenuIcon sx={{ fontSize: 40 }} />,
+      href: '/admin/editar-menu-del-dia',
+      color: '#ff7043'
+    },
+    {
+      label: '🧩 Crear menú del día empresa',
+      icon: <AddBoxIcon sx={{ fontSize: 40 }} />,
+      href: '/admin/empresa/especial',
+      color: '#d81b60'
+    },
+    {
+      label: '📈 Ver estadísticas, Gestion de Usuarios y Definir Semana de pedidos',
       icon: <DashboardIcon sx={{ fontSize: 40 }} />,
       href: '/admin/dashboard',
       color: '#7b1fa2'
-    },
-    {
-      label: '👤 Gestión de usuarios',
-      icon: <DashboardIcon sx={{ fontSize: 40 }} />,
-      href: '/admin/dashboard',
-      color: '#6a1b9a'
     },
     {
       label: '📋 Producción semanal',
@@ -68,16 +61,22 @@ const AdminHome = () => {
       color: '#ed6c02'
     },
     {
+      label: '📋 Ver menú semanal',
+      icon: <RestaurantMenuIcon sx={{ fontSize: 40 }} />,
+      href: '/admin/ver-menu',
+      color: '#4caf50'
+    },
+    {
       label: 'Volver a la app',
       icon: <ArrowBackIcon sx={{ fontSize: 40 }} />,
       href: '/App',
       color: '#616161'
     },
     {
-      label: '📋 Ver menú semanal',
-      icon: <RestaurantMenuIcon sx={{ fontSize: 40 }} />,
-      href: '/admin/ver-menu',
-      color: '#4caf50'
+      label: '🚪 Cerrar sesión',
+      icon: <ArrowBackIcon sx={{ fontSize: 40 }} />,
+      href: '#logout',
+      color: '#c62828'
     }
   ];
 
@@ -96,7 +95,14 @@ const AdminHome = () => {
               transition={{ duration: 0.3 }}
             >
               <Box
-                onClick={() => window.location.assign(href)}
+                onClick={() => {
+                  if (href === '#logout') {
+                    localStorage.removeItem('token'); // Si usás sessionStorage, cambialo
+                    window.location.href = '/login'; // Ajustá si tenés otra ruta de login
+                  } else {
+                    window.location.assign(href);
+                  }
+                }}
                 sx={{
                   height: 160,
                   width: '100%',

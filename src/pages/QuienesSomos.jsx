@@ -110,12 +110,12 @@ const QuienesSomos = () => {
         </Grid>
 
         {/* Nutrición */}
-        <Grid container spacing={4} alignItems="center" sx={{ my: 6 }} direction="row-reverse">
-          <Grid item xs={12} md={6}>
+        <Grid container spacing={4} alignItems="center" sx={{ my: 6, flexDirection: { xs: 'column-reverse', md: 'row' } }}>
+          <Grid item xs={12} md={6} sx={{ display: 'flex', justifyContent: 'center' }}>
             <motion.img
               src={nutricionImg}
               alt="Nutrición"
-              style={{ width: '100%', borderRadius: 16 }}
+              style={{ width: '100%', maxWidth: '100%', borderRadius: 16 }}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}

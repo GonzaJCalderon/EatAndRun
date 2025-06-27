@@ -1,261 +1,426 @@
-import API from '../api/api';
+import api from '../api/api';
 import { useEffect, useState } from 'react';
-import { saveAs } from 'file-saver';
 import {
-  Container,
-  Typography,
-  Card,
-  CardContent,
-  Divider,
-  Button,
-  TextField,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-  Box
+  Container, Typography, Card, CardContent, Divider,
+  Button, TextField, MenuItem, Select, FormControl, InputLabel,
+  Tabs, Tab, Box
 } from '@mui/material';
-import { isThisWeek } from 'date-fns';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import Autocomplete from '@mui/material/Autocomplete';
+import Modal from '@mui/material/Modal';
+import { saveAs } from 'file-saver';
+
+const diasSemana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
+
+const extraMap = {
+  "1": "🍰 Postre",
+  "2": "🥗 Ensalada",
+  "3": "💪 Proteína",
+  "ID:1": "🍰 Postre",
+  "ID:2": "🥗 Ensalada",
+  "ID:3": "💪 Proteína"
+};
+
+
+
 
 const exportarResumenCSV = (resumen) => {
-  let csv = 'Día;Plato;Cantidad\n';
+  let csv = 'Día;Plato;Cantidad;Usuario;Teléfono;Dirección;Empresa\n';
   Object.entries(resumen).forEach(([dia, platos]) => {
-    Object.entries(platos).forEach(([nombre, cantidad]) => {
-      csv += `${dia};${nombre};${cantidad}\n`;
+    Object.entries(platos).forEach(([nombre, entradas]) => {
+      entradas.forEach(({ usuario, cantidad, telefono, direccion, esEmpresa }) => {
+        csv += `${dia};${nombre};${cantidad};${usuario};${telefono};${direccion};${esEmpresa ? 'SÍ' : 'NO'}\n`;
+      });
     });
   });
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  saveAs(blob, `resumen-${new Date().toISOString().slice(0, 10)}.csv`);
+  saveAs(blob, `resumen-detallado-${new Date().toISOString().slice(0, 10)}.csv`);
 };
 
-const diasSemana = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const agruparPedidosPorDiaConDetalle = (pedidos) => {
+  const resultado = {};
 
-function calcularTimestampDesdeDia(fechaPedido, diaTexto) {
-  if (diaTexto === 'tartas') return new Date(fechaPedido).getTime();
-  const diaPedido = new Date(fechaPedido);
-  const numeroDia = diasSemana.indexOf(diaTexto.toLowerCase());
-  const diferencia = numeroDia - diaPedido.getDay();
-  const fechaFinal = new Date(diaPedido);
-  fechaFinal.setDate(diaPedido.getDate() + diferencia);
-  fechaFinal.setHours(0, 0, 0, 0);
-  return fechaFinal.getTime();
-}
+  pedidos.forEach(p => {
+    const { usuario, pedido, estado, tipo_menu, id, fecha } = p;
+    const esEmpresa = tipo_menu === 'empresa';
+    const nombreCompleto = usuario.nombre;
+    const direccion = usuario.direccion || '';
+    const subdireccion = usuario.direccionSecundaria || '';
+    const telefono = usuario.telefono || '';
+    const email = usuario.email || '';
 
-function formatFechaEntrega(fechaEntrega, diaTexto) {
-  const ts = calcularTimestampDesdeDia(fechaEntrega, diaTexto);
-  const fecha = new Date(ts);
-  return fecha.toLocaleDateString('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  });
-}
+    const dias = new Set();
+
+   const detalle = {
+  id,
+  nombreCompleto,
+  direccion,
+  subdireccion,
+  telefono,
+  email,
+  estado,
+  delivery: p.delivery || {},
+  esEmpresa,
+  fecha,
+  metodoPago: p.metodoPago || null,               // ✅ AÑADIR ESTO
+  comprobanteUrl: p.comprobanteUrl || null,       // ✅ AÑADIR ESTO
+  platos: [],
+  extras: [],
+  tartas: []
+};
 
 
-const agruparPedidosResumen = (pedidos) => {
-  const resumen = {};
-  const diasPermitidos = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
-  pedidos.forEach(({ pedido }) => {
-    if (!pedido) return;
-    ['diarios', 'extras', 'tartas'].forEach((tipo) => {
-      const grupo = pedido[tipo];
-      if (!grupo) return;
-      if (typeof Object.values(grupo)[0] === 'object') {
-        Object.entries(grupo).forEach(([dia, platos]) => {
-          const diaLower = dia.toLowerCase();
-          if (!diasPermitidos.includes(diaLower)) return;
-          if (!resumen[diaLower]) resumen[diaLower] = {};
-          Object.entries(platos).forEach(([nombre, cantidad]) => {
-            if (!resumen[diaLower][nombre]) resumen[diaLower][nombre] = 0;
-            resumen[diaLower][nombre] += cantidad;
-          });
-        });
-      } else {
-        const dia = 'tartas';
-        if (!resumen[dia]) resumen[dia] = {};
-        Object.entries(grupo).forEach(([nombre, cantidad]) => {
-          if (!resumen[dia][nombre]) resumen[dia][nombre] = 0;
-          resumen[dia][nombre] += cantidad;
-        });
+    for (const [dia, items] of Object.entries(pedido.diarios || {})) {
+      dias.add(dia);
+      for (const [plato, cantidad] of Object.entries(items)) {
+        detalle.platos.push({ nombre: plato, cantidad });
       }
-    });
-  });
-  return resumen;
-};
+    }
 
+    for (const [dia, items] of Object.entries(pedido.extras || {})) {
+      dias.add(dia);
+      for (const [extra, cantidad] of Object.entries(items)) {
+        detalle.extras.push({ nombre: extra, cantidad });
+      }
+    }
+
+    for (const [tarta, cantidad] of Object.entries(pedido.tartas || {})) {
+      detalle.tartas.push({ nombre: tarta, cantidad });
+    }
+
+    dias.forEach(dia => {
+      if (!resultado[dia]) resultado[dia] = [];
+      resultado[dia].push(detalle);
+    });
+
+    if (detalle.tartas.length > 0) {
+      if (!resultado['TARTAS']) resultado['TARTAS'] = [];
+      resultado['TARTAS'].push(detalle);
+    }
+  });
+
+  return resultado;
+};
 
 const AdminPedidos = () => {
-  const [deliveryUsers, setDeliveryUsers] = useState([]); // ✅ Aquí está OK
   const [pedidos, setPedidos] = useState([]);
-  const [resumen, setResumen] = useState({});
+  const [resumenDetallado, setResumenDetallado] = useState({});
   const [busqueda, setBusqueda] = useState('');
+  const [semanaActiva, setSemanaActiva] = useState(null);
+  const [tabDia, setTabDia] = useState('lunes');
+  const [opcionesDelivery, setOpcionesDelivery] = useState({});
+  const [modalOpen, setModalOpen] = useState(false);
+const [comprobanteUrl, setComprobanteUrl] = useState(null);
+
 
   useEffect(() => {
-  const fetchDeliveries = async () => {
-const res = await API.get('/admin/users?role=delivery');
+    api.get('/admin/orders').then(res => {
+      setPedidos(res.data);
+      setResumenDetallado(agruparPedidosPorDiaConDetalle(res.data));
+    });
 
+    api.get('/menu/semana/actual').then(res => {
+      setSemanaActiva(res.data.semana || res.data);
+    });
+  }, []);
 
-    setDeliveryUsers(res.data);
+  const cambiarEstadoPedido = (id, estado) => {
+    api.put(`/orders/${id}`, { status: estado }).then(() => {
+      const updated = pedidos.map(p => p.id === id ? { ...p, estado } : p);
+      setPedidos(updated);
+      setResumenDetallado(agruparPedidosPorDiaConDetalle(updated));
+    });
   };
-
-  fetchDeliveries();
-}, []);
-
-useEffect(() => {
-  const fetchPedidos = async () => {
+const asignarDelivery = async (id, delivery) => {
   try {
-    const resAsignados = await API.get('/delivery/orders');
-    const resSinAsignar = await API.get('/delivery/unassigned-orders');
+    if (!delivery?.id) {
+      console.warn(`❗ Delivery inválido para pedido ${id}`);
+      return;
+    }
 
-    setPedidosAsignados(resAsignados.data);
-    setPedidosDisponibles(resSinAsignar.data);
-  } catch (err) {
-    console.error('❌ Error al obtener pedidos', err);
+    const res = await api.put(`/orders/${id}/assign`, {
+      delivery_id: delivery.id
+    });
+
+    // Actualizar en frontend
+    const actualizado = pedidos.map(p =>
+      p.id === id ? { ...p, delivery } : p
+    );
+
+    setPedidos(actualizado);
+    setResumenDetallado(agruparPedidosPorDiaConDetalle(actualizado));
+
+    console.log(`✅ Delivery asignado al pedido ${id}`, res.data);
+  } catch (error) {
+    console.error(`❌ Error al asignar delivery al pedido ${id}:`, error.response?.data || error.message);
   }
 };
 
-    
-    fetchPedidos();
-  }, []);
 
-  const cambiarEstadoPedido = async (id, nuevoEstado) => {
-    try {
-      const res = await API.put(`/orders/${id}`, { status: nuevoEstado });
-      const nuevos = pedidos.map(p =>
-        p.id === id ? { ...p, estado: res.data.status } : p
-      );
-      setPedidos(nuevos);
-    } catch (error) {
-      console.error('❌ Error al actualizar estado:', error);
-    }
-  };
+  if (!semanaActiva) return <Typography>Cargando...</Typography>;
 
-  const pedidosFiltrados = pedidos.filter((p) => {
-    if (!p.fecha || !p.usuario) return false;
-    const query = busqueda.toLowerCase();
-    const fechaPedido = new Date(p.fecha);
-    const coincideBusqueda =
-      p.usuario.nombre.toLowerCase().includes(query) ||
-      p.usuario.email.toLowerCase().includes(query);
-      return (query === '' ? true : coincideBusqueda) && isThisWeek(fechaPedido);
-  });
+  const filtrados = pedidos.filter(p =>
+    !busqueda ||
+    p.usuario.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+    p.usuario.email.toLowerCase().includes(busqueda.toLowerCase())
+  );
 
-  const mostrarEstado = (estado) => {
-    switch (estado) {
-      case 'realizado': return '✅ Realizado';
-      case 'cancelado': return '❌ Cancelado';
-      default: return '🟡 Pendiente';
-    }
-  };
+  const mostrarEstado = e => ({
+    pendiente: '🟡 Pendiente',
+    realizado: '✅ Realizado',
+    entregado: '📦 Entregado',
+    cancelado: '❌ Cancelado',
+    no_entregado: '🚫 No Entregado'
+  }[e] || '🟡 Pendiente');
+
+  const pedidosSemana = filtrados.filter(p =>
+    p.fecha >= semanaActiva.semana_inicio && p.fecha <= semanaActiva.semana_fin
+  );
+
+  const pedidosHistorial = filtrados.filter(p =>
+    p.fecha < semanaActiva.semana_inicio
+  );
+
+
+const handleVerComprobante = async (pedido) => {
+  if (!pedido.comprobanteUrl) return;
+
+  try {
+    const url = pedido.comprobanteUrl;
+
+    // ✅ Extrae todo el path relativo desde `upload/` hasta antes de la extensión
+    const matches = url.match(/\/upload\/(?:v\d+\/)?([^.?]+)\.(pdf|jpg|jpeg|png)$/i);
+    const publicId = matches?.[1];
+
+
+
+ setComprobanteUrl(pedido.comprobanteUrl);
+
+    setModalOpen(true);
+
+    console.log("✅ Public ID CORRECTO:", publicId);
+    console.log("🔗 Signed URL:", res.data.signedUrl);
+
+  } catch (err) {
+
+  }
+};
+
+
+
+
+
 
   return (
     <Container sx={{ mt: 4 }}>
-      <Button variant="outlined" startIcon={<ArrowBackIcon />} sx={{ mb: 3 }} onClick={() => window.location.href = "/admin"}>
+      <Button variant="outlined" startIcon={<ArrowBackIcon />}
+        onClick={() => window.location.href = '/admin'}>
         Volver al Admin
       </Button>
 
-      <Typography variant="h4" gutterBottom>📋 Pedidos recibidos</Typography>
+      <Typography variant="h4" sx={{ my: 2 }}>📋 Pedidos de la Semana</Typography>
+      <TextField label="Buscar por nombre o email" fullWidth sx={{ mb: 3 }}
+        value={busqueda} onChange={e => setBusqueda(e.target.value)} />
 
-      {pedidos.length === 0 ? (
-        <Typography>No hay pedidos aún.</Typography>
-      ) : (
+      <Tabs
+        value={tabDia}
+        onChange={(e, val) => setTabDia(val)}
+        variant="scrollable"
+        scrollButtons="auto"
+        sx={{ mb: 3 }}
+      >
+        {diasSemana.map(d => <Tab key={d} label={d.toUpperCase()} value={d} />)}
+        <Tab label="📜 Historial" value="HISTORIAL" />
+      </Tabs>
+
+      {tabDia !== 'HISTORIAL' && (
         <>
-          <Box sx={{ mb: 3 }}>
-            <Button variant="contained" color="success" onClick={() => exportarResumenCSV(resumen)}>
-              📤 Exportar resumen
-            </Button>
-          </Box>
+          <Button variant="contained" color="success" sx={{ mb: 2 }}
+            onClick={() => exportarResumenCSV(resumenDetallado)}>
+            📤 Exportar resumen CSV
+          </Button>
 
-          <TextField
-            label="Buscar por nombre o email"
-            variant="outlined"
-            fullWidth
-            sx={{ mb: 4 }}
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-          />
+          {(resumenDetallado[tabDia] && resumenDetallado[tabDia].length > 0)
+            ? resumenDetallado[tabDia].map((pedido, i) => (
+              <Card key={i} sx={{ mb: 2 }}>
+                <CardContent>
+                  <Typography variant="h6">{pedido.esEmpresa ? '🏢' : '👤'} {pedido.nombreCompleto}</Typography>
+                  <Typography>📍 {pedido.direccion}</Typography>
+                  {pedido.subdireccion && <Typography>📍 {pedido.subdireccion}</Typography>}
+                  <Typography>📞 {pedido.telefono}</Typography>
+    <Typography>📧 {pedido.email}</Typography>
 
-          {/* RESUMEN POR DÍA */}
-          <Typography variant="h5" gutterBottom>📊 Resumen por día</Typography>
-          {Object.entries(resumen).map(([dia, platos]) => (
-            <Card key={dia} sx={{ mb: 2 }}>
+{console.log("📎 Comprobante info:", {
+  metodoPago: pedido.metodoPago,
+  comprobanteUrl: pedido.comprobanteUrl,
+  pedidoId: pedido.id
+})}
+
+{pedido.metodoPago && (
+  <Typography>💳 Método de pago: {pedido.metodoPago}</Typography>
+)}
+{pedido.comprobanteUrl && (
+  <Button
+    variant="outlined"
+    color="primary"
+    sx={{ mt: 1 }}
+    onClick={() => handleVerComprobante(pedido)}
+  >
+    📎 Ver comprobante
+  </Button>
+)}
+
+
+
+
+
+
+                  {pedido.delivery?.nombre ? (
+                    <>
+                      <Typography>🚚 Delivery: {pedido.delivery.nombre}</Typography>
+                      {pedido.delivery.telefono && <Typography>📞 {pedido.delivery.telefono}</Typography>}
+
+                      <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+                        <TextField
+                          label="Nombre del delivery"
+                          value={pedido.delivery?.nombre || ''}
+                          fullWidth
+                          onChange={e => asignarDelivery(pedido.id, {
+                            ...pedido.delivery,
+                            nombre: e.target.value
+                          })}
+                        />
+                        <TextField
+                          label="Teléfono del delivery"
+                          value={pedido.delivery?.telefono || ''}
+                          fullWidth
+                          onChange={e => asignarDelivery(pedido.id, {
+                            ...pedido.delivery,
+                            telefono: e.target.value
+                          })}
+                        />
+                      </Box>
+                    </>
+                  ) : (
+                    <Box sx={{ mt: 2 }}>
+                      <Autocomplete
+                        freeSolo
+                        onInputChange={async (e, value) => {
+                          const res = await api.get('/deliveries/search?q=' + value);
+                          setOpcionesDelivery(prev => ({
+                            ...prev,
+                            [pedido.id]: res.data
+                          }));
+                        }}
+                        onChange={(e, selected) => {
+                          if (!selected) return;
+                          asignarDelivery(pedido.id, selected);
+                        }}
+                        options={opcionesDelivery[pedido.id] || []}
+                        getOptionLabel={(option) => `${option.name} (${option.email})`}
+                        renderInput={(params) => <TextField {...params} label="Buscar delivery" fullWidth />}
+                      />
+                    </Box>
+                  )}
+
+                  <Typography>📦 Estado: {pedido.estado}</Typography>
+
+                  <Divider sx={{ my: 1 }} />
+
+                {pedido.platos.map((plato, j) => (
+  <Typography key={j}>
+    🍽 {typeof plato.cantidad === 'object' ? JSON.stringify(plato.cantidad) : plato.cantidad} × {typeof plato.nombre === 'object' ? JSON.stringify(plato.nombre) : plato.nombre}
+  </Typography>
+))}
+
+                  {pedido.extras.map((extra, j) => {
+  const id = extra.nombre?.replace?.(/^ID:/, '') || '';
+  const nombreMostrado = extraMap[extra.nombre] || extraMap[id] || `Extra ${id}`;
+  return (
+    <Typography key={`e${j}`}>➕ {extra.cantidad} extra: {nombreMostrado}</Typography>
+  );
+})}
+
+                  {pedido.tartas.map((tarta, j) => (
+                    <Typography key={`t${j}`}>🥧 {tarta.cantidad} tarta: {tarta.nombre}</Typography>
+                  ))}
+
+                  <FormControl fullWidth sx={{ mt: 2 }}>
+                    <InputLabel>Estado del Pedido</InputLabel>
+                   <Select
+  value={pedido.estado}
+  label="Estado del Pedido"
+  onChange={e => cambiarEstadoPedido(pedido.id, e.target.value)}
+>
+  <MenuItem value="pendiente">🟡 Pendiente</MenuItem>
+  <MenuItem value="preparando">🍳 Preparando</MenuItem>
+  <MenuItem value="en camino">🚚 En camino</MenuItem>
+  <MenuItem value="entregado">📦 Entregado</MenuItem>
+  <MenuItem value="cancelado">❌ Cancelado</MenuItem>
+</Select>
+
+                  </FormControl>
+                </CardContent>
+              </Card>
+            ))
+            : <Typography>No hay pedidos para {tabDia}</Typography>}
+        </>
+      )}
+
+      {tabDia === 'HISTORIAL' && (
+        <>
+          <Typography variant="h5" sx={{ mt: 3 }}>📜 Historial de Pedidos</Typography>
+          {pedidosHistorial.map(p => (
+            <Card key={p.id} sx={{ mb: 2 }}>
               <CardContent>
-                <Typography variant="h6">
-                  📅 {dia.toUpperCase()} {(() => {
-                    const pConDia = pedidos.find(p => p.pedido?.diarios?.[dia] || p.pedido?.extras?.[dia]);
-                    return pConDia ? formatFechaEntrega(pConDia.fecha, dia) : '';
-                  })()}
-                </Typography>
-                <Divider sx={{ my: 1 }} />
-                {Object.entries(platos).map(([nombre, cantidad], i) => (
-                  <Typography key={i}>🍽️ {nombre}: <strong>{cantidad}</strong></Typography>
-                ))}
+                <Typography variant="h6">{p.tipo_menu === 'empresa' ? '🏢' : '👤'} {p.usuario.nombre}</Typography>
+                <Typography>📧 {p.usuario.email}</Typography>
+                <Typography>📅 {new Date(p.fecha).toLocaleDateString('es-AR')}</Typography>
+                <Typography>📌 {mostrarEstado(p.estado)}</Typography>
               </CardContent>
-            </Card>
-          ))}
-
-          {/* PEDIDOS INDIVIDUALES */}
-          <Typography variant="h5" sx={{ mt: 5 }}>👤 Pedidos individuales</Typography>
-          {pedidosFiltrados.map((p, i) => (
-            <Card key={i} sx={{ mt: 2, mb: 4 }}>
-              <CardContent>
-                <Typography variant="h6">👤 {p.usuario.nombre}</Typography>
-                {p.usuario.email && <Typography>📧 {p.usuario.email}</Typography>}
-                {p.usuario.direccion && <Typography>🏠 {p.usuario.direccion}</Typography>}
-                {p.usuario.telefono && <Typography>📞 {p.usuario.telefono}</Typography>}
-                <Typography sx={{ mt: 1 }}>📌 Estado: <strong>{mostrarEstado(p.estado)}</strong></Typography>
-
-                <FormControl size="small" sx={{ mt: 1 }}>
-                  <InputLabel>Estado</InputLabel>
-                  <Select
-                    value={p.estado || 'pendiente'}
-                    label="Estado"
-                    onChange={(e) => cambiarEstadoPedido(p.id, e.target.value)}
-                  >
-                    <MenuItem value="pendiente">🟡 Pendiente</MenuItem>
-                    <MenuItem value="realizado">✅ Realizado</MenuItem>
-                    <MenuItem value="cancelado">❌ Cancelado</MenuItem>
-                  </Select>
-                </FormControl>
-
-                {/* PEDIDOS POR TIPO */}
-                {Object.entries(p.pedido || {}).map(([tipo, grupo]) => (
-                  <Box key={tipo} sx={{ mt: 2 }}>
-                    <Typography fontWeight="bold" textTransform="uppercase">{tipo}</Typography>
-                    {typeof Object.values(grupo)[0] === 'object'
-                      ? Object.entries(grupo).map(([dia, platos], j) => (
-                          <Box key={j} sx={{ ml: 2, mt: 1 }}>
-                            <Typography variant="subtitle1">📅 {dia.toUpperCase()} {formatFechaEntrega(p.fecha, dia)}</Typography>
-                            {Object.entries(platos).map(([nombre, cantidad], k) => (
-                              <Typography key={k}>🍽️ {nombre}: <strong>{cantidad}</strong></Typography>
-                            ))}
-                          </Box>
-                        ))
-                      : Object.entries(grupo).map(([nombre, cantidad], k) => (
-                          <Typography key={k} sx={{ ml: 2 }}>🍰 {nombre}: <strong>{cantidad}</strong></Typography>
-                        ))}
-                  </Box>
-                ))}
-
-                {p.observaciones && (
-                  <Typography sx={{ mt: 2 }}>✏️ Observaciones: {p.observaciones}</Typography>
-                )}
-
-                {p.comprobanteUrl && (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography fontWeight="bold">📎 Comprobante:</Typography>
-                    <img src={p.comprobanteUrl} alt="comprobante" style={{ maxWidth: '100%', maxHeight: 200, marginTop: 8, borderRadius: 6 }} />
-                    <a href={p.comprobanteUrl} download={p.comprobanteNombre || 'comprobante.jpg'}>
-                      <Button size="small" variant="outlined" sx={{ mt: 1 }}>Descargar</Button>
-                    </a>
-                  </Box>
-                )}
-              </CardContent>
+              
             </Card>
           ))}
         </>
+      )} 
+
+      {comprobanteUrl && (
+
+<Modal open={modalOpen} onClose={() => {
+  setModalOpen(false);
+  setComprobanteUrl(null); // ⬅️ Limpia al cerrar
+}}>
+
+    <Box sx={{
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      bgcolor: 'background.paper',
+      boxShadow: 24,
+      p: 2,
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      overflow: 'auto'
+    }}>
+      {comprobanteUrl.endsWith('.pdf') ? (
+        <iframe
+          src={comprobanteUrl}
+          width="100%"
+          height="600px"
+          title="Comprobante PDF"
+        />
+      ) : (
+        <img
+          src={comprobanteUrl}
+          alt="Comprobante"
+          style={{ maxWidth: '100%' }}
+        />
       )}
+    </Box>
+  </Modal>
+)}
+
     </Container>
   );
 };

@@ -18,13 +18,17 @@ const Header = () => {
       <Toolbar sx={{ justifyContent: 'space-between' }}>
         {/* Logo + nombre empresa */}
         <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => navigate('/')}>
-          <img src="/assets/eatandrun-logo.jpg" alt="Logo" style={{ height: 40, borderRadius: '50%', marginRight: 8 }} />
+          <img
+            src="/assets/eatandrun-logo.jpg"
+            alt="Logo"
+            style={{ height: 40, borderRadius: '50%', marginRight: 8 }}
+          />
           <Typography variant="h6" fontWeight="bold">Eat & Run</Typography>
         </Box>
 
         {/* Links */}
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <Button color="inherit" onClick={() => navigate('/')}>Menú</Button>
+          <Button color="inherit" onClick={() => navigate('/app')}>Menú</Button>
           <Button color="inherit" onClick={() => navigate('/quienes-somos')}>¿Quiénes Somos?</Button>
 
           {user?.role === 'admin' && (
@@ -37,7 +41,15 @@ const Header = () => {
 
           {user ? (
             <>
-              <Typography variant="body2">Hola, {user.name}</Typography>
+              {/* 👇 Este botón lleva al perfil */}
+              <Button
+                color="inherit"
+                onClick={() => navigate('/perfil')}
+                sx={{ textTransform: 'none' }}
+              >
+                Hola, {user.name}
+              </Button>
+
               <Button color="inherit" onClick={handleLogout}>Salir</Button>
             </>
           ) : (

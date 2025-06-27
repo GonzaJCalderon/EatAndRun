@@ -13,6 +13,8 @@ import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import theme from './theme'; // ✅ Tu archivo custom
 import { SnackbarProvider } from 'notistack';
+import { GlobalStyles } from '@mui/material';
+
 
 
 import App from './App';
@@ -24,7 +26,50 @@ const root = createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <ThemeProvider theme={theme}>
-      <CssBaseline />
+  <GlobalStyles styles={{
+    '@media print': {
+      '.no-print': {
+        display: 'none !important'
+      },
+      body: {
+        WebkitPrintColorAdjust: 'exact !important',
+        printColorAdjust: 'exact !important',
+        fontFamily: '"Poppins", sans-serif !important'
+      },
+      '@page': {
+        margin: '1.5cm',
+        size: 'A4 portrait'
+      },
+      header: {
+        display: 'block',
+        position: 'fixed',
+        top: 0,
+        width: '100%',
+        textAlign: 'center',
+        fontWeight: 'bold',
+        fontSize: '14px',
+        padding: '6px 0',
+        borderBottom: '1px solid #000',
+        background: '#fff'
+      },
+      footer: {
+        display: 'block',
+        position: 'fixed',
+        bottom: 0,
+        width: '100%',
+        textAlign: 'center',
+        fontSize: '10px',
+        padding: '4px 0',
+        borderTop: '1px solid #000',
+        background: '#fff'
+      },
+      '.MuiCard-root': {
+        pageBreakInside: 'avoid'
+      }
+    }
+  }} />
+  <CssBaseline />
+
       <SnackbarProvider
         maxSnack={3}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}

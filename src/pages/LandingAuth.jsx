@@ -3,7 +3,7 @@ import { Box, Button, Container, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
-import heroImage from '../assets/imgs/landing-welcome.png'; // 📸 Pedí esta imagen a Sora
+import heroImage from '../assets/imgs/landing-welcome.png';
 
 const LandingAuth = () => {
   const navigate = useNavigate();
@@ -20,7 +20,15 @@ const LandingAuth = () => {
         justifyContent: 'center'
       }}
     >
-      <Container maxWidth="sm" sx={{ textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 4, p: 5 }}>
+      <Container
+        maxWidth="sm"
+        sx={{
+          textAlign: 'center',
+          backgroundColor: 'rgba(255,255,255,0.9)',
+          borderRadius: 4,
+          p: 5
+        }}
+      >
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -50,6 +58,15 @@ const LandingAuth = () => {
             onClick={() => navigate('/registro')}
           >
             Crear cuenta
+          </Button>
+
+          <Button
+            variant="text"
+            fullWidth
+            sx={{ mt: 2 }}
+            onClick={() => navigate('/recuperar-clave')}
+          >
+            ¿Olvidaste tu contraseña?
           </Button>
         </motion.div>
       </Container>
