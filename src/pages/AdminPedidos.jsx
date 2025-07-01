@@ -119,7 +119,7 @@ const [comprobanteUrl, setComprobanteUrl] = useState(null);
       setResumenDetallado(agruparPedidosPorDiaConDetalle(res.data));
     });
 
-    api.get('/menu/semana/actual').then(res => {
+    api.get('/semana/actual').then(res => {
       setSemanaActiva(res.data.semana || res.data);
     });
   }, []);

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import {
   Container, Typography, Card, Divider, Grid,
   Box, Button, Dialog, DialogTitle, DialogContent, DialogActions,
-  Select, MenuItem, TextField 
+  Select, MenuItem, TextField, Snackbar, Alert 
 } from "@mui/material";
 import { motion } from "framer-motion";
 import { Bar, Pie } from "react-chartjs-2";
@@ -33,6 +33,10 @@ const [nuevaFechaCierre, setNuevaFechaCierre] = useState('');
 const [loadingSemana, setLoadingSemana] = useState(false);
 const [nuevaFechaInicio, setNuevaFechaInicio] = useState('');
 const [nuevaFechaFin, setNuevaFechaFin] = useState('');
+const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+const [confirmDelete, setConfirmDelete] = useState({ open: false, userId: null });
+
+
 
 
 
@@ -43,7 +47,7 @@ useEffect(() => {
 
 const fetchSemanaActiva = async () => {
   try {
-    const res = await api.get('/menu/semana/actual');
+    const res = await api.get('/semana/actual');
  setNuevaFechaInicio(res.data.semana_inicio?.split('T')[0] || '');
 setNuevaFechaFin(res.data.semana_fin?.split('T')[0] || '');
 
@@ -72,7 +76,7 @@ setSemanaActiva(res.data);
 
 const actualizarFechasSemana = async () => {
   try {
-    await api.put('/menu/semana', {
+    await api.put('/semana', {
       fecha_inicio: nuevaFechaInicio,
       fecha_fin: nuevaFechaFin,
       cierre: nuevaFechaCierre
@@ -89,7 +93,7 @@ const actualizarFechasSemana = async () => {
 
 const toggleHabilitacion = async () => {
   try {
-    await api.put('/menu/semana/habilitar', {
+    await api.put('/semana/habilitar', {
       habilitado: !semanaActiva.habilitado
     });
     fetchSemanaActiva();
@@ -119,31 +123,82 @@ const toggleHabilitacion = async () => {
     }
   };
 
-  const calcularResumen = (pedidos) => {
-    const resumenTemp = {
-      totalPedidos: pedidos.length,
-      totalUsuarios: new Set(pedidos.map(p => p.usuario?.email)).size,
-      totalPlatos: 0,
-      cancelados: pedidos.filter(p => p.estado === "cancelado").length,
-      realizados: pedidos.filter(p => p.estado === "realizado").length,
-      pedidosPorDia: {},
-      platosVendidos: {}
-    };
+  const extraMap = {
+  "1": "🍰 Postre",
+  "2": "🥗 Ensalada",
+  "3": "💪 Proteína",
+  "ID:1": "🍰 Postre",
+  "ID:2": "🥗 Ensalada",
+  "ID:3": "💪 Proteína"
+};
 
-    pedidos.forEach((p) => {
-      Object.entries(p.pedido || {}).forEach(([dia, platos]) => {
-        resumenTemp.pedidosPorDia[dia] = (resumenTemp.pedidosPorDia[dia] || 0) + 1;
-        Object.entries(platos).forEach(([platoKey, datos]) => {
-          const nombre = datos?.nombreOriginal || platoKey;
-          const cantidad = typeof datos === "object" ? datos?.cantidad ?? 0 : datos;
-          resumenTemp.platosVendidos[nombre] = (resumenTemp.platosVendidos[nombre] || 0) + cantidad;
-          resumenTemp.totalPlatos += cantidad;
-        });
+
+const calcularResumen = (pedidos) => {
+  const diasSemana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
+
+  const resumenTemp = {
+    totalPedidos: pedidos.length,
+    totalUsuarios: new Set(pedidos.map(p => p.usuario?.email)).size,
+    totalPlatos: 0,
+    cancelados: pedidos.filter(p => p.estado === "cancelado").length,
+    realizados: pedidos.filter(p => p.estado === "realizado").length,
+    pedidosPorDia: {},
+    platosVendidos: {},
+    platosVendidosPorDia: {}
+  };
+
+  diasSemana.forEach(dia => {
+    resumenTemp.pedidosPorDia[dia] = 0;
+    resumenTemp.platosVendidosPorDia[dia] = {};
+  });
+
+  pedidos.forEach((pedido) => {
+    const datosPedido = pedido.pedido || {};
+
+    // 1. DIARIOS y EXTRAS → contienen días como claves
+    ['diarios', 'extras'].forEach(tipo => {
+      const diasTipo = datosPedido[tipo] || {};
+      Object.entries(diasTipo).forEach(([dia, platos]) => {
+        if (!diasSemana.includes(dia)) return;
+
+        resumenTemp.pedidosPorDia[dia]++;
+
+      Object.entries(platos).forEach(([nombrePlato, cantidad]) => {
+  const esExtra = tipo === 'extras';
+  const nombreReal = esExtra
+    ? extraMap[nombrePlato] || nombrePlato
+    : nombrePlato;
+
+  resumenTemp.platosVendidos[nombreReal] = (resumenTemp.platosVendidos[nombreReal] || 0) + cantidad;
+  resumenTemp.platosVendidosPorDia[dia][nombreReal] = (resumenTemp.platosVendidosPorDia[dia][nombreReal] || 0) + cantidad;
+  resumenTemp.totalPlatos += cantidad;
+});
+
       });
     });
 
-    setResumen(resumenTemp);
-  };
+    // 2. TARTAS → no tienen días asociados (💡 usar fecha del pedido)
+    if (datosPedido.tartas && Object.keys(datosPedido.tartas).length > 0) {
+      const fecha = new Date(pedido.fecha);
+      const diaPedido = fecha.toLocaleDateString('es-ES', { weekday: 'long' }).toLowerCase();
+
+      if (diasSemana.includes(diaPedido)) {
+        resumenTemp.pedidosPorDia[diaPedido]++;
+
+        Object.entries(datosPedido.tartas).forEach(([nombreTarta, cantidad]) => {
+          resumenTemp.platosVendidos[nombreTarta] = (resumenTemp.platosVendidos[nombreTarta] || 0) + cantidad;
+          resumenTemp.platosVendidosPorDia[diaPedido][nombreTarta] = (resumenTemp.platosVendidosPorDia[diaPedido][nombreTarta] || 0) + cantidad;
+
+          resumenTemp.totalPlatos += cantidad;
+        });
+      }
+    }
+  });
+
+  setResumen(resumenTemp);
+};
+
+
 
 const cambiarRol = async (userId, nuevoRol) => {
   try {
@@ -161,17 +216,26 @@ const cambiarRol = async (userId, nuevoRol) => {
   }
 };
 
+const confirmarEliminarUsuario = (userId) => {
+  setConfirmDelete({ open: true, userId });
+};
 
 
-  const eliminarUsuario = async (userId) => {
-    if (!window.confirm("¿Estás seguro de eliminar este usuario?")) return;
-    try {
-      await api.delete(`/admin/users/${userId}`);
-      fetchUsuarios();
-    } catch (err) {
-      console.error("❌ Error al eliminar usuario:", err);
-    }
-  };
+const eliminarUsuario = async () => {
+  try {
+    await api.delete(`/admin/users/${confirmDelete.userId}`);
+    setSnackbar({ open: true, message: '✅ Usuario eliminado correctamente', severity: 'success' });
+    fetchUsuarios();
+  } catch (err) {
+    const detail = err.response?.data?.detail || 'Error al eliminar usuario';
+    setSnackbar({ open: true, message: `❌ ${detail}`, severity: 'error' });
+  } finally {
+    setConfirmDelete({ open: false, userId: null });
+  }
+};
+
+
+
 
   const abrirModalUsuario = (usuario) => {
     setUsuarioSeleccionado(usuario);
@@ -185,11 +249,16 @@ const cambiarRol = async (userId, nuevoRol) => {
 
   const exportarUsuariosExcel = () => {
     const data = usuariosFiltrados.map((u) => ({
-      Nombre: u.nombre || "—",
-      Email: u.email,
-      Rol: u.rol,
-      ID: u.id
-    }));
+  ID: u.id,
+  Nombre: u.nombre || "—",
+  Apellido: u.apellido || "—",
+  Email: u.email,
+  Rol: u.rol,
+  Teléfono: u.telefono || "—",
+  Dirección_Principal: u.direccion_principal || "—",
+  Dirección_Secundaria: u.direccion_secundaria || "—"
+}));
+
 
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
@@ -219,14 +288,15 @@ const cambiarRol = async (userId, nuevoRol) => {
     }]
   };
 
-  const datosGraficoBarras = {
-    labels: Object.keys(resumen.pedidosPorDia || {}),
-    datasets: [{
-      label: "Pedidos por día",
-      data: Object.values(resumen.pedidosPorDia || {}),
-      backgroundColor: "#42A5F5"
-    }]
-  };
+const datosGraficoBarras = {
+  labels: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'],
+  datasets: [{
+    label: "Pedidos por día",
+    data: ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'].map(d => resumen.pedidosPorDia?.[d] || 0),
+    backgroundColor: "#42A5F5"
+  }]
+};
+
 
   return (
     <Container sx={{ mt: 4, pb: 6 }}>
@@ -369,35 +439,40 @@ const cambiarRol = async (userId, nuevoRol) => {
           <Typography>No hay usuarios que coincidan con la búsqueda.</Typography>
         ) : (
           usuariosFiltrados.map((usuario) => (
-            <UserCard
-              key={usuario.id}
-              usuario={usuario}
-              onVer={abrirModalUsuario}
-              onEliminar={eliminarUsuario}
-              onRolChange={cambiarRol}
-            />
+          <UserCard
+  key={usuario.id}
+  usuario={usuario}
+  onVer={abrirModalUsuario}
+onEliminar={confirmarEliminarUsuario}
+
+  onRolChange={cambiarRol}
+/>
+
           ))
         )}
       </Card>
-
-      <Dialog open={modalAbierto} onClose={cerrarModalUsuario}>
-        <DialogTitle>👤 Información del Usuario</DialogTitle>
-        <DialogContent dividers>
-          {usuarioSeleccionado ? (
-            <>
-              <Typography><strong>Nombre:</strong> {usuarioSeleccionado.nombre || '—'}</Typography>
-              <Typography><strong>Email:</strong> {usuarioSeleccionado.email}</Typography>
-              <Typography><strong>Rol:</strong> {usuarioSeleccionado.rol}</Typography>
-              <Typography><strong>ID:</strong> {usuarioSeleccionado.id}</Typography>
-            </>
-          ) : (
-            <Typography>Cargando...</Typography>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={cerrarModalUsuario} color="primary">Cerrar</Button>
-        </DialogActions>
-      </Dialog>
+<Dialog open={modalAbierto} onClose={cerrarModalUsuario}>
+  <DialogTitle>👤 Información del Usuario</DialogTitle>
+  <DialogContent dividers>
+    {usuarioSeleccionado ? (
+      <>
+        <Typography><strong>ID:</strong> {usuarioSeleccionado.id}</Typography>
+        <Typography><strong>Nombre:</strong> {usuarioSeleccionado.nombre || '—'}</Typography>
+        <Typography><strong>Apellido:</strong> {usuarioSeleccionado.apellido || '—'}</Typography>
+        <Typography><strong>Email:</strong> {usuarioSeleccionado.email}</Typography>
+        <Typography><strong>Rol:</strong> {usuarioSeleccionado.rol}</Typography>
+        <Typography><strong>Teléfono:</strong> {usuarioSeleccionado.telefono || '—'}</Typography>
+        <Typography><strong>Dirección principal:</strong> {usuarioSeleccionado.direccion_principal || '—'}</Typography>
+        <Typography><strong>Dirección secundaria:</strong> {usuarioSeleccionado.direccion_secundaria || '—'}</Typography>
+      </>
+    ) : (
+      <Typography>Cargando...</Typography>
+    )}
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={cerrarModalUsuario} color="primary">Cerrar</Button>
+  </DialogActions>
+</Dialog>
 
       <Box textAlign="center" sx={{ mt: 5 }}>
         <Button
@@ -410,6 +485,34 @@ const cambiarRol = async (userId, nuevoRol) => {
           Ver historial de pedidos
         </Button>
       </Box>
+      <Snackbar
+  open={snackbar.open}
+  autoHideDuration={4000}
+  onClose={() => setSnackbar({ ...snackbar, open: false })}
+  anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+>
+  <Alert
+    onClose={() => setSnackbar({ ...snackbar, open: false })}
+    severity={snackbar.severity}
+    sx={{ width: '100%' }}
+  >
+    {snackbar.message}
+  </Alert>
+</Snackbar>
+
+<Dialog
+  open={confirmDelete.open}
+  onClose={() => setConfirmDelete({ open: false, userId: null })}
+>
+  <DialogTitle>¿Eliminar usuario?</DialogTitle>
+  <DialogContent>Esta acción no se puede deshacer. ¿Deseás continuar?</DialogContent>
+  <DialogActions>
+    <Button onClick={() => setConfirmDelete({ open: false, userId: null })}>Cancelar</Button>
+    <Button onClick={eliminarUsuario} color="error" variant="contained">Eliminar</Button>
+  </DialogActions>
+</Dialog>
+
+
     </Container>
   );
 };

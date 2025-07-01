@@ -63,6 +63,14 @@ const theme = createTheme({
     }
   },
 
+  transition: {
+  repeat: Infinity,
+  repeatType: 'loop',
+  duration: 40, // ⬅️ más alto = más lento = más elegante
+  ease: 'linear',
+},
+
+
   palette: {
     primary: {
       main: '#4CAF50',

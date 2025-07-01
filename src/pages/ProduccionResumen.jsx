@@ -10,6 +10,7 @@ import { useSnackbar } from 'notistack';
 import api from "../api/api";
 import ProduccionEditablePorDia from "../components/ProduccionEditablePorDia";
 
+
 const ProduccionResumen = () => {
   const [pedidos, setPedidos] = useState([]);
   const [resumen, setResumen] = useState({});
@@ -242,12 +243,13 @@ const notaLibre = notasPorDia[dia] || '';
 
     // Encabezado
 sheet.columns = [
-  { header: 'Usuario', key: 'usuario', width: 35 },
+  { header: 'Usuario', key: 'nombre', width: 20 },
   { header: 'Tipo', key: 'tipo', width: 10 },
   { header: 'Cantidad', key: 'cantidad', width: 12 },
   { header: 'Nota libre', key: 'nota', width: 40 },
   { header: 'Observación', key: 'observacion', width: 40 }
 ];
+
 
 
     // Escribir por plato

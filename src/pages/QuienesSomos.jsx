@@ -1,12 +1,14 @@
-import React from 'react';
-import { Box, Typography, Container, Grid, Divider, Paper } from '@mui/material';
-import { motion } from 'framer-motion';
+import React, { useEffect } from 'react';
+import { Box, Typography, Container, Grid, Divider, Paper, Link } from '@mui/material';
+import { motion, useAnimation } from 'framer-motion';
 import { FaLeaf, FaWarehouse, FaUserMd, FaHandshake } from 'react-icons/fa';
+import InstagramIcon from '@mui/icons-material/Instagram';
+
 import empresaImg from '../assets/imgs/empresaImg.png';
 import plantaImg from '../assets/imgs/planta-elaboradora.png';
 import nutricionImg from '../assets/imgs/nutricionImg.png';
 
-// Clientes
+// Logos
 import acsa from '../assets/logos/acsa_mining.jpg';
 import allianz from '../assets/logos/Allianz.jpg';
 import blogo from '../assets/logos/Blogo.jpg';
@@ -50,6 +52,28 @@ const Timeline = () => (
 );
 
 const QuienesSomos = () => {
+  const controls = useAnimation();
+
+  const startScroll = () => {
+    controls.start({
+      x: ['0%', '-100%'],
+      transition: {
+        repeat: Infinity,
+        repeatType: 'loop',
+        duration: 40,
+        ease: 'linear'
+      }
+    });
+  };
+
+  const stopScroll = () => {
+    controls.stop();
+  };
+
+  useEffect(() => {
+    startScroll();
+  }, []);
+
   return (
     <Box sx={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#f8fcf9' }}>
       {/* Hero */}
@@ -67,12 +91,9 @@ const QuienesSomos = () => {
           textShadow: '0 0 15px rgba(0,0,0,0.7)'
         }}
       >
-        <Typography variant="h3" fontWeight="bold">
-          ¿Quiénes somos?
-        </Typography>
+        <Typography variant="h3" fontWeight="bold">¿Quiénes somos?</Typography>
       </Box>
 
-      {/* Contenido */}
       <Container sx={{ py: 6 }}>
         {/* Presentación */}
         <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 0.8 }} viewport={{ once: true }}>
@@ -136,23 +157,80 @@ const QuienesSomos = () => {
         {/* Timeline */}
         <Timeline />
 
-        {/* Empresas que confían */}
-        <Box sx={{ mt: 8 }}>
+        {/* Logos animados */}
+        <Box sx={{ mt: 8, overflow: 'hidden' }}>
           <Typography variant="h6" fontWeight="bold" textAlign="center" gutterBottom>
             <FaHandshake style={{ color: '#66bb6a', marginRight: 8 }} />
             Empresas que confían en nosotros
           </Typography>
-          <Grid container spacing={3} justifyContent="center" mt={3}>
-            {logos.map((logo, i) => (
-              <Grid item key={i}>
-                <Paper elevation={2} sx={{ p: 2, borderRadius: 2 }}>
-                  <img src={logo} alt={`Logo ${i}`} style={{ height: 50 }} />
+          <Box
+            onMouseEnter={stopScroll}
+            onMouseLeave={startScroll}
+            sx={{
+              mt: 4,
+              overflow: 'hidden',
+              whiteSpace: 'nowrap',
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <motion.div
+              animate={controls}
+              style={{
+                display: 'inline-flex',
+                gap: '40px',
+                padding: '10px 0',
+                alignItems: 'center',
+              }}
+            >
+              {[...logos, ...logos].map((logo, i) => (
+                <Paper
+                  key={i}
+                  elevation={2}
+                  sx={{
+                    p: 1,
+                    borderRadius: 2,
+                    backgroundColor: '#fff',
+                    minWidth: 120,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    height: 70,
+                  }}
+                >
+                  <img src={logo} alt={`logo-${i}`} style={{ height: 50, objectFit: 'contain' }} />
                 </Paper>
-              </Grid>
-            ))}
-          </Grid>
+              ))}
+            </motion.div>
+          </Box>
         </Box>
       </Container>
+
+      {/* Footer */}
+      <Box sx={{ textAlign: 'center', py: 4, mt: 6, backgroundColor: '#f1f1f1' }}>
+        <img
+          src="/assets/eatandrun-logo.jpg"
+          alt="Logo Footer"
+          style={{ width: '60px', borderRadius: '50%', marginBottom: 8 }}
+        />
+        <Typography variant="body2" color="text.secondary" gutterBottom>
+          Eat & Run - Healthy Food 🍃
+        </Typography>
+        <Box sx={{ mt: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
+          <InstagramIcon sx={{ color: '#E1306C' }} />
+          <Link
+            href="https://www.instagram.com/eatandrun.mza/"
+            target="_blank"
+            rel="noopener noreferrer"
+            underline="hover"
+            variant="body2"
+            sx={{ fontWeight: 500, color: 'text.secondary' }}
+          >
+            @eatandrun.mza
+          </Link>
+        </Box>
+      </Box>
     </Box>
   );
 };

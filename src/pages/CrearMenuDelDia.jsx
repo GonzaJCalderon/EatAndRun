@@ -1,8 +1,9 @@
 import React from 'react';
-import CrearPlatoDelDia from '../components/CrearPlatoDelDia'; // Asegurate que el path esté bien
+import GestionarPlatos from '../components/GestionarPlatos';
 
 const CrearMenuDelDia = () => {
-  return <CrearPlatoDelDia />;
+  return <GestionarPlatos />;
 };
 
 export default CrearMenuDelDia;
+

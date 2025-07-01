@@ -96,7 +96,7 @@ const token = useSelector(selectToken);
   useEffect(() => {
     const fetchMenus = async () => {
       try {
-        const res = await api.get('/menu/daily/today');
+        const res = await api.get('/daily/today');
         setMenuEspecialHoy(res.data);
       } catch (err) {
         console.error('❌ Error al obtener menú especial de hoy:', err);

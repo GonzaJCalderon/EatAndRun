@@ -19,8 +19,10 @@ import VerMenuDelDia from './pages/VerMenuDelDia';
 import EditarMenuDelDia from './pages/EditarMenuDelDia';
 import DeliveryDashboard from './pages/DeliveryDashboard';
 import AdminMenuPreview from './components/AdminMenuPreview';
-import CrearMenuEspecialEmpresa from './pages/CrearMenuEspecialEmpresa';
 import PerfilUsuario from './components/PerfilUsuario';
+import MisPedidos from './components/MisPedidos';
+import PedidoDetalle from './components/PedidoDetalle';
+import RecuperarClave from './pages/RecuperarClave';
 
 const App = () => (
   <Routes>
@@ -37,6 +39,7 @@ const App = () => (
     {/* 👉 Login / Registro sin layout */}
     <Route path="/login" element={<Login />} />
     <Route path="/registro" element={<Registro />} />
+    <Route path="/recuperar-clave" element={<RecuperarClave />} /> 
 
     {/* 👉 Admin Dashboard */}
     <Route path="/admin" element={<AdminHome />} />
@@ -46,11 +49,14 @@ const App = () => (
     <Route path="/admin/historial" element={<HistorialAdmin />} />
     <Route path="/admin/produccion" element={<ProduccionResumen />} />
     <Route path="/admin/editar-precios" element={<EditarPrecios />} />
-    <Route path="/admin/crear-dia" element={<CrearMenuDelDia />} />
     <Route path="/admin/menu-del-dia" element={<VerMenuDelDia />} />
-    <Route path="/admin/editar-menu-del-dia" element={<EditarMenuDelDia />} />
+    <Route path="/admin/crear-dia" element={<CrearMenuDelDia />} />
+<Route path="/admin/editar-platos" element={<EditarMenuDelDia />} />
     <Route path="/admin/ver-menu" element={<AdminMenuPreview />} />
-    <Route path="/admin/empresa/especial" element={<CrearMenuEspecialEmpresa />} />
+    <Route path="/mis-pedidos" element={<MisPedidos />} />
+    <Route path="/mis-pedidos/:id" element={<PedidoDetalle />} />
+
+
 
     {/* 👉 Delivery Dashboard */}
     <Route path="/delivery" element={<DeliveryDashboard />} />

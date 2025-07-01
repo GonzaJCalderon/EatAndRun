@@ -21,11 +21,11 @@ const [semanaActiva, setSemanaActiva] = useState(null);
 
   const token = localStorage.getItem('authToken');
 
-  const endpointBase = 'http://localhost:4000/api/menu/fixed';
+  const endpointBase = 'https://eatandrun-back-production.up.railway.app/api/fixed';
 
   const fetchSemanaActiva = async () => {
   try {
-    const res = await fetch('http://localhost:4000/api/menu/semana/actual', {
+    const res = await fetch('https://eatandrun-back-production.up.railway.app/api/semana/actual', {
       headers: { Authorization: `Bearer ${token}` }
     });
     const data = await res.json();
@@ -83,7 +83,7 @@ const handleImagenChange = async (index, file) => {
   formData.append('image', file);
 
   try {
-    const res = await fetch('http://localhost:4000/api/menu/upload-image', {
+    const res = await fetch('https://eatandrun-back-production.up.railway.app/api/upload', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`
