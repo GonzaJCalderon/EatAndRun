@@ -34,9 +34,24 @@ const UserCard = ({ usuario, onVer, onEliminar, onRolChange }) => {
           <MenuItem value="admin">Admin</MenuItem>
         </Select>
 
-        <IconButton onClick={() => onVer(usuario)} color="primary">
-          <VisibilityIcon />
-        </IconButton>
+       <IconButton
+  onClick={() =>
+    onVer({
+      id: usuario.id,
+      nombre: usuario.nombre,
+      apellido: usuario.apellido,
+      email: usuario.email,
+      rol: usuario.rol,
+      telefono: usuario.telefono,
+      direccion_principal: usuario.direccion_principal,
+      direccion_secundaria: usuario.direccion_secundaria
+    })
+  }
+  color="primary"
+>
+  <VisibilityIcon />
+</IconButton>
+
 
         <IconButton onClick={() => onEliminar(usuario.id)} color="error">
           <DeleteIcon />

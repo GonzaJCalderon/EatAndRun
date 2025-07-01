@@ -31,7 +31,7 @@ const VerMenuDelDia = () => {
   const fetchPlatos = async () => {
     setCargando(true);
     try {
-      const res = await fetch('http://localhost:4000/api/menu/daily', {
+      const res = await fetch('https://eatandrun-back-production.up.railway.app/api/daily', {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('authToken')}`
         }
@@ -50,7 +50,7 @@ const VerMenuDelDia = () => {
     if (!confirmar) return;
 
     try {
-      await fetch(`http://localhost:4000/api/menu/daily/${id}`, {
+      await fetch(`https://eatandrun-back-production.up.railway.app/api/daily/${id}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('authToken')}`

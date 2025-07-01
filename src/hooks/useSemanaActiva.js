@@ -8,7 +8,8 @@ export const useSemanaActiva = () => {
   useEffect(() => {
     const fetchSemana = async () => {
       try {
-        const res = await axios.get('/api/menu/semana-activa');
+    const res = await axios.get('https://eatandrun-back-production.up.railway.app/api/menu/semana/actual'); // ✅
+
         setSemana(res.data);
       } catch (err) {
         setSemana(null);

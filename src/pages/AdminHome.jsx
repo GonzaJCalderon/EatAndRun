@@ -19,29 +19,24 @@ const AdminHome = () => {
       color: '#1976d2'
     },
     {
-      label: 'Editar menú semanal',
+      label: 'Crear o Editar menú semanal',
       icon: <RestaurantMenuIcon sx={{ fontSize: 40 }} />,
       href: '/admin/editar-menu',
       color: '#0288d1'
     },
     {
-      label: '📆 Crear menú del día',
+      label: '📆 Crear o editar menú del día',
       icon: <AddBoxIcon sx={{ fontSize: 40 }} />,
       href: '/admin/crear-dia',
       color: '#009688'
     },
-    {
-      label: '✏️ Editar menú del día',
-      icon: <RestaurantMenuIcon sx={{ fontSize: 40 }} />,
-      href: '/admin/editar-menu-del-dia',
-      color: '#ff7043'
-    },
-    {
-      label: '🧩 Crear menú del día empresa',
-      icon: <AddBoxIcon sx={{ fontSize: 40 }} />,
-      href: '/admin/empresa/especial',
-      color: '#d81b60'
-    },
+    // {
+    //   label: '✏️ Editar menú del día',
+    //   icon: <RestaurantMenuIcon sx={{ fontSize: 40 }} />,
+    //   href: '/admin/editar-menu-del-dia',
+    //   color: '#ff7043'
+    // },
+
     {
       label: '📈 Ver estadísticas, Gestion de Usuarios y Definir Semana de pedidos',
       icon: <DashboardIcon sx={{ fontSize: 40 }} />,

@@ -86,17 +86,24 @@ function MainApp() {
   useEffect(() => {
 const fetchSemanaActiva = async () => {
   try {
-    const res = await fetch('http://localhost:4000/api/menu/semana/actual');
+    const res = await fetch('https://eatandrun-back-production.up.railway.app/api/semana/actual');
     const data = await res.json();
 
-    // 🔥 ESTA LÍNEA CAMBIA:
-    setSemanaActiva(data.semana || data); // por compatibilidad con ambas respuestas
-  } catch {
-    console.warn("⚠️ No se pudo obtener semana activa");
+    if (data?.error) {
+      console.warn("⚠️ Backend respondió error:", data.error);
+      setSemanaActiva(null); // 👈 importante para que no siga el flujo
+      return;
+    }
+
+    setSemanaActiva(data.semana || data);
+  } catch (error) {
+    console.warn("⚠️ No se pudo obtener semana activa", error);
+    setSemanaActiva(null);
   } finally {
     setSemanaCargada(true);
   }
 };
+
 
 
     fetchSemanaActiva();
@@ -144,7 +151,7 @@ const fetchSemanaActiva = async () => {
     const fetchEspecial = async () => {
       try {
         const token = localStorage.getItem('authToken');
-        const res = await fetch('http://localhost:4000/api/menu/daily/empresa/especial', {
+        const res = await fetch('https://eatandrun-back-production.up.railway.app/api/daily/empresa/especial', {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
@@ -178,26 +185,29 @@ const fetchSemanaActiva = async () => {
       const token = localStorage.getItem('authToken');
       const roleName = mapearRoleIdANombre(user?.role);
       if (!token || !roleName) return;
-
-      const format = (data) => data.map(p => ({
+const format = (data) =>
+  Array.isArray(data)
+    ? data.map(p => ({
         nombre: p.name,
         descripcion: p.description,
         img: p.image_url,
         cantidad: 0,
         id: p.id || p._id,
         tipo: 'fijo'
-      }));
+      }))
+    : [];
+
 
       if (roleName === 'admin') {
         const [usuarioRes, empresaRes] = await Promise.all([
-          fetch(`http://localhost:4000/api/menu/fixed/by-role?role=usuario`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`http://localhost:4000/api/menu/fixed/by-role?role=empresa`, { headers: { Authorization: `Bearer ${token}` } })
+          fetch(`https://eatandrun-back-production.up.railway.app/api/fixed/by-role?role=usuario`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`https://eatandrun-back-production.up.railway.app/api/fixed/by-role?role=empresa`, { headers: { Authorization: `Bearer ${token}` } })
         ]);
         const usuarioData = await usuarioRes.json();
         const empresaData = await empresaRes.json();
         setMenuFijosPorRol({ usuario: format(usuarioData), empresa: format(empresaData) });
       } else {
-        const res = await fetch(`http://localhost:4000/api/menu/fixed/by-role?role=${roleName}`, {
+        const res = await fetch(`https://eatandrun-back-production.up.railway.app/api/fixed/by-role?role=${roleName}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
@@ -216,7 +226,7 @@ const fetchSemanaActiva = async () => {
     const fetchMenuDelDia = async () => {
       try {
         const token = localStorage.getItem('authToken');
-        const res = await fetch('http://localhost:4000/api/menu/daily', {
+        const res = await fetch('https://eatandrun-back-production.up.railway.app/api/daily/', {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
@@ -253,8 +263,22 @@ const fetchSemanaActiva = async () => {
   useEffect(() => {
     if (!user) return;
 
-    const roleName = mapearRoleIdANombre(user.role);
-    const fijosRol = menuFijosPorRol[roleName] || [];
+const roleName = mapearRoleIdANombre(user.role);
+
+// ✅ Primero definimos fijosRol
+const fijosRol = roleName === 'admin'
+  ? [
+      ...(menuFijosPorRol.usuario || []).map(p => ({ ...p, rol: 'usuario' })),
+      ...(menuFijosPorRol.empresa || []).map(p => ({ ...p, rol: 'empresa' }))
+    ]
+  : (menuFijosPorRol[roleName] || []);
+
+
+// Luego sí podemos loguear
+console.log('🍽️ Menu Fijos Por Rol:', menuFijosPorRol);
+console.log('🍽️ Fijos Combinados para admin:', fijosRol);
+
+
     const especialesAgrupados = agruparPorDiaSemana(menuDelDia);
 
     const nuevoMenuData = {};
@@ -465,18 +489,30 @@ const handleGuardarPedido = async () => {
 
   console.log("🧾 Payload items:", items); // ✅ DEBUG antes de enviar
 
-  setGuardando(true);
-  try {
-    const fechaEntregaFinal = semanaActiva?.semana_inicio;
-    const total = estimarTotal();
+setGuardando(true);
+try {
+  const token = localStorage.getItem("authToken");
 
-    const res = await api.post('/orders', {
-      items,
-      total,
-      fecha_entrega: fechaEntregaFinal,
-      observaciones,
-      metodoPago
-    });
+  // 🧠 DEBUG: mostrar token y rol actual antes de enviar pedido
+  if (token) {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    console.log("🔐 Token actual:", token);
+    console.log("🧑‍💼 Rol desde token JWT:", payload.role);
+  } else {
+    console.warn("🚨 No se encontró authToken en localStorage");
+  }
+
+  const fechaEntregaFinal = semanaActiva?.semana_inicio;
+  const total = estimarTotal();
+
+  const res = await api.post('/orders', {
+    items,
+    total,
+    fecha_entrega: fechaEntregaFinal,
+    observaciones,
+    metodoPago
+  });
+
 
     const orderId = res.data.id;
 
@@ -541,6 +577,7 @@ if (pedidoExitoso) {
     </Container>
   );
 }
+
 
   return (
     <>

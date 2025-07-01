@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Box, Typography, Grid, Card, CardContent, CardMedia, Divider } from '@mui/material';
+import {
+  Box, Typography, Grid, Card, CardContent, CardMedia,
+  Divider, Button
+} from '@mui/material';
+import LogoutIcon from '@mui/icons-material/Logout';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
 
@@ -12,12 +17,11 @@ const AdminMenuPreview = () => {
     try {
       const token = localStorage.getItem('authToken');
 
-      // Fijos por rol
       const [resUsuario, resEmpresa] = await Promise.all([
-        fetch('http://localhost:4000/api/menu/fixed/by-role?role=usuario', {
+        fetch('https://eatandrun-back-production.up.railway.app/api/fixed/by-role?role=usuario', {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        fetch('http://localhost:4000/api/menu/fixed/by-role?role=empresa', {
+        fetch('https://eatandrun-back-production.up.railway.app/api/fixed/by-role?role=empresa', {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
@@ -25,11 +29,9 @@ const AdminMenuPreview = () => {
       const dataUsuario = await resUsuario.json();
       const dataEmpresa = await resEmpresa.json();
 
-      // Especiales (sin filtro)
-      const resEspecial = await fetch('http://localhost:4000/api/menu/daily/all', {
+      const resEspecial = await fetch('https://eatandrun-back-production.up.railway.app/api/daily/all', {
         headers: { Authorization: `Bearer ${token}` }
       });
-
       const dataEspecial = await resEspecial.json();
 
       setMenuFijo({ usuario: dataUsuario, empresa: dataEmpresa });
@@ -54,9 +56,7 @@ const AdminMenuPreview = () => {
       const dia = fecha.getDay();
       const map = { 1: 'lunes', 2: 'martes', 3: 'miercoles', 4: 'jueves', 5: 'viernes' };
       const diaTexto = map[dia];
-      if (diaTexto) {
-        agrupado[diaTexto].push(p);
-      }
+      if (diaTexto) agrupado[diaTexto].push(p);
     });
 
     return agrupado;
@@ -65,7 +65,7 @@ const AdminMenuPreview = () => {
   const menuEspecialPorDia = agruparPorDia(menuEspecial);
 
   const renderPlato = (plato) => (
-    <Card sx={{ display: 'flex', mb: 2 }} key={plato.id}>
+    <Card sx={{ display: 'flex', mb: 2, width: '100%' }} key={plato.id}>
       {plato.image_url && (
         <CardMedia component="img" sx={{ width: 120 }} image={plato.image_url} alt={plato.name} />
       )}
@@ -76,15 +76,48 @@ const AdminMenuPreview = () => {
     </Card>
   );
 
+  const volver = () => {
+    window.location.href = '/admin';
+  };
+
+  const cerrarSesion = () => {
+    localStorage.removeItem('authToken');
+    window.location.href = '/login';
+  };
+
   return (
-    <Box sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>📋 Vista previa del Menú Semanal</Typography>
+    <Box sx={{ mt: 4, px: 2 }}>
+      {/* 🔙 Volver + Cerrar sesión */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
+        <Button
+          variant="outlined"
+          startIcon={<ArrowBackIcon />}
+          onClick={volver}
+        >
+          Volver al Admin
+        </Button>
+
+        <Button
+          variant="contained"
+          color="error"
+          startIcon={<LogoutIcon />}
+          onClick={cerrarSesion}
+        >
+          Cerrar sesión
+        </Button>
+      </Box>
+
+      <Typography variant="h4" gutterBottom>
+        📋 Vista previa del Menú Semanal
+      </Typography>
 
       {error && <Typography color="error">{error}</Typography>}
 
       {dias.map(dia => (
         <Box key={dia} sx={{ mt: 4 }}>
-          <Typography variant="h6" sx={{ mb: 1 }}>{dia.charAt(0).toUpperCase() + dia.slice(1)}</Typography>
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            {dia.charAt(0).toUpperCase() + dia.slice(1)}
+          </Typography>
           <Divider sx={{ mb: 2 }} />
 
           <Typography variant="subtitle1" color="primary">👤 Fijos Usuario</Typography>

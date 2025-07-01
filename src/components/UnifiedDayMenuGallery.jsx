@@ -88,13 +88,14 @@ const UnifiedDayMenuGallery = ({ day, fijos = [], especiales = [], selected = {}
   }}
 >
   {fijos.map((plato) => (
-    <Box key={plato.id} sx={{ flex: '0 0 auto', scrollSnapAlign: 'start' }}>
-      <UnifiedMenuCard
-        plato={plato}
-        cantidad={selected[plato.id]?.cantidad || 0}
-        onChange={(p, c) => handleCantidadChange(p, c)}
-      />
-    </Box>
+   <Box key={`fijo-${plato.id}`} sx={{ flex: '0 0 auto', scrollSnapAlign: 'start' }}>
+  <UnifiedMenuCard
+    plato={plato}
+    cantidad={selected[plato.id]?.cantidad || 0}
+    onChange={(p, c) => handleCantidadChange(p, c)}
+  />
+</Box>
+
   ))}
 </Box>
 
@@ -117,19 +118,20 @@ const UnifiedDayMenuGallery = ({ day, fijos = [], especiales = [], selected = {}
                 {especiales.map((plato) => {
                   const cantidad = selected[plato.id]?.cantidad || 0;
                   return (
-                    <motion.div
-                      key={plato.id}
-                      whileHover={{ scale: 1.03 }}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <UnifiedMenuCard
-                        plato={plato}
-                        cantidad={cantidad}
-                        onChange={(p, c) => handleCantidadChange(p, c)}
-                      />
-                    </motion.div>
+                <motion.div
+  key={`especial-${plato.id}`}
+  whileHover={{ scale: 1.03 }}
+  initial={{ opacity: 0, y: 10 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.3 }}
+>
+  <UnifiedMenuCard
+    plato={plato}
+    cantidad={cantidad}
+    onChange={(p, c) => handleCantidadChange(p, c)}
+  />
+</motion.div>
+
                   );
                 })}
               </Box>

@@ -30,3 +30,33 @@ a:hover {
 button {
   all: unset;
 }
+
+
+html, body {
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto; /* ✅ ahora sí deja que aparezca el scroll horizontal cuando es necesario */
+}
+
+/* Mostrar barra de scroll más estilizada si querés */
+::-webkit-scrollbar {
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Esto evita que los inputs o botones se expandan más del contenedor */
+table * {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+
+

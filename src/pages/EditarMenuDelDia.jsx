@@ -9,6 +9,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AddIcon from '@mui/icons-material/Add';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 const EditarMenuDelDia = () => {
   const [platos, setPlatos] = useState([]);
@@ -18,6 +19,7 @@ const EditarMenuDelDia = () => {
   const [fechaFiltro, setFechaFiltro] = useState('');
   const [rolFiltro, setRolFiltro] = useState('');
   const [subiendo, setSubiendo] = useState({});
+  const navigate = useNavigate();
 
   const token = localStorage.getItem('authToken');
 
@@ -27,7 +29,7 @@ const EditarMenuDelDia = () => {
 useEffect(() => {
   const fetchSemana = async () => {
     try {
-      const res = await fetch('http://localhost:4000/api/menu/semana/actual', {
+      const res = await fetch('https://eatandrun-back-production.up.railway.app/api/semana/actual', {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -49,7 +51,7 @@ useEffect(() => {
 
   const fetchPlatos = async () => {
     try {
-      const res = await fetch('http://localhost:4000/api/menu/daily/all', {
+      const res = await fetch('https://eatandrun-back-production.up.railway.app/api/daily/all', {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -74,7 +76,7 @@ useEffect(() => {
     setSubiendo((prev) => ({ ...prev, [index]: true }));
 
     try {
-      const res = await fetch('http://localhost:4000/api/menu/upload-image', {
+      const res = await fetch('https://eatandrun-back-production.up.railway.app/api/upload-image', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData
@@ -120,8 +122,8 @@ const guardarCambios = async (index) => {
 
   try {
     const endpoint = isNuevo
-      ? 'http://localhost:4000/api/menu/daily'
-      : `http://localhost:4000/api/menu/daily/${plato.id}`;
+      ? 'https://eatandrun-back-production.up.railway.app/api/daily'
+      : `https://eatandrun-back-production.up.railway.app/api/daily/${plato.id}`;
 
     const res = await fetch(endpoint, {
       method: isNuevo ? 'POST' : 'PUT',
@@ -150,7 +152,7 @@ const guardarCambios = async (index) => {
     if (!window.confirm('¿Eliminar este plato del día?')) return;
 
     try {
-      const res = await fetch(`http://localhost:4000/api/menu/daily/${id}`, {
+      const res = await fetch(`https://eatandrun-back-production.up.railway.app/api/daily/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -241,17 +243,18 @@ const agregarPlato = () => {
         </Grid>
       </Grid>
 
-     <Button
-  variant="outlined"
+   
+<Button
+  variant="contained"
+  color="primary"
   startIcon={<AddIcon />}
   fullWidth
   sx={{ mb: 3 }}
-  onClick={agregarPlato}
+  onClick={() => navigate('/admin/crear-dia')} // 👈 ruta del form de creación
   disabled={semanaActiva && !semanaActiva.habilitado}
 >
-  ➕ Agregar nuevo plato
+  ➕ Crear nuevo plato
 </Button>
-
 
       {platosFiltrados.length === 0 ? (
         <Typography>No hay platos que coincidan con los filtros.</Typography>

@@ -169,8 +169,8 @@ const ProduccionEditablePorDia = ({ pedidos, onGuardarCambios, onResumenEditado 
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell><strong>Nombre</strong></TableCell>
-                    <TableCell><strong>Apellido</strong></TableCell>
+                    <TableCell><strong>Nombre y Apellido</strong></TableCell>
+                 
                     <TableCell><strong>Platos</strong></TableCell>
                     <TableCell><strong>Extras</strong></TableCell>
                     <TableCell><strong>Tartas</strong></TableCell>
