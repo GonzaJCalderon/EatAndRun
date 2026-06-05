@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   Box, Typography, Grid, Card, CardContent, CardMedia,
-  Button, IconButton, Tooltip
+  Button, IconButton, Tooltip, List, ListItem, ListItemAvatar, Avatar, ListItemText
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -76,34 +76,25 @@ const AdminMenuPreview = () => {
     index === self.findIndex((x) => x.nombre === t.nombre)
   );
 
-  const renderPlatoCompacto = (plato) => (
+  const renderPlatoFijo = (plato) => (
     <Grid item xs={12} sm={6} md={4} lg={3} key={plato.id || plato.name}>
-      <Card sx={{ 
-        display: 'flex', 
-        alignItems: 'center',
-        p: 1,
+      <ListItem sx={{ 
+        bgcolor: '#fff', 
         borderRadius: 2, 
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        bgcolor: '#fff',
-        height: '100%'
+        border: '1px solid #e2e8f0',
+        p: 1
       }}>
-        {plato.image_url && (
-          <CardMedia
-            component="img"
-            sx={{ width: 60, height: 60, borderRadius: 1, objectFit: 'cover', mr: 1.5 }}
-            image={plato.image_url}
-            alt={plato.name || plato.nombre}
-          />
-        )}
-        <Box>
-          <Typography variant="subtitle2" fontWeight="bold" sx={{ lineHeight: 1.1 }}>
-            {plato.name || plato.nombre}
-          </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-            {plato.description || plato.descripcion}
-          </Typography>
-        </Box>
-      </Card>
+        <ListItemAvatar sx={{ minWidth: 50 }}>
+          <Avatar src={plato.image_url} variant="rounded" sx={{ width: 40, height: 40 }} />
+        </ListItemAvatar>
+        <ListItemText 
+          primary={plato.name || plato.nombre} 
+          primaryTypographyProps={{ variant: 'subtitle2', fontWeight: 'bold', lineHeight: 1.1 }}
+          secondary={plato.description || plato.descripcion}
+          secondaryTypographyProps={{ variant: 'caption', noWrap: true }}
+          sx={{ my: 0 }}
+        />
+      </ListItem>
     </Grid>
   );
 
@@ -128,34 +119,25 @@ const AdminMenuPreview = () => {
     </Card>
   );
 
-  const renderTarta = (tarta, idx) => (
+  const renderTartaFija = (tarta, idx) => (
     <Grid item xs={12} sm={6} md={4} lg={3} key={idx}>
-      <Card sx={{ 
-        display: 'flex', 
-        alignItems: 'center',
-        p: 1,
+      <ListItem sx={{ 
+        bgcolor: '#fff', 
         borderRadius: 2, 
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        bgcolor: '#fff',
-        height: '100%'
+        border: '1px solid #fecdd3',
+        p: 1
       }}>
-        {tarta.img && (
-          <CardMedia
-            component="img"
-            sx={{ width: 60, height: 60, borderRadius: 1, objectFit: 'cover', mr: 1.5 }}
-            image={tarta.img}
-            alt={tarta.nombre}
-          />
-        )}
-        <Box>
-          <Typography variant="subtitle2" fontWeight="bold" sx={{ lineHeight: 1.1 }}>
-            {tarta.nombre}
-          </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-            {tarta.descripcion || '—'}
-          </Typography>
-        </Box>
-      </Card>
+        <ListItemAvatar sx={{ minWidth: 50 }}>
+          <Avatar src={tarta.img} variant="rounded" sx={{ width: 40, height: 40 }} />
+        </ListItemAvatar>
+        <ListItemText 
+          primary={tarta.nombre} 
+          primaryTypographyProps={{ variant: 'subtitle2', fontWeight: 'bold', lineHeight: 1.1 }}
+          secondary={tarta.descripcion || '—'}
+          secondaryTypographyProps={{ variant: 'caption', noWrap: true }}
+          sx={{ my: 0 }}
+        />
+      </ListItem>
     </Grid>
   );
 
@@ -213,8 +195,8 @@ const AdminMenuPreview = () => {
             Editar Menú Fijo
           </Button>
         </Box>
-        <Grid container spacing={2}>
-          {menuFijo.map(renderPlatoCompacto)}
+        <Grid container spacing={1.5}>
+          {menuFijo.map(renderPlatoFijo)}
         </Grid>
       </Box>
 
@@ -278,8 +260,8 @@ const AdminMenuPreview = () => {
             Editar Tartas
           </Button>
         </Box>
-        <Grid container spacing={2}>
-          {tartasUnicas.map(renderTarta)}
+        <Grid container spacing={1.5}>
+          {tartasUnicas.map(renderTartaFija)}
         </Grid>
       </Box>
     </Box>
