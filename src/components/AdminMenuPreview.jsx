@@ -92,48 +92,62 @@ const AdminMenuPreview = () => {
   const tartasPorFecha = agruparTartasPorFecha(tartas);
 
   const renderPlato = (plato) => (
-    <Card sx={{ display: 'flex', mb: 2, width: '100%' }} key={plato.id}>
-      {plato.image_url && (
-        <CardMedia
-          component="img"
-          sx={{ width: 120 }}
-          image={plato.image_url}
-          alt={plato.name || plato.nombre}
-        />
-      )}
-      <CardContent>
-        <Typography variant="subtitle1" fontWeight="bold">
-          {plato.name || plato.nombre}
-        </Typography>
-        <Typography variant="body2">
-          {plato.description || plato.descripcion}
-        </Typography>
-      </CardContent>
-    </Card>
+    <Grid item xs={12} sm={6} md={4} lg={3} key={plato.id || plato.name}>
+      <Card sx={{ 
+        display: 'flex', 
+        height: '100%', 
+        borderRadius: 2, 
+        border: '1px solid #f1f5f9',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+      }}>
+        {plato.image_url && (
+          <CardMedia
+            component="img"
+            sx={{ width: 90, objectFit: 'cover' }}
+            image={plato.image_url}
+            alt={plato.name || plato.nombre}
+          />
+        )}
+        <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 }, flexGrow: 1 }}>
+          <Typography variant="subtitle2" fontWeight="bold" sx={{ lineHeight: 1.2, mb: 0.5 }}>
+            {plato.name || plato.nombre}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            {plato.description || plato.descripcion}
+          </Typography>
+        </CardContent>
+      </Card>
+    </Grid>
   );
 
   const renderTarta = (tarta, idx) => (
-  <Card sx={{ mb: 2 }} key={idx}>
-    <Box sx={{ display: 'flex' }}>
-      {tarta.img && (
-        <CardMedia
-          component="img"
-          sx={{ width: 120, objectFit: 'cover' }}
-          image={tarta.img} // ✅ la propiedad real
-          alt={tarta.nombre}
-        />
-      )}
-      <CardContent>
-        <Typography variant="subtitle1" fontWeight="bold">
-          {tarta.nombre}
-        </Typography>
-        <Typography variant="body2">
-          {tarta.descripcion || '—'}
-        </Typography>
-      </CardContent>
-    </Box>
-  </Card>
-);
+    <Grid item xs={12} sm={6} md={4} lg={3} key={idx}>
+      <Card sx={{ 
+        display: 'flex', 
+        height: '100%', 
+        borderRadius: 2, 
+        border: '1px solid #f1f5f9',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+      }}>
+        {tarta.img && (
+          <CardMedia
+            component="img"
+            sx={{ width: 90, objectFit: 'cover' }}
+            image={tarta.img}
+            alt={tarta.nombre}
+          />
+        )}
+        <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 }, flexGrow: 1 }}>
+          <Typography variant="subtitle2" fontWeight="bold" sx={{ lineHeight: 1.2, mb: 0.5 }}>
+            {tarta.nombre}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            {tarta.descripcion || '—'}
+          </Typography>
+        </CardContent>
+      </Card>
+    </Grid>
+  );
 
 
   const volver = () => {
@@ -179,14 +193,14 @@ const AdminMenuPreview = () => {
           </AccordionSummary>
           <AccordionDetails>
             {/* Fijos (ya no separados) */}
-            <Typography variant="subtitle1" color="primary">🍽️ Menú Fijo</Typography>
-            <Grid container spacing={1}>
+            <Typography variant="subtitle1" color="primary" sx={{ mb: 1 }}>🍽️ Menú Fijo</Typography>
+            <Grid container spacing={2}>
               {menuFijo.map(renderPlato)}
             </Grid>
 
             {/* Especiales */}
-            <Typography variant="subtitle1" color="secondary" sx={{ mt: 2 }}>⭐ Especiales</Typography>
-            <Grid container spacing={1}>
+            <Typography variant="subtitle1" color="secondary" sx={{ mt: 3, mb: 1 }}>⭐ Especiales</Typography>
+            <Grid container spacing={2}>
               {(menuEspecialPorDia[dia] || []).map(renderPlato)}
             </Grid>
           </AccordionDetails>
@@ -199,8 +213,9 @@ const AdminMenuPreview = () => {
         {Object.entries(tartasPorFecha).map(([fecha, lista]) => (
           <Box key={fecha} sx={{ mt: 2, mb: 3 }}>
             <Typography variant="subtitle1" fontWeight="bold">{fecha}</Typography>
-            <Divider sx={{ my: 1 }} />
-            {lista.map(renderTarta)}
+            <Grid container spacing={2}>
+              {lista.map(renderTarta)}
+            </Grid>
           </Box>
         ))}
       </Box>
