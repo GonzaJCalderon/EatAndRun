@@ -10,30 +10,26 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import api from '../api/api';
-import { getTartaPrecios } from '../utils/getTartaPrecios';
 
 const EditarPrecios = () => {
   const [preciosBase, setPreciosBase] = useState({
     plato: 6300,
+    menu_especial: 7400,
     envio: 900,
     postre: 2800,
     ensalada: 2800,
     proteina: 3500,
+    tarta: 14500,
     descuento_por_plato: 200,
     umbral_descuento: 5
   });
-
-  const [preciosTarta, setPreciosTarta] = useState({});
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const configRes = await api.get('/config/precios');
-        setPreciosBase(configRes.data);
-        localStorage.setItem('precios_eatandrun', JSON.stringify(configRes.data));
-
-        const tartas = await getTartaPrecios();
-        setPreciosTarta(tartas);
+        setPreciosBase({ ...preciosBase, ...configRes.data });
+        localStorage.setItem('precios_eatandrun', JSON.stringify({ ...preciosBase, ...configRes.data }));
       } catch (err) {
         console.error("❌ Error al cargar datos:", err);
       }
@@ -49,12 +45,6 @@ const EditarPrecios = () => {
     }));
   };
 
-  const handleTartaChange = (id, valor) => {
-    setPreciosTarta((prev) => ({
-      ...prev,
-      [id]: { ...prev[id], precio: parseInt(valor) || 0 }
-    }));
-  };
 
   const guardar = async () => {
     try {
@@ -62,10 +52,6 @@ const EditarPrecios = () => {
       await api.put('/config/precios', preciosBase);
       localStorage.setItem("precios_eatandrun", JSON.stringify(preciosBase));
 
-      // Guardar precios de tartas
-      for (const id in preciosTarta) {
-        await api.put(`/tartas/${id}`, { precio: preciosTarta[id].precio });
-      }
 
       alert("✅ Datos actualizados correctamente");
     } catch (err) {
@@ -92,8 +78,9 @@ const EditarPrecios = () => {
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 4, mb: 4 }}>
         {[
           'plato',
-          'envio',
+          'menu_especial',
           'tarta',
+          'envio',
           'postre',
           'ensalada',
           'proteina',
@@ -117,24 +104,7 @@ const EditarPrecios = () => {
         </Button>
       </Box>
 
-      <Divider sx={{ my: 4 }} />
 
-      <Typography variant="h6">
-        🥧 Precios por Tarta
-      </Typography>
-
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 2 }}>
-        {Object.entries(preciosTarta).map(([id, tarta]) => (
-          <TextField
-            key={id}
-            label={`TARTA: ${tarta.nombre ? tarta.nombre.toUpperCase() : 'DESCONOCIDA'}`}
-            type="number"
-            value={tarta.precio}
-            onChange={(e) => handleTartaChange(id, e.target.value)}
-            sx={{ minWidth: 180 }}
-          />
-        ))}
-      </Box>
     </Container>
   );
 };
