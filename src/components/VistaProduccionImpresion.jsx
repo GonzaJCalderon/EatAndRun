@@ -126,7 +126,12 @@ const VistaProduccionImpresion = ({ pedidos, resumen, semanaActual }) => {
                     {usuariosTarta.map((u, i) => (
                       <TableRow key={i}>
                         <TableCell sx={{ py: 0.5, borderBottom: '1px solid #eee' }}>
-                          {u.cantidad > 1 ? `${u.nombre} (x${u.cantidad})` : u.nombre}
+                          <Typography variant="body1">
+                            {u.cantidad > 1 ? `${u.nombre} (x${u.cantidad})` : u.nombre}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: "#7f8c8d", display: "block" }}>
+                            <b>🗓️ Pedido:</b> {u.fechaPedido ? dayjs(typeof u.fechaPedido === 'string' ? u.fechaPedido.split('T')[0] : u.fechaPedido).format('DD/MM/YYYY') : 'S/D'} | <b>🚚 Entrega:</b> {u.fechaEntrega ? dayjs(typeof u.fechaEntrega === 'string' ? u.fechaEntrega.split('T')[0] : u.fechaEntrega).format('dddd DD/MM') : 'A coordinar'}
+                          </Typography>
                           {u.observaciones && <Typography variant="caption" display="block" color="textSecondary">Obs: {u.observaciones}</Typography>}
                         </TableCell>
                       </TableRow>

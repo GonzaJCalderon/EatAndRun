@@ -251,7 +251,9 @@ const pedidosFiltrados = res.data
         resumenTemp["TARTAS"][nombreLimpio].usuarios.push({
           nombre,
           cantidad: cantidadNum,
-          observaciones: p.observaciones || ''
+          observaciones: p.observaciones || p.nota_admin,
+          fechaPedido: p.fecha_entrega || p.created_at,
+          fechaEntrega: p.fecha_entrega_tartas
         });
 
         totalTemp[nombreLimpio] = (totalTemp[nombreLimpio] || 0) + cantidadNum;

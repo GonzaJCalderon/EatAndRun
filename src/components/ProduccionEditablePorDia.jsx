@@ -39,15 +39,18 @@ const pedidosPorDia = {};
 
 pedidos.forEach(p => {
   const diarios = p.pedido?.diarios || {};
-  const fechaPorDia = p.pedido?.fecha_dia_por_dia || {}; // ← vos podés generar esto en el backend si querés, o bien derivarlo del campo `fecha_dia` en cada ítem
+  const extras = p.pedido?.extras || {};
+  const fechaPorDia = p.pedido?.fecha_dia_por_dia || {};
 
-  Object.entries(diarios).forEach(([dia, platos]) => {
+  const diasConPedidos = new Set([...Object.keys(diarios), ...Object.keys(extras)]);
+
+  diasConPedidos.forEach(dia => {
     const fechaStr = fechaPorDia?.[dia] || null;
     let clave = dia;
 
     if (fechaStr) {
-      const fecha = dayjs(fechaStr);
-      const nombreDia = fecha.format('dddd'); // lunes, martes...
+      const fecha = dayjs(typeof fechaStr === 'string' ? fechaStr.split('T')[0] : fechaStr);
+      const nombreDia = fecha.format('dddd');
       const fechaLegible = fecha.format('DD/MM');
       clave = `${nombreDia} ${fechaLegible}`;
     }
@@ -171,7 +174,15 @@ pedidos.forEach(p => {
                   const nombre = `${p.usuario?.nombre || ''} ${p.usuario?.apellido || ''}`.trim();
                   return Object.entries(p.pedido?.tartas || {}).map(([tarta, cantidad]) => (
                     <TableRow key={`${id}-tarta-${tarta}`}>
-                      <TableCell>{nombre}</TableCell>
+                      <TableCell>
+                        <Typography variant="body2">{nombre}</Typography>
+                        <Typography variant="caption" sx={{ color: "#7f8c8d", display: "block" }}>
+                          <b>Pedido:</b> {p.created_at || p.fecha_entrega ? dayjs(typeof (p.created_at || p.fecha_entrega) === 'string' ? (p.created_at || p.fecha_entrega).split('T')[0] : (p.created_at || p.fecha_entrega)).format('DD/MM') : 'S/D'}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: "#7f8c8d", display: "block" }}>
+                          <b>Entrega:</b> {p.fecha_entrega_tartas ? dayjs(typeof p.fecha_entrega_tartas === 'string' ? p.fecha_entrega_tartas.split('T')[0] : p.fecha_entrega_tartas).format('DD/MM') : 'A coordinar'}
+                        </Typography>
+                      </TableCell>
                       <TableCell>{tarta}</TableCell>
                       <TableCell>
                         <TextField
