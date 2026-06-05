@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import {
   Container, Typography, Card, CardContent,
-  Divider, Button, Box, CircularProgress
+  Divider, Button, Box, CircularProgress,
+  FormControl, InputLabel, Select, MenuItem,
+  Checkbox, FormControlLabel, TextField, Paper, Grid, Chip
 } from "@mui/material";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { saveAs } from 'file-saver';
@@ -535,55 +537,80 @@ const exportarExcelPorEmpresa = async () => {
         </Button>
       </Box>
 
-      <Box className="no-print" sx={{ mb: 3, display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center' }}>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <label><strong>Filtrar por menú:</strong></label>
-          <select value={tipoMenu} onChange={handleFiltroChange}>
-            <option value="todos">Todos</option>
-            <option value="usuario">Usuarios individuales</option>
-            <option value="empresa">Empresas</option>
-          </select>
+      <Paper className="no-print" elevation={2} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: 'text.secondary' }}>
+          Filtros de Búsqueda
+        </Typography>
+        
+        <Grid container spacing={3} alignItems="center">
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Filtrar por menú</InputLabel>
+              <Select value={tipoMenu} onChange={handleFiltroChange} label="Filtrar por menú">
+                <MenuItem value="todos">Todos</MenuItem>
+                <MenuItem value="usuario">Usuarios individuales</MenuItem>
+                <MenuItem value="empresa">Empresas</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
 
-          <label><strong>Filtrar por:</strong></label>
-          <select value={filtroTiempo} onChange={handleFiltroTiempoChange} disabled={usarRangoPersonalizado}>
-            <option value="semana">Semana</option>
-            <option value="mes">Mes</option>
-            <option value="año">Año</option>
-          </select>
-        </Box>
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Periodo</InputLabel>
+              <Select 
+                value={filtroTiempo} 
+                onChange={handleFiltroTiempoChange} 
+                label="Periodo"
+                disabled={usarRangoPersonalizado}
+              >
+                <MenuItem value="semana">Semana</MenuItem>
+                <MenuItem value="mes">Mes</MenuItem>
+                <MenuItem value="año">Año</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
 
-        <Box>
-          <label>
-            <input
-              type="checkbox"
-              checked={usarRangoPersonalizado}
-              onChange={(e) => setUsarRangoPersonalizado(e.target.checked)}
-            />{" "}
-            Usar rango personalizado
-          </label>
-        </Box>
+          <Grid item xs={12} sm={12} md={6}>
+            <FormControlLabel
+              control={
+                <Checkbox 
+                  checked={usarRangoPersonalizado}
+                  onChange={(e) => setUsarRangoPersonalizado(e.target.checked)}
+                  color="primary"
+                />
+              }
+              label="Usar rango de fechas personalizado"
+            />
+          </Grid>
 
-        {usarRangoPersonalizado && (
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Box>
-              <label>Desde:</label>
-              <input
-                type="date"
-                value={fechaDesde}
-                onChange={(e) => setFechaDesde(e.target.value)}
-              />
-            </Box>
-            <Box>
-              <label>Hasta:</label>
-              <input
-                type="date"
-                value={fechaHasta}
-                onChange={(e) => setFechaHasta(e.target.value)}
-              />
-            </Box>
-          </Box>
-        )}
-      </Box>
+          {usarRangoPersonalizado && (
+            <>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Desde"
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  value={fechaDesde}
+                  onChange={(e) => setFechaDesde(e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Hasta"
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  value={fechaHasta}
+                  onChange={(e) => setFechaHasta(e.target.value)}
+                />
+              </Grid>
+            </>
+          )}
+        </Grid>
+      </Paper>
 
       <Typography variant="h4" textAlign="center" gutterBottom>
         🍽️ Resumen de Producción
@@ -595,16 +622,15 @@ const exportarExcelPorEmpresa = async () => {
         </Typography>
       )}
 
-      <Box className="no-print" sx={{ display: 'flex', gap: 2, justifyContent: 'center', mb: 3 }}>
-        <Button variant="contained" color="success" onClick={exportarExcel}>
+      <Box className="no-print" sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center', mb: 5 }}>
+        <Button variant="contained" color="success" size="large" onClick={exportarExcel} sx={{ px: 4 }}>
           📤 Exportar Excel
         </Button>
-        <Button variant="contained" color="secondary" onClick={exportarExcelPorEmpresa}>
-  🏢 Exportar por Empresa
-</Button>
-
-        <Button variant="outlined" color="primary" onClick={() => window.print()}>
-          🖨️ Imprimir producción
+        <Button variant="contained" color="secondary" size="large" onClick={exportarExcelPorEmpresa} sx={{ px: 4 }}>
+          🏢 Exportar por Empresa
+        </Button>
+        <Button variant="outlined" color="primary" size="large" onClick={() => window.print()} sx={{ px: 4, borderWidth: 2 }}>
+          🖨️ Imprimir
         </Button>
       </Box>
 
@@ -614,19 +640,34 @@ const exportarExcelPorEmpresa = async () => {
         </Box>
       ) : (
         <>
-          <Card sx={{ mt: 4, backgroundColor: '#f0f0f0' }}>
-            <CardContent>
-              <Typography variant="h5" textAlign="center" sx={{ mb: 2 }}>
-                📦 Total Producción
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
+          <Paper elevation={0} sx={{ mt: 4, p: 3, backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 3 }}>
+            <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold', color: '#1e293b' }}>
+              📦 Producción Global de la Semana
+            </Typography>
+            <Grid container spacing={2}>
               {Object.entries(totalProduccion).map(([plato, cantidad], idx) => (
-                <Typography key={idx} textAlign="center" sx={{ mb: 1 }}>
-                  🍽️ <strong>{plato}</strong>: {cantidad}
-                </Typography>
+                <Grid item xs={12} sm={6} md={4} key={idx}>
+                  <Box sx={{ 
+                    p: 2, 
+                    backgroundColor: 'white', 
+                    borderRadius: 2, 
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <Typography variant="body1" sx={{ fontWeight: 500, color: '#334155' }}>
+                      {plato}
+                    </Typography>
+                    <Chip label={cantidad} color="primary" size="small" sx={{ fontWeight: 'bold', minWidth: 40 }} />
+                  </Box>
+                </Grid>
               ))}
-            </CardContent>
-          </Card>
+              {Object.keys(totalProduccion).length === 0 && (
+                <Typography sx={{ p: 2, color: 'text.secondary' }}>No hay producción en este periodo.</Typography>
+              )}
+            </Grid>
+          </Paper>
 
           <Box sx={{ mt: 6 }}>
             <Typography variant="h5" sx={{ mb: 2 }}>📊 Vista de Producción (Formato Cocina)</Typography>
