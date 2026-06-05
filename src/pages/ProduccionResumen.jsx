@@ -366,44 +366,30 @@ for (const dia of diasSemana) {
     sheet.addRow([]);
 
     const platos = Object.keys(dataDia);
-    const mitad = Math.ceil(platos.length / 2);
-    const platosIzq = platos.slice(0, mitad);
-    const platosDer = platos.slice(mitad);
-
-    const agregarBloques = (platos, colInicio) => {
-      for (const plato of platos) {
+    const agregarBloques = (listaPlatos) => {
+      for (const plato of listaPlatos) {
         sheet.addRow([]);
-        const tituloRow = sheet.addRow([]);
-        const colChar = String.fromCharCode(65 + colInicio);
-        const cell = sheet.getCell(`${colChar}${tituloRow.number}`);
-        cell.value = plato.toUpperCase();
+        const tituloRow = sheet.addRow([plato.toUpperCase()]);
+        const cell = sheet.getCell(`A${tituloRow.number}`);
         cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
         cell.fill = {
           type: 'pattern',
           pattern: 'solid',
           fgColor: { argb: 'FF4CAF50' },
         };
-        sheet.mergeCells(
-          tituloRow.number,
-          colInicio + 1,
-          tituloRow.number,
-          colInicio + 2
-        );
+        sheet.mergeCells(tituloRow.number, 1, tituloRow.number, 2);
 
         const pedidosDePlato = getPedidosPorDiaYPlato(dia, plato);
         pedidosDePlato.forEach(u => {
-          const row = sheet.addRow([]);
-          sheet.getCell(`${colChar}${row.number}`).value = u.cantidad > 1 ? `${u.nombre} (x${u.cantidad})` : u.nombre;
+          sheet.addRow([u.cantidad > 1 ? `${u.nombre} (x${u.cantidad})` : u.nombre]);
         });
 
-        const resumenRow = sheet.addRow([]);
-        sheet.getCell(`${colChar}${resumenRow.number}`).value = 'TOTAL';
-        sheet.getCell(`${String.fromCharCode(65 + colInicio + 1)}${resumenRow.number}`).value = dataDia[plato].cantidad;
+        const resumenRow = sheet.addRow(['TOTAL', dataDia[plato].cantidad]);
+        sheet.getCell(`B${resumenRow.number}`).font = { bold: true };
       }
     };
 
-    agregarBloques(platosIzq, 0);  // columnas A/B
-    agregarBloques(platosDer, 5);  // columnas F/G
+    agregarBloques(platos);
 
     // 🧮 Tabla resumen
     sheet.addRow([]);
@@ -706,6 +692,7 @@ const exportarExcelPorEmpresa = async () => {
             <Typography variant="h5" sx={{ mb: 2 }}>📝 Edición por día</Typography>
             <ProduccionEditablePorDia
               pedidos={pedidos}
+              mapaPlatos={mapaPlatos}
               onResumenEditado={handleResumenEditado}
               onGuardarCambios={handleGuardarCambios}
               filasLibres={filasLibres}

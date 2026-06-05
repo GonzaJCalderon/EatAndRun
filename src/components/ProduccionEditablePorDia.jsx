@@ -5,6 +5,7 @@ import {
   TableRow, TableCell, TableBody, Paper
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import dayjs from '../utils/day';
 
 const diasOrdenados = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
 
@@ -14,7 +15,7 @@ const extraMap = {
   "3": "💪 Proteína"
 };
 
-const ProduccionEditablePorDia = ({ pedidos, onGuardarCambios }) => {
+const ProduccionEditablePorDia = ({ pedidos, mapaPlatos = {}, onGuardarCambios }) => {
   const [ediciones, setEdiciones] = useState({});
 
   const handleChange = (pedidoId, path, value) => {
@@ -85,19 +86,28 @@ pedidos.forEach(p => {
               <TableCell>{nombre}</TableCell>
 
               <TableCell>
-                {Object.entries(platos).map(([nombrePlato, cantidad]) => (
-                  <Box key={nombrePlato} sx={{ mb: 1 }}>
-                    <Typography>{nombrePlato}</Typography>
-                    <TextField
-                      size="small"
-                      type="number"
-                      defaultValue={cantidad}
-                      onChange={(e) =>
-                        handleChange(id, `diarios.${dia}.${nombrePlato}`, Number(e.target.value))
-                      }
-                    />
-                  </Box>
-                ))}
+                {Object.entries(platos).map(([nombrePlato, cantidad]) => {
+                  // Transform ID:24 into "Wok de Pollo"
+                  let nombreMostrar = nombrePlato;
+                  if (nombrePlato.startsWith('ID:')) {
+                    const id = nombrePlato.replace('ID:', '');
+                    nombreMostrar = mapaPlatos[id] || nombrePlato;
+                  }
+
+                  return (
+                    <Box key={nombrePlato} sx={{ mb: 1 }}>
+                      <Typography>{nombreMostrar}</Typography>
+                      <TextField
+                        size="small"
+                        type="number"
+                        defaultValue={cantidad}
+                        onChange={(e) =>
+                          handleChange(id, `diarios.${dia}.${nombrePlato}`, Number(e.target.value))
+                        }
+                      />
+                    </Box>
+                  );
+                })}
               </TableCell>
 
               <TableCell>
