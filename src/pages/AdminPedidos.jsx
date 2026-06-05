@@ -284,17 +284,17 @@ const fechaReal = pedidoObj.fecha_dia_por_dia?.[dia.toLowerCase()]
 
 
 const formatearFechaBonita = (isoDate) => {
-  if (!isoDate || isoDate === 'Fecha desconocida' || isoDate === 'Invalid Date') return isoDate;
+  if (!isoDate || isoDate === 'Fecha desconocida' || isoDate === 'Invalid Date') return '📦 Especiales / Sin Fecha';
   try {
     const fecha = new Date(isoDate);
-    if (isNaN(fecha.getTime())) return isoDate;
+    if (isNaN(fecha.getTime())) return '📦 Especiales / Sin Fecha';
     return new Intl.DateTimeFormat('es-AR', {
       weekday: 'long',
       day: '2-digit',
       month: '2-digit'
     }).format(fecha);
   } catch (e) {
-    return isoDate;
+    return '📦 Especiales / Sin Fecha';
   }
 };
 
@@ -429,190 +429,216 @@ const historialCompletoAgrupado = agruparPedidosPorFechaConDetalle(pedidos);
     setModalOpen(true);
   };
 
-  if (!semanaActiva) return <Typography>Cargando...</Typography>;
+  if (!semanaActiva) return <Typography sx={{ mt: 4, textAlign: 'center' }}>Cargando información...</Typography>;
 
   return (
-    <Container sx={{ mt: 4 }}>
-      <Button variant="outlined" startIcon={<ArrowBackIcon />}
-        onClick={() => window.location.href = '/admin'}>
-        Volver al Admin
-      </Button>
-
-      <Typography variant="h4" sx={{ my: 2 }}>📋 Pedidos de la Semana</Typography>
-
-      {/* Filtros de Fecha */}
-      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DatePicker
-            label="Desde"
-            value={filtroDesde}
-            onChange={setFiltroDesde}
-            slotProps={{ textField: { fullWidth: true } }}
-          />
-        </LocalizationProvider>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DatePicker
-            label="Hasta"
-            value={filtroHasta}
-            onChange={setFiltroHasta}
-            slotProps={{ textField: { fullWidth: true } }}
-          />
-        </LocalizationProvider>
+    <Container maxWidth="xl" sx={{ mt: 4, pb: 10 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Button variant="outlined" startIcon={<ArrowBackIcon />}
+          onClick={() => window.location.href = '/admin'} sx={{ borderRadius: 2 }}>
+          Volver
+        </Button>
+        <Typography variant="h4" fontWeight="bold" color="primary.main">
+          📋 Gestión de Pedidos
+        </Typography>
       </Box>
 
-      {/* Buscador multi-campo */}
-      <TextField
-        label="Buscar por nombre, apellido, dirección, email o empresa"
-        fullWidth sx={{ mb: 3 }}
-        value={busqueda}
-        onChange={e => setBusqueda(e.target.value)}
-      />
+      {/* Filtros de Fecha y Búsqueda */}
+      <Card sx={{ p: 3, mb: 4, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9' }}>
+        <Grid container spacing={3} alignItems="center">
+          <Grid item xs={12} md={3}>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                label="Fecha Desde"
+                value={filtroDesde}
+                onChange={setFiltroDesde}
+                slotProps={{ textField: { fullWidth: true, size: 'small' } }}
+              />
+            </LocalizationProvider>
+          </Grid>
+          <Grid item xs={12} md={3}>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                label="Fecha Hasta"
+                value={filtroHasta}
+                onChange={setFiltroHasta}
+                slotProps={{ textField: { fullWidth: true, size: 'small' } }}
+              />
+            </LocalizationProvider>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <TextField
+              label="Buscar por cliente, empresa, email o dirección..."
+              fullWidth
+              size="small"
+              value={busqueda}
+              onChange={e => setBusqueda(e.target.value)}
+              sx={{ backgroundColor: '#fff' }}
+            />
+          </Grid>
+        </Grid>
+      </Card>
 
-      {/* Tabs */}
-      <Tabs
-        value={tabDia}
-        onChange={(e, val) => setTabDia(val)}
-        variant="scrollable"
-        scrollButtons="auto"
-        sx={{ mb: 3 }}
-      >
-        {fechasDisponibles.map(f => (
-          <Tab key={f} label={formatearFechaBonita(f)} value={f} />
-        ))}
-        <Tab label="📜 Historial" value="HISTORIAL" />
-      </Tabs>
+      {/* Tabs Modernos */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 4 }}>
+        <Tabs
+          value={tabDia}
+          onChange={(e, val) => setTabDia(val)}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{ 
+            '& .MuiTab-root': { fontWeight: 'bold', fontSize: '1rem', textTransform: 'capitalize', minHeight: 60 },
+            '& .Mui-selected': { color: '#1976d2' }
+          }}
+        >
+          {fechasDisponibles.map(f => (
+            <Tab key={f} label={formatearFechaBonita(f)} value={f} />
+          ))}
+          <Tab label="📜 Historial Completo" value="HISTORIAL" sx={{ color: '#d32f2f' }} />
+        </Tabs>
+      </Box>
 
       {/* Pedidos de un día */}
       {tabDia !== 'HISTORIAL' && (
         <>
-        <Button
-  variant="contained"
-  color="secondary"
-  sx={{ ml: 2 }}
-  onClick={() => exportarResumenVisualExcel(resumenDetallado)}
->
-  📊 Exportar Excel estilo planilla
-</Button>
-<ResumenVisualPorDia pedidos={resumenDetallado[tabDia] || []} />
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+            <Typography variant="h5" fontWeight="bold">Resumen de Preparación</Typography>
+            <Button
+              variant="contained"
+              color="success"
+              onClick={() => exportarResumenVisualExcel(resumenDetallado)}
+              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 'bold' }}
+            >
+              📊 Exportar Planilla Excel
+            </Button>
+          </Box>
+          <ResumenVisualPorDia pedidos={resumenDetallado[tabDia] || []} />
 
-
-          {(resumenDetallado[tabDia] && resumenDetallado[tabDia].length > 0)
-            ? resumenDetallado[tabDia].map((pedido, i) => (
-              <Card key={i} sx={{ mb: 2 }}>
-                <CardContent>
-                  <Typography variant="h6">
-                    {pedido.esEmpresa ? '🏢' : '👤'} {pedido.nombreCompleto}
-                    {pedido.empresa_nombre && (
-                      <> — <span style={{ color: '#2074a0' }}>Empresa: <b>{pedido.empresa_nombre}</b></span></>
-                    )}
-                  </Typography>
-                  <Typography>📍 {pedido.direccion}</Typography>
-                  {pedido.subdireccion && <Typography>📍 {pedido.subdireccion}</Typography>}
-                  <Typography>📞 {pedido.telefono}</Typography>
-                  <Typography>📧 {pedido.email}</Typography>
-
-                  {pedido.metodoPago && (
-                    <Typography>💳 Método de pago: {pedido.metodoPago}</Typography>
-                  )}
-                  {pedido.comprobanteUrl && (
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      sx={{ mt: 1 }}
-                      onClick={() => handleVerComprobante(pedido)}
-                    >
-                      📎 Ver comprobante
-                    </Button>
-                  )}
-
-                  {pedido.delivery?.nombre ? (
-                    <>
-                      <Typography>🚚 Delivery: {pedido.delivery.nombre}</Typography>
-                      {pedido.delivery.telefono && <Typography>📞 {pedido.delivery.telefono}</Typography>}
-
-                      <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-                        <TextField
-                          label="Nombre del delivery"
-                          value={pedido.delivery?.nombre || ''}
-                          fullWidth
-                          onChange={e => asignarDelivery(pedido.id, {
-                            ...pedido.delivery,
-                            nombre: e.target.value
-                          })}
-                        />
-                        <TextField
-                          label="Teléfono del delivery"
-                          value={pedido.delivery?.telefono || ''}
-                          fullWidth
-                          onChange={e => asignarDelivery(pedido.id, {
-                            ...pedido.delivery,
-                            telefono: e.target.value
-                          })}
-                        />
-                      </Box>
-                    </>
-                  ) : (
-                    <Box sx={{ mt: 2 }}>
-                      <Autocomplete
-                        freeSolo
-                        onInputChange={async (e, value) => {
-                          const res = await api.get('/deliveries/search?q=' + value);
-                          setOpcionesDelivery(prev => ({
-                            ...prev,
-                            [pedido.id]: res.data
-                          }));
-                        }}
-                        onChange={(e, selected) => {
-                          if (!selected) return;
-                          asignarDelivery(pedido.id, selected);
-                        }}
-                        options={opcionesDelivery[pedido.id] || []}
-                        getOptionLabel={(option) => `${option.name} (${option.email})`}
-                        renderInput={(params) => <TextField {...params} label="Buscar delivery" fullWidth />}
-                      />
+          <Typography variant="h5" fontWeight="bold" sx={{ mb: 3, mt: 5 }}>Detalle de Entregas</Typography>
+          <Grid container spacing={3}>
+            {(resumenDetallado[tabDia] && resumenDetallado[tabDia].length > 0)
+              ? resumenDetallado[tabDia].map((pedido, i) => (
+                <Grid item xs={12} md={6} lg={4} key={i}>
+                  <Card sx={{ 
+                    borderRadius: 3, 
+                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', 
+                    border: '1px solid #e2e8f0',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column'
+                  }}>
+                    <Box sx={{ bgcolor: pedido.esEmpresa ? '#e0f2fe' : '#f8fafc', p: 2, borderBottom: '1px solid #e2e8f0' }}>
+                      <Typography variant="h6" fontWeight="bold" color="text.primary">
+                        {pedido.esEmpresa ? '🏢' : '👤'} {pedido.nombreCompleto}
+                      </Typography>
+                      {pedido.empresa_nombre && (
+                        <Typography variant="body2" color="primary.main" fontWeight="bold">
+                          Empresa: {pedido.empresa_nombre}
+                        </Typography>
+                      )}
                     </Box>
-                  )}
+                    <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      <Typography variant="body2">📍 <strong>Dirección:</strong> {pedido.direccion}</Typography>
+                      {pedido.subdireccion && <Typography variant="body2">📍 <strong>Alternativa:</strong> {pedido.subdireccion}</Typography>}
+                      <Typography variant="body2">📞 <strong>Tel:</strong> {pedido.telefono}</Typography>
 
-                  <Typography>📦 Estado: {pedido.estado}</Typography>
+                      <Divider sx={{ my: 1 }} />
+                      <Typography variant="subtitle2" fontWeight="bold" color="text.secondary">PLATOS PEDIDOS</Typography>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mb: 1 }}>
+                        {pedido.platos.map((plato, j) => (
+                          <Typography key={j} variant="body2" sx={{ display: 'flex', justifyContent: 'space-between', bgcolor: '#f1f5f9', px: 1, py: 0.5, borderRadius: 1 }}>
+                            <span>🍽 {typeof plato.nombre === 'object' ? JSON.stringify(plato.nombre) : plato.nombre}</span>
+                            <strong>x{typeof plato.cantidad === 'object' ? JSON.stringify(plato.cantidad) : plato.cantidad}</strong>
+                          </Typography>
+                        ))}
+                        {pedido.extras.map((extra, j) => {
+                          const id = extra.nombre?.replace?.(/^ID:/, '') || '';
+                          const nombreMostrado = extraMap[extra.nombre] || extraMap[id] || `Extra ${id}`;
+                          return (
+                            <Typography key={`e${j}`} variant="body2" sx={{ display: 'flex', justifyContent: 'space-between', bgcolor: '#fef3c7', px: 1, py: 0.5, borderRadius: 1 }}>
+                              <span>➕ {nombreMostrado}</span>
+                              <strong>x{extra.cantidad}</strong>
+                            </Typography>
+                          );
+                        })}
+                        {pedido.tartas.map((tarta, j) => (
+                          <Typography key={`t${j}`} variant="body2" sx={{ display: 'flex', justifyContent: 'space-between', bgcolor: '#fce7f3', px: 1, py: 0.5, borderRadius: 1 }}>
+                            <span>🥧 {tarta.nombre}</span>
+                            <strong>x{tarta.cantidad}</strong>
+                          </Typography>
+                        ))}
+                      </Box>
+                      
+                      <Box sx={{ bgcolor: '#f8fafc', p: 1.5, borderRadius: 2, border: '1px solid #e2e8f0', mt: 1 }}>
+                        <Typography variant="caption" fontWeight="bold" color="text.secondary">🚚 DELIVERY ASIGNADO</Typography>
+                        {pedido.delivery?.nombre ? (
+                          <Box sx={{ mt: 1 }}>
+                            <Typography variant="body2" fontWeight="bold">{pedido.delivery.nombre}</Typography>
+                            {pedido.delivery.telefono && <Typography variant="body2" color="text.secondary">{pedido.delivery.telefono}</Typography>}
+                            <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                              <TextField
+                                label="Nombre"
+                                size="small"
+                                value={pedido.delivery?.nombre || ''}
+                                fullWidth
+                                onChange={e => asignarDelivery(pedido.id, { ...pedido.delivery, nombre: e.target.value })}
+                              />
+                              <TextField
+                                label="Teléfono"
+                                size="small"
+                                value={pedido.delivery?.telefono || ''}
+                                fullWidth
+                                onChange={e => asignarDelivery(pedido.id, { ...pedido.delivery, telefono: e.target.value })}
+                              />
+                            </Box>
+                          </Box>
+                        ) : (
+                          <Box sx={{ mt: 1 }}>
+                            <Autocomplete
+                              freeSolo
+                              size="small"
+                              onInputChange={async (e, value) => {
+                                const res = await api.get('/deliveries/search?q=' + value);
+                                setOpcionesDelivery(prev => ({ ...prev, [pedido.id]: res.data }));
+                              }}
+                              onChange={(e, selected) => {
+                                if (!selected) return;
+                                asignarDelivery(pedido.id, selected);
+                              }}
+                              options={opcionesDelivery[pedido.id] || []}
+                              getOptionLabel={(option) => typeof option === 'string' ? option : `${option.name} (${option.email})`}
+                              renderInput={(params) => <TextField {...params} label="Buscar delivery" fullWidth />}
+                            />
+                          </Box>
+                        )}
+                      </Box>
 
-                  <Divider sx={{ my: 1 }} />
-
-                  {pedido.platos.map((plato, j) => (
-                    <Typography key={j}>
-                      🍽 {typeof plato.cantidad === 'object' ? JSON.stringify(plato.cantidad) : plato.cantidad} × {typeof plato.nombre === 'object' ? JSON.stringify(plato.nombre) : plato.nombre}
-                    </Typography>
-                  ))}
-
-                  {pedido.extras.map((extra, j) => {
-                    const id = extra.nombre?.replace?.(/^ID:/, '') || '';
-                    const nombreMostrado = extraMap[extra.nombre] || extraMap[id] || `Extra ${id}`;
-                    return (
-                      <Typography key={`e${j}`}>➕ {extra.cantidad} extra: {nombreMostrado}</Typography>
-                    );
-                  })}
-
-                  {pedido.tartas.map((tarta, j) => (
-                    <Typography key={`t${j}`}>🥧 {tarta.cantidad} tarta: {tarta.nombre}</Typography>
-                  ))}
-
-                  <FormControl fullWidth sx={{ mt: 2 }}>
-                    <InputLabel>Estado del Pedido</InputLabel>
-                    <Select
-                      value={pedido.estado}
-                      label="Estado del Pedido"
-                      onChange={e => cambiarEstadoPedido(pedido.id, e.target.value)}
-                    >
-                      <MenuItem value="pendiente">🟡 Pendiente</MenuItem>
-                      <MenuItem value="preparando">🍳 Preparando</MenuItem>
-                      <MenuItem value="en camino">🚚 En camino</MenuItem>
-                      <MenuItem value="entregado">📦 Entregado</MenuItem>
-                      <MenuItem value="cancelado">❌ Cancelado</MenuItem>
-                    </Select>
-                  </FormControl>
-                </CardContent>
-              </Card>
-            ))
-            : <Typography>No hay pedidos para {tabDia}</Typography>}
+                      <Box sx={{ mt: 'auto', pt: 2 }}>
+                        <FormControl fullWidth size="small">
+                          <InputLabel>Estado de Entrega</InputLabel>
+                          <Select
+                            value={pedido.estado}
+                            label="Estado de Entrega"
+                            onChange={e => cambiarEstadoPedido(pedido.id, e.target.value)}
+                            sx={{
+                              bgcolor: pedido.estado === 'entregado' ? '#dcfce7' : pedido.estado === 'cancelado' ? '#fee2e2' : pedido.estado === 'en camino' ? '#dbeafe' : '#fff',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            <MenuItem value="pendiente">🟡 Pendiente</MenuItem>
+                            <MenuItem value="preparando">🍳 Preparando</MenuItem>
+                            <MenuItem value="en camino">🚚 En camino</MenuItem>
+                            <MenuItem value="entregado">📦 Entregado</MenuItem>
+                            <MenuItem value="cancelado">❌ Cancelado</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))
+              : <Typography sx={{ width: '100%', textAlign: 'center', color: 'text.secondary', mt: 4 }}>No hay pedidos registrados para esta fecha.</Typography>}
+          </Grid>
         </>
       )}
 
