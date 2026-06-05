@@ -243,7 +243,7 @@ const endpointBase = isProd
           
           <Grid container spacing={2}>
             {platosMenu.map((plato, index) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={plato.id || `nuevo-${index}`}>
+              <Grid item xs={12} sm={6} md={4} lg={4} key={plato.id || `nuevo-${index}`}>
                 <motion.div
                   initial={{ opacity: 0, y: 15 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -255,6 +255,8 @@ const endpointBase = isProd
                         <TextField
                           label="Nombre del plato"
                           size="small"
+                          multiline
+                          maxRows={2}
                           value={plato.name}
                           onChange={(e) => handleInputChange(index, 'name', e.target.value)}
                           fullWidth
