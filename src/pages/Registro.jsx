@@ -121,7 +121,7 @@ const Registro = ({ onRegister }) => {
   }, [codigoEmpresa]);
 
   // Misma imagen que usaba la Landing
-  const bgImage = 'https://res.cloudinary.com/dwiga4jg8/image/upload/w_1600,q_auto,f_auto/Fondo_APLICACION_EAR_2_qbxnl7.png';
+  const bgImage = 'https://res.cloudinary.com/dwiga4jg8/image/upload/q_100,f_auto/Fondo_APLICACION_EAR_2_qbxnl7.png';
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
@@ -138,12 +138,6 @@ const Registro = ({ onRegister }) => {
           position: 'relative',
         }}
       >
-        {/* Gradiente suave en la parte baja para transición al form */}
-        <Box sx={{
-          position: 'absolute', bottom: 0, left: 0, right: 0,
-          height: '40%',
-          background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.85))',
-        }} />
       </Box>
 
       {/* ── Formulario abajo en mobile, derecha en desktop ── */}
