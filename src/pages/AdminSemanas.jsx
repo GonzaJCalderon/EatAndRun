@@ -62,7 +62,7 @@ const AdminSemanas = () => {
 
   const handleCrearSemana = async () => {
     try {
-      await api.post('/semana', nuevaSemana);
+      await api.post('/semana', { ...nuevaSemana, cierre: nuevaSemana.fecha_fin });
       setSnackbar({ open: true, message: '✅ Semana creada con éxito', severity: 'success' });
       setModalCrear(false);
       setNuevaSemana({ fecha_inicio: '', fecha_fin: '', cierre: '' });
@@ -185,8 +185,7 @@ const AdminSemanas = () => {
         {semanasDisponibles.filter(s => !s.habilitado).map(semana => (
           <Grid item xs={12} sm={6} md={4} key={semana.id}>
              <Card sx={{ p: 2, opacity: 0.8 }}>
-                <Typography fontWeight="bold">Semana: {semana.semana_inicio?.split('T')[0]} a {semana.semana_fin?.split('T')[0]}</Typography>
-                <Typography variant="body2" color="text.secondary">Cierre: {semana.cierre?.split('T')[0]}</Typography>
+                <Typography variant="h6">Semana del <strong>{semana.fecha_inicio?.split('T')[0]}</strong> al <strong>{semana.fecha_fin?.split('T')[0]}</strong></Typography>
                 <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
                    <Button size="small" variant="contained" color="success" onClick={() => toggleEstadoSemana(semana.id, true)}>Rehabilitar</Button>
                    <Button size="small" variant="outlined" color="error" onClick={() => eliminarSemana(semana.id)}>Eliminar</Button>
@@ -211,7 +210,6 @@ const AdminSemanas = () => {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2, minWidth: 300 }}>
             <TextField label="Fecha Inicio" type="date" value={nuevaSemana.fecha_inicio} onChange={e => setNuevaSemana({...nuevaSemana, fecha_inicio: e.target.value})} InputLabelProps={{ shrink: true }} fullWidth />
             <TextField label="Fecha Fin" type="date" value={nuevaSemana.fecha_fin} onChange={e => setNuevaSemana({...nuevaSemana, fecha_fin: e.target.value})} InputLabelProps={{ shrink: true }} fullWidth />
-            <TextField label="Fecha de Cierre (Límite para pedidos)" type="date" value={nuevaSemana.cierre} onChange={e => setNuevaSemana({...nuevaSemana, cierre: e.target.value})} InputLabelProps={{ shrink: true }} fullWidth />
           </Box>
         </DialogContent>
         <DialogActions>

@@ -16,7 +16,7 @@ const SemanaManage = ({ semana, onGuardar, onToggle, onGuardarDias, onEliminar, 
   };
 
   const guardarFechas = () => {
-    onGuardar(semana.id, { inicio, fin, cierre });
+    onGuardar(semana.id, { inicio, fin, cierre: fin });
   };
 
   const guardarDias = () => {
@@ -41,7 +41,6 @@ const SemanaManage = ({ semana, onGuardar, onToggle, onGuardarDias, onEliminar, 
       boxShadow: isActive ? '0 4px 20px rgba(76, 175, 80, 0.15)' : undefined
     }}>
       <Typography variant="h6">📅 Semana del {inicio} al {fin}</Typography>
-      <Typography>🕒 Cierre: <strong>{cierre}</strong></Typography>
       <Typography>Estado: <strong>{semana.habilitado ? "✅ Habilitada" : "❌ Bloqueada"}</strong></Typography>
       {isActive && (
         <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
@@ -61,12 +60,6 @@ const SemanaManage = ({ semana, onGuardar, onToggle, onGuardarDias, onEliminar, 
           type="date"
           value={fin}
           onChange={(e) => setFin(e.target.value)}
-        />
-        <TextField
-          label="Cierre"
-          type="date"
-          value={cierre}
-          onChange={(e) => setCierre(e.target.value)}
         />
       </Box>
 
