@@ -65,7 +65,21 @@ const diaMap = {
 const combinarItems = (arr1, arr2) => {
   const map = {};
   [...arr1, ...arr2].forEach(item => {
-    map[item.nombre] = (map[item.nombre] || 0) + item.cantidad;
+    let nombreNorm = (item.nombre || '').toString().trim();
+    
+    // Limpieza de errores comunes de tipeo en la base de datos
+    if (nombreNorm.startsWith('tarta-tarta-')) {
+      nombreNorm = nombreNorm.replace('tarta-tarta-', 'tarta-');
+    }
+
+    // Buscamos si ya existe ignorando mayúsculas/minúsculas
+    const existingKey = Object.keys(map).find(k => k.toLowerCase() === nombreNorm.toLowerCase());
+    
+    if (existingKey) {
+      map[existingKey] += item.cantidad;
+    } else {
+      map[nombreNorm] = item.cantidad;
+    }
   });
   return Object.entries(map).map(([nombre, cantidad]) => ({ nombre, cantidad }));
 };
