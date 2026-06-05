@@ -3,30 +3,43 @@ import { Box, Button, Container, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
-import heroImage from '../assets/imgs/landing-welcome.png';
 
 const LandingAuth = () => {
   const navigate = useNavigate();
 
+  const heroImage = 'https://res.cloudinary.com/dwiga4jg8/image/upload/w_1600,q_auto,f_auto/Fondo_APLICACION_EAR_2_qbxnl7.png';
+
+
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        backgroundImage: `url(${heroImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}
-    >
+   <Box
+  sx={{
+    minHeight: '100vh',
+    width: '100%',
+    backgroundImage: `url(${heroImage})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center top',
+    backgroundRepeat: 'no-repeat',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    overflow: 'hidden'
+  }}
+>
+
+      
+
+      {/* Contenido sobre la imagen */}
       <Container
         maxWidth="sm"
         sx={{
+          position: 'relative',
+          zIndex: 1,
           textAlign: 'center',
-          backgroundColor: 'rgba(255,255,255,0.9)',
+          backgroundColor: 'rgba(255, 255, 255, 0.97)',
           borderRadius: 4,
-          p: 5
+          p: { xs: 3, sm: 5 },
+          m: 2
         }}
       >
         <motion.div

@@ -9,7 +9,7 @@ const diasSemana = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
 
 const prettyName = (key) => key?.charAt(0).toUpperCase() + key.slice(1);
 
-const TabsMenuContainer = ({ menuData, selecciones, onSelect }) => {
+const TabsMenuContainer = ({ menuData, selecciones, onSelect, onFinalizarDias }) => {
   const [tabIndex, setTabIndex] = useState(0);
   const [diasDisponibles, setDiasDisponibles] = useState([]);
 
@@ -28,6 +28,21 @@ const TabsMenuContainer = ({ menuData, selecciones, onSelect }) => {
   const platosEspeciales = menuData[diaActual]?.especiales || [];
   const seleccionDia = selecciones[diaActual] || {};
 
+  const avanzarAlSiguienteDia = () => {
+    if (tabIndex < diasDisponibles.length - 1) {
+      setTimeout(() => {
+        setTabIndex(tabIndex + 1);
+      }, 300);
+    } else {
+      // 👇 Cuando ya estamos en el último día y hay selección
+      if (typeof onFinalizarDias === 'function') {
+        setTimeout(() => {
+          onFinalizarDias();
+        }, 400);
+      }
+    }
+  };
+
   const handleSelectCambio = (nuevaSeleccion) => {
     if (typeof onSelect === 'function') {
       const nuevoEstadoCompleto = {
@@ -35,6 +50,14 @@ const TabsMenuContainer = ({ menuData, selecciones, onSelect }) => {
         [diaActual]: nuevaSeleccion
       };
       onSelect(nuevoEstadoCompleto);
+
+      const items = Object.values(nuevaSeleccion || {});
+      const eligioPlatos = items.some(p => (p?.cantidad || 0) > 0);
+      const deseaOmitir = items.some(p => p?.tipo === 'skip');
+
+      if (eligioPlatos || deseaOmitir) {
+        avanzarAlSiguienteDia(); // ✅ usar nueva lógica
+      }
     }
   };
 
@@ -83,5 +106,6 @@ const TabsMenuContainer = ({ menuData, selecciones, onSelect }) => {
     </Box>
   );
 };
+
 
 export default TabsMenuContainer;

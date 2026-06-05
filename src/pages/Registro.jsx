@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSnackbar } from 'notistack';
-import { useNavigate } from 'react-router-dom';
-
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -9,28 +8,34 @@ import {
   MenuItem,
   Paper,
   TextField,
-  Typography
+  Typography,
+  Alert
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import API from '../api/api';
 import registerImage from '../assets/imgs/register-ilustration.png';
 
 const Registro = ({ onRegister }) => {
-const [form, setForm] = useState({
-  nombre: '',
-  apellido: '', 
-  email: '',
-  password: '',
-  role: 'usuario',
-  telefono: '',
-  direccion: '',
-  direccionAlt: '',
-  razonSocial: '',
-  cuit: ''
-});
+  const [searchParams] = useSearchParams();
+  const codigoEmpresa = searchParams.get('empresa');
 
+  const [form, setForm] = useState({
+    nombre: '',
+    apellido: '',
+    email: '',
+    password: '',
+    role: codigoEmpresa ? 'usuario' : 'usuario', // Si viene por invitación, queda como usuario (empleado)
+    telefono: '',
+    direccion: '',
+    direccionAlt: '',
+    razonSocial: '',
+    cuit: ''
+  });
 
   const [loading, setLoading] = useState(false);
+  const [empresaAsignada, setEmpresaAsignada] = useState(null);
+  const { enqueueSnackbar } = useSnackbar();
+  const navigate = useNavigate();
 
   const roles = [
     { value: 'usuario', label: '👤 Usuario' },
@@ -41,63 +46,77 @@ const [form, setForm] = useState({
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const { enqueueSnackbar } = useSnackbar();
-const navigate = useNavigate();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-
- const handleSubmit = async (e) => {
-  e.preventDefault();
-
- if (!form.nombre || !form.apellido || !form.email || !form.password || !form.telefono || !form.direccion) {
-  enqueueSnackbar('❗ Todos los campos personales son obligatorios', { variant: 'warning' });
-  return;
-}
-
-
-  if (form.role === 'empresa' && (!form.razonSocial || !form.cuit)) {
-    enqueueSnackbar('❗ Razón social y CUIT son obligatorios para empresas', { variant: 'warning' });
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-  const res = await API.post('/auth/register', {
-  name: form.nombre,
-  apellido: form.apellido, // 👈 AGREGADO
-  email: form.email,
-  password: form.password,
-  role: form.role,
-  telefono: form.telefono,
-  direccion_principal: form.direccion,
-  direccion_alternativa: form.direccionAlt,
-  empresa: form.role === 'empresa' ? {
-    razonSocial: form.razonSocial,
-    cuit: form.cuit
-  } : null
-});
-
-
-    if (res.data) {
-      localStorage.setItem('eatAndRunUser', JSON.stringify(res.data));
-      enqueueSnackbar('✅ Registro exitoso. Ahora podés iniciar sesión.', { variant: 'success' });
-
-      setTimeout(() => {
-        navigate('/login');
-      }, 1500);
-
-      if (onRegister) onRegister(res.data);
+    if (!form.nombre || !form.apellido || !form.email || !form.password || !form.telefono || !form.direccion) {
+      enqueueSnackbar('❗ Todos los campos personales son obligatorios', { variant: 'warning' });
+      return;
     }
-  } catch (err) {
-    console.error('🔥 Error:', err?.response?.data || err.message);
-    enqueueSnackbar(err?.response?.data?.error || '❌ Error al registrar el usuario', {
-      variant: 'error'
-    });
-  } finally {
-    setLoading(false);
-  }
-};
 
+    if (form.role === 'empresa' && (!form.razonSocial || !form.cuit)) {
+      enqueueSnackbar('❗ Razón social y CUIT son obligatorios para empresas', { variant: 'warning' });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await API.post('/auth/register', {
+        name: form.nombre,
+        apellido: form.apellido,
+        email: form.email,
+        password: form.password,
+        role: form.role,
+        telefono: form.telefono,
+        direccion_principal: form.direccion,
+        direccion_alternativa: form.direccionAlt,
+        empresa: form.role === 'empresa' ? {
+          razonSocial: form.razonSocial,
+          cuit: form.cuit
+        } : null,
+        codigoInvitacion: codigoEmpresa || null
+      });
+
+      if (res.data) {
+        localStorage.setItem('eatAndRunUser', JSON.stringify(res.data));
+        enqueueSnackbar('✅ Registro exitoso. Ahora podés iniciar sesión.', { variant: 'success' });
+
+        setTimeout(() => {
+          navigate('/login');
+        }, 1500);
+
+        if (onRegister) onRegister(res.data);
+      }
+    } catch (err) {
+      console.error('🔥 Error:', err?.response?.data || err.message);
+      enqueueSnackbar(err?.response?.data?.error || '❌ Error al registrar el usuario', {
+        variant: 'error'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchEmpresa = async () => {
+      if (!codigoEmpresa) return;
+
+      try {
+        const res = await API.post('/auth/verificar-codigo', { codigo: codigoEmpresa });
+
+        if (res.data && res.data.nombreEmpresa) {
+          setEmpresaAsignada(res.data.nombreEmpresa);
+        } else {
+          enqueueSnackbar('⚠️ Código inválido o expirado', { variant: 'warning' });
+        }
+      } catch (err) {
+        enqueueSnackbar('❌ No se pudo verificar el código de empresa', { variant: 'error' });
+      }
+    };
+
+    fetchEmpresa();
+  }, [codigoEmpresa]);
 
   return (
     <Grid container component="main" sx={{ height: '100vh' }}>
@@ -130,39 +149,32 @@ const navigate = useNavigate();
             <Typography component="h1" variant="h4" fontWeight="bold" gutterBottom>
               Crear cuenta
             </Typography>
+
+            {empresaAsignada && (
+              <Alert severity="info" sx={{ mt: 1, mb: 2 }}>
+                Te estás registrando como <strong>empleado de {empresaAsignada}</strong>
+              </Alert>
+            )}
           </motion.div>
 
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
-           <TextField
-  label="Nombre"
-  name="nombre"
-  fullWidth
-  required
-  value={form.nombre}
-  onChange={handleChange}
-  sx={{ mb: 2 }}
-/>
-<TextField
-  label="Apellido"
-  name="apellido"
-  fullWidth
-  required
-  value={form.apellido}
-  onChange={handleChange}
-  sx={{ mb: 2 }}
-/>
-
+            <TextField label="Nombre" name="nombre" fullWidth required value={form.nombre} onChange={handleChange} sx={{ mb: 2 }} />
+            <TextField label="Apellido" name="apellido" fullWidth required value={form.apellido} onChange={handleChange} sx={{ mb: 2 }} />
             <TextField label="Email" name="email" type="email" fullWidth required value={form.email} onChange={handleChange} sx={{ mb: 2 }} />
             <TextField label="Contraseña" name="password" type="password" fullWidth required value={form.password} onChange={handleChange} sx={{ mb: 2 }} />
             <TextField label="Teléfono" name="telefono" fullWidth required value={form.telefono} onChange={handleChange} sx={{ mb: 2 }} />
             <TextField label="Dirección principal" name="direccion" fullWidth required value={form.direccion} onChange={handleChange} sx={{ mb: 2 }} />
             <TextField label="Dirección alternativa (opcional)" name="direccionAlt" fullWidth value={form.direccionAlt} onChange={handleChange} sx={{ mb: 2 }} />
 
-            <TextField select label="Tipo de usuario" name="role" value={form.role} onChange={handleChange} fullWidth sx={{ mb: 3 }}>
-              {roles.map((r) => (
-                <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>
-              ))}
-            </TextField>
+            {!codigoEmpresa && (
+              <TextField select label="Tipo de usuario" name="role" value={form.role} onChange={handleChange} fullWidth sx={{ mb: 3 }}>
+                {roles.map((r) => (
+                  <MenuItem key={r.value} value={r.value}>
+                    {r.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+            )}
 
             {form.role === 'empresa' && (
               <>
@@ -171,7 +183,13 @@ const navigate = useNavigate();
               </>
             )}
 
-            <Button type="submit" fullWidth variant="contained" sx={{ mt: 1, backgroundColor: '#68955C', '&:hover': { backgroundColor: '#557d4c' } }} disabled={loading}>
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 1, backgroundColor: '#68955C', '&:hover': { backgroundColor: '#557d4c' } }}
+              disabled={loading}
+            >
               {loading ? 'Registrando...' : 'Registrarse'}
             </Button>
           </Box>

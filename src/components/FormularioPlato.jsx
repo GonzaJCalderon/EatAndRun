@@ -1,68 +1,74 @@
 import React from 'react';
 import {
-  TextField, Button, Box, MenuItem, Select, InputLabel, FormControl, Typography
+  Box,
+  TextField,
+  Button,
+  Typography,
+  CircularProgress
 } from '@mui/material';
-import UploadIcon from '@mui/icons-material/Upload';
 
 const FormularioPlato = ({
-  nombre, setNombre,
-  descripcion, setDescripcion,
-  fecha, setFecha,
-  rol, setRol,
-  imagen, setImagen,
+  nombre,
+  setNombre,
+  descripcion,
+  setDescripcion,
+  fecha,
+  setFecha,
+  imagen,
+  setImagen,
   cargando,
   handleSubmit,
   platoEditando,
   resetFormulario
 }) => {
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
+    <Box
+      component="form"
+      onSubmit={handleSubmit}
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+        p: 3,
+        border: '1px solid #ccc',
+        borderRadius: 2,
+        mt: 2,
+        backgroundColor: '#fafafa'
+      }}
+    >
+      <Typography variant="h6">
+        {platoEditando ? '✏️ Editar plato del día' : '➕ Crear nuevo plato del día'}
+      </Typography>
+
       <TextField
-        label="Nombre del plato"
+        label="🍽️ Nombre del plato"
         value={nombre}
         onChange={(e) => setNombre(e.target.value)}
-        fullWidth
         required
-        sx={{ mb: 2 }}
+        fullWidth
       />
+
       <TextField
-        label="Descripción"
+        label="📝 Descripción (opcional)"
         value={descripcion}
         onChange={(e) => setDescripcion(e.target.value)}
-        fullWidth
         multiline
-        rows={2}
-        sx={{ mb: 2 }}
+        rows={3}
+        fullWidth
       />
+
       <TextField
-        label="Fecha"
+        label="📅 Fecha de entrega"
         type="date"
+        InputLabelProps={{ shrink: true }}
         value={fecha}
         onChange={(e) => setFecha(e.target.value)}
-        fullWidth
         required
-        InputLabelProps={{ shrink: true }}
-        sx={{ mb: 2 }}
+        fullWidth
       />
-      <FormControl fullWidth sx={{ mb: 2 }}>
-        <InputLabel>Para rol</InputLabel>
-        <Select
-          value={rol}
-          label="Para rol"
-          onChange={(e) => setRol(e.target.value)}
-          required
-        >
-          <MenuItem value="usuario">👤 Usuario</MenuItem>
-          <MenuItem value="empresa">🏢 Empresa</MenuItem>
-        </Select>
-      </FormControl>
-      <Button
-        variant="outlined"
-        component="label"
-        startIcon={<UploadIcon />}
-        sx={{ mb: 2 }}
-      >
-        Subir nueva imagen
+
+      <Button variant="outlined" component="label">
+        📤 Subir imagen
         <input
           type="file"
           hidden
@@ -70,17 +76,30 @@ const FormularioPlato = ({
           onChange={(e) => setImagen(e.target.files[0])}
         />
       </Button>
+
       {imagen && (
-        <Typography variant="body2" sx={{ mb: 2 }}>
-          Imagen seleccionada: <strong>{imagen.name}</strong>
+        <Typography variant="body2" color="text.secondary">
+          📎 Imagen seleccionada: {imagen.name}
         </Typography>
       )}
-      <Box sx={{ display: 'flex', gap: 2 }}>
-        <Button type="submit" variant="contained" color="primary" disabled={cargando}>
-          {cargando ? 'Guardando...' : platoEditando ? 'Actualizar' : 'Guardar plato'}
+
+      <Box display="flex" gap={2} mt={2}>
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          disabled={cargando}
+          startIcon={cargando && <CircularProgress size={16} />}
+        >
+          {platoEditando ? 'Actualizar' : 'Crear'}
         </Button>
+
         {platoEditando && (
-          <Button onClick={resetFormulario} variant="outlined" color="secondary">
+          <Button
+            variant="outlined"
+            onClick={resetFormulario}
+            disabled={cargando}
+          >
             Cancelar edición
           </Button>
         )}

@@ -20,8 +20,11 @@ import { useSelector } from 'react-redux';
 import { selectUser, selectToken } from '../store/slices/authSlice';
 import { Select, MenuItem, TextField } from '@mui/material';
 import { Tabs, Tab } from '@mui/material';
+import dayjs from '../utils/day'; // o la ruta relativa que uses
 
-import dayjs from 'dayjs';
+console.log(dayjs().format('dddd')); // "jueves" en español
+
+
 
 
 
@@ -105,13 +108,18 @@ const token = useSelector(selectToken);
 
     fetchMenus();
   }, []);
-
- useEffect(() => {
+useEffect(() => {
   const fetchData = async () => {
     try {
       let query = '';
+      const hoyStr = dayjs().format('YYYY-MM-DD'); // Fecha hoy formato YYYY-MM-DD
+
+      // Solo aplicar query de fecha si NO es hoy
       if (filtroFecha !== 'hoy') {
         query = `?desde=${desdeFecha}&hasta=${hastaFecha}`;
+      } else {
+        // Forzar query igual para pedidos asignados del día
+        query = `?desde=${hoyStr}&hasta=${hoyStr}`;
       }
 
       const asignadosRes = await api.get(`/delivery/my-orders${query}`);
@@ -120,12 +128,18 @@ const token = useSelector(selectToken);
       let asignados = asignadosRes.data;
       let sinAsignar = sinAsignarRes.data;
 
-      // Solo filtramos por día si es "hoy"
-     if (filtroFecha === 'hoy') {
-  // Si querés seguir filtrando sin asignar por contenido del día
-  sinAsignar = filtrarPedidosPorDia(sinAsignar, hoy);
-}
+      if (filtroFecha === 'hoy') {
+        // Filtrar por día lógico (por contenido de menú)
+        sinAsignar = filtrarPedidosPorDia(sinAsignar, hoy);
 
+        // Filtrar por fecha exacta
+        asignados = asignados.filter(p =>
+          dayjs(p.fecha_entrega).isSame(hoyStr, 'day')
+        );
+        sinAsignar = sinAsignar.filter(p =>
+          dayjs(p.fecha_entrega).isSame(hoyStr, 'day')
+        );
+      }
 
       setPedidosAsignados(asignados);
       setPedidosSinAsignar(sinAsignar);
@@ -138,6 +152,7 @@ const token = useSelector(selectToken);
 
   fetchData();
 }, [hoy, filtroFecha, desdeFecha, hastaFecha]);
+
 
 
   const cambiarEstado = async (id, nuevoEstado) => {
@@ -455,9 +470,12 @@ const pedidosCancelados = pedidosAsignados.filter(
               <Typography variant="h6">Pedido #{pedido.id}</Typography>
               <Typography>🧍 Cliente: {pedido.usuario?.nombre}</Typography>
               <Typography>📍 Dirección: {pedido.usuario?.direccion}</Typography>
-              <Typography>
-                📅 Fecha entrega: {new Date(pedido.fecha).toLocaleDateString()}
-              </Typography>
+{dayjs(pedido.fecha_entrega).isSame(dayjs(), 'day') && (
+  <Typography>
+    📅 Fecha de entrega: {dayjs(pedido.fecha_entrega).format('dddd DD/MM/YYYY')}
+  </Typography>
+)}
+
               <Typography>💬 Observaciones: {pedido.observaciones || '—'}</Typography>
 
               <Divider sx={{ my: 2 }} />

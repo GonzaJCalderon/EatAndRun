@@ -8,15 +8,17 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       workbox: {
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024 // Por si querés mantenerlo de respaldo
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024
       }
     })
   ],
+  optimizeDeps: {
+    exclude: ['dayjs/locale/es']
+  },
   build: {
     rollupOptions: {
       output: {
         manualChunks(id) {
-          // 💡 Si es un módulo grande de node_modules, separalo
           if (id.includes('node_modules')) {
             if (id.includes('@mui')) return 'mui';
             if (id.includes('framer-motion')) return 'motion';
@@ -25,6 +27,6 @@ export default defineConfig({
         }
       }
     },
-    chunkSizeWarningLimit: 1500 // ⚠️ Opcional: sube el warning threshold si querés
+    chunkSizeWarningLimit: 1500
   }
 });

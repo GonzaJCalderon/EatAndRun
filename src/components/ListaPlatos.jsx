@@ -5,7 +5,14 @@ import DeleteIcon from '@mui/icons-material/Delete';
 
 const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
 
-const ListaPlatos = ({ platosCreados, busquedaNombre, filtroDesde, filtroHasta, handleEditar, handleEliminar }) => {
+const ListaPlatos = ({
+  platosCreados,
+  busquedaNombre,
+  filtroDesde,
+  filtroHasta,
+  handleEditar,
+  handleEliminar
+}) => {
   const platosAgrupados = useMemo(() => {
     return Array.from(
       platosCreados
@@ -56,7 +63,6 @@ const ListaPlatos = ({ platosCreados, busquedaNombre, filtroDesde, filtroHasta, 
                       <Typography variant="body2" color="text.secondary">
                         {plato.description}
                       </Typography>
-                      <Typography>👥 Rol: {plato.for_role}</Typography>
                     </Grid>
                     <Grid item xs={12} md={3} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                       <Button

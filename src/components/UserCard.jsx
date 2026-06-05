@@ -1,8 +1,9 @@
 import { Box, Typography, Select, MenuItem, IconButton } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import EditIcon from "@mui/icons-material/Edit";
 
-const UserCard = ({ usuario, onVer, onEliminar, onRolChange }) => {
+const UserCard = ({ usuario, onVer, onEliminar, onRolChange, onEditar }) => {
   return (
     <Box
       key={usuario.id}
@@ -32,26 +33,31 @@ const UserCard = ({ usuario, onVer, onEliminar, onRolChange }) => {
           <MenuItem value="empresa">Empresa</MenuItem>
           <MenuItem value="delivery">Delivery</MenuItem>
           <MenuItem value="admin">Admin</MenuItem>
+          <MenuItem value="empleado">Empleado</MenuItem>
+          <MenuItem value="moderador">Moderador</MenuItem> {/* ✅ AÑADIDO */}
         </Select>
 
-       <IconButton
-  onClick={() =>
-    onVer({
-      id: usuario.id,
-      nombre: usuario.nombre,
-      apellido: usuario.apellido,
-      email: usuario.email,
-      rol: usuario.rol,
-      telefono: usuario.telefono,
-      direccion_principal: usuario.direccion_principal,
-      direccion_secundaria: usuario.direccion_secundaria
-    })
-  }
-  color="primary"
->
-  <VisibilityIcon />
-</IconButton>
+        <IconButton
+          onClick={() =>
+            onVer({
+              id: usuario.id,
+              nombre: usuario.nombre,
+              apellido: usuario.apellido,
+              email: usuario.email,
+              rol: usuario.rol,
+              telefono: usuario.telefono,
+              direccion_principal: usuario.direccion_principal,
+              direccion_secundaria: usuario.direccion_secundaria
+            })
+          }
+          color="primary"
+        >
+          <VisibilityIcon />
+        </IconButton>
 
+        <IconButton onClick={() => onEditar(usuario)} color="info">
+          <EditIcon />
+        </IconButton>
 
         <IconButton onClick={() => onEliminar(usuario.id)} color="error">
           <DeleteIcon />

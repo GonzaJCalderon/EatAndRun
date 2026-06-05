@@ -5,17 +5,18 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
+    "build": "npx vite build --mode production",
     "preview": "vite preview"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@fontsource/poppins": "^5.2.6",
     "@hello-pangea/dnd": "^18.0.1",
-    "@mui/icons-material": "^7.0.2",
-    "@mui/material": "^7.0.2",
+    "@mui/icons-material": "^7.2.0",
+    "@mui/lab": "^7.0.0-beta.14",
+    "@mui/material": "^7.2.0",
+    "@mui/x-date-pickers": "^8.9.0",
     "@reduxjs/toolkit": "^2.7.0",
     "axios": "^1.9.0",
     "chart.js": "^4.4.9",
@@ -34,6 +35,7 @@
     "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.22.3",
     "redux-persist": "^6.0.0",
+    "styled-components": "^6.1.19",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

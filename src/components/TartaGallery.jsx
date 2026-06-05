@@ -1,103 +1,107 @@
-// src/components/TartaGallery.jsx
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  Card,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
   Typography,
   Box,
   IconButton,
+  Card,
   Divider
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
-import { motion } from 'framer-motion';
-
-const tartas = [
-  {
-    key: 'jamonqueso',
-    nombre: 'Jamón y Queso',
-    descripcion: 'Clásica y deliciosa.',
-    img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQnYwz0tnYeAVCIY2lgvAT74k4JI_sY7589xg&s'
-  },
-  {
-    key: 'verduras',
-    nombre: 'Verduras',
-    descripcion: 'Colorida, saludable y rica.',
-    img: 'https://media.tycsports.com/files/2024/07/08/739758/tarta-de-verdura_862x485.webp'
-  },
-  {
-    key: 'acelga',
-    nombre: 'Acelga',
-    descripcion: 'La opción verde, fresca y casera.',
-    img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTJMGXstZJ_CRcZ1iQTHd8YjEtv8rPc_UHu0g&s'
-  },
-  {
-    key: 'capresse',
-    nombre: 'Capresse',
-    descripcion: 'Tomate, albahaca y muzza. Simplemente genial.',
-    img: 'https://www.lasaltena.com.ar/wp-content/uploads/2020/03/Tarta-caprese_banner-400x196.png.webp'
-  },
-  {
-    key: 'pollo',
-    nombre: 'Pollo',
-    descripcion: 'Súper sabrosa y bien cargada.',
-    img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSLy8mYRLS32pHUIp_E-TyTPsCCI1LyqxVRug&s'
-  }
-];
-
-
-// 🔁 Mapa para reutilizar el nombre real (para backend, PDF, etc.)
-export const tartaLabelMap = tartas.reduce((acc, tarta) => {
-  acc[tarta.key] = tarta.nombre;
-  return acc;
-}, {});
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import api from '../api/api';
+import { setTartaLabelMap } from '../utils/tartaUtils';
 
 const TartaGallery = ({ seleccionadas = {}, onChange }) => {
-  const handleCantidadChange = (key, cantidad) => {
-    if (cantidad < 0) return;
+  const [tartas, setTartas] = useState([]);
+  const [expanded, setExpanded] = useState(false);
+  const scrollRef = useRef(null); // 👈 ref para scroll manual con flechas
 
-    const actualizadas = {
-      ...seleccionadas,
-      [key]: cantidad
+  useEffect(() => {
+    const fetchTartas = async () => {
+      try {
+        const res = await api.get('/tartas');
+        const data = Array.isArray(res.data) ? res.data : [];
+        setTartas(data);
+        setTartaLabelMap(data);
+
+        console.log(`🥧 Tartas cargadas desde el backend: ${data.length}`, data);
+      } catch (err) {
+        console.error('❌ Error al cargar tartas:', err);
+      }
     };
 
-    onChange?.(actualizadas);
+    fetchTartas();
+  }, []);
+
+  const handleCantidadChange = (key, cantidad) => {
+    if (cantidad < 0) return;
+    onChange({ ...seleccionadas, [key]: cantidad });
   };
 
-  return (
-    <Box sx={{ mt: 4 }}>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        viewport={{ once: true }}
-      >
-       <Typography variant="h6" fontWeight="bold" textAlign="center">
-  🍰 Tartas (8 porciones): $13.500 c/u
-</Typography>
+  const tartasValidas = tartas.filter(t => t.key && t.nombre);
+  console.log("🔎 Todas las tartas:", tartas);
+  console.log("✅ Tartas válidas:", tartasValidas);
 
+  const scrollBy = (offset) => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: offset, behavior: 'smooth' });
+    }
+  };
+
+  if (!tartasValidas.length) return null;
+
+  return (
+    <Accordion
+      expanded={expanded}
+      onChange={() => setExpanded(prev => !prev)}
+      sx={{ mt: 4 }}
+    >
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Typography variant="h6" fontWeight="bold">🥧 Tartas (8 porciones)</Typography>
+      </AccordionSummary>
+
+      <AccordionDetails>
+        {/* Contenedor scroll horizontal */}
         <Box
+          ref={scrollRef}
           sx={{
             display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
+            overflowX: 'auto',
             gap: 2,
-            mt: 3
+            pb: 1,
+            px: 1,
+            scrollSnapType: 'x mandatory',
+            scrollBehavior: 'smooth',
+            '&::-webkit-scrollbar': {
+              height: 8
+            },
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: '#aaa',
+              borderRadius: 4
+            },
+            '&::-webkit-scrollbar-track': {
+              backgroundColor: '#f0f0f0'
+            }
           }}
         >
-          {tartas.map((tarta) => {
+          {tartasValidas.map((tarta) => {
             const cantidad = seleccionadas[tarta.key] || 0;
-
             return (
-              <motion.div key={tarta.key} whileHover={{ scale: 1.03 }}>
-                <Card
-                  sx={{
-                    width: 220,
-                    p: 2,
-                    textAlign: 'center',
-                    borderRadius: 4,
-                    boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
-                  }}
-                >
+              <Box
+                key={tarta.key}
+                sx={{
+                  scrollSnapAlign: 'start',
+                  minWidth: { xs: 220, sm: 240 },
+                  flexShrink: 0
+                }}
+              >
+                <Card sx={{ p: 2, borderRadius: 3, textAlign: 'center' }}>
                   <Box
                     component="img"
                     src={tarta.img}
@@ -106,37 +110,41 @@ const TartaGallery = ({ seleccionadas = {}, onChange }) => {
                       width: '100%',
                       height: 130,
                       objectFit: 'cover',
-                      borderRadius: 3,
+                      borderRadius: 2,
                       mb: 1
                     }}
                   />
-                  <Typography variant="subtitle1" fontWeight="bold">
-                    {tarta.nombre}
-                  </Typography>
+                  <Typography variant="subtitle1" fontWeight="bold">{tarta.nombre}</Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                     {tarta.descripcion}
                   </Typography>
-
                   <Divider sx={{ my: 1 }} />
-
                   <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                     <IconButton onClick={() => handleCantidadChange(tarta.key, cantidad - 1)} size="small">
                       <RemoveIcon />
                     </IconButton>
-                    <Typography variant="body1" sx={{ mx: 2 }}>
-                      {cantidad}
-                    </Typography>
+                    <Typography variant="body1" sx={{ mx: 2 }}>{cantidad}</Typography>
                     <IconButton onClick={() => handleCantidadChange(tarta.key, cantidad + 1)} size="small">
                       <AddIcon />
                     </IconButton>
                   </Box>
                 </Card>
-              </motion.div>
+              </Box>
             );
           })}
         </Box>
-      </motion.div>
-    </Box>
+
+        {/* Flechas de scroll */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+          <IconButton onClick={() => scrollBy(-250)} size="small">
+            <ArrowBackIosNewIcon fontSize="small" />
+          </IconButton>
+          <IconButton onClick={() => scrollBy(250)} size="small">
+            <ArrowForwardIosIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      </AccordionDetails>
+    </Accordion>
   );
 };
 

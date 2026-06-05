@@ -1,28 +1,50 @@
 import React, { useMemo } from 'react';
-import { Typography, Box, Button, Divider } from '@mui/material';
-import { tartaLabelMap } from './TartaGallery';
+import {
+  Typography,
+  Box,
+  Button,
+  Divider,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  InputLabel,
+  CircularProgress
+} from '@mui/material';
+
+import { tartaLabelMap } from '../utils/tartaUtils';
+import CopyText from './CopyText';
+import { usePreciosCompletos } from '../hooks/usePreciosCompletos';
 
 const ResumenFinal = ({
+   loading,
+precios, 
   resumenDias,
-  total,
+  descuento = 0,
   metodoPago,
   observaciones,
   tartasSeleccionadas = {},
-  precios = { plato: 6300, envio: 900, tarta: 13500 },
   extrasDetalle = {},
+  comprobante,
+  onComprobanteChange,
+  onMetodoPagoChange,
   onEditar,
-  onConfirmarFinal
+  onConfirmarFinal,
+  isEmpresa = false,
+  subtotalPlatos = 0,
+  subtotalExtras = 0,
+  subtotalEnvio = 0,
+  subtotalTartas = 0,
+  guardando = false
 }) => {
+
+  if (loading || !precios) {
+    return <Box sx={{ textAlign: 'center', mt: 5 }}><CircularProgress /></Box>;
+  }
+
+  const totalFinal = subtotalPlatos + subtotalExtras + subtotalEnvio + subtotalTartas - descuento;
+
   const tartasMostradas = Object.entries(tartasSeleccionadas).filter(([_, cantidad]) => cantidad > 0);
-  const totalTartas = tartasMostradas.reduce((sum, [_, cant]) => sum + cant, 0);
-  const subtotalTartas = totalTartas * precios.tarta;
 
-  const totalDiasConPlato = resumenDias.filter(({ resumen }) =>
-    resumen && !resumen.startsWith('❌')
-  ).length;
-  const subtotalEnvio = totalDiasConPlato * precios.envio;
-
-  // ✅ Nuevo: usamos useMemo para recalcular correctamente los extras
   const extraList = useMemo(() => {
     return Object.entries(extrasDetalle)
       .flatMap(([dia, extras]) =>
@@ -35,28 +57,26 @@ const ResumenFinal = ({
       );
   }, [extrasDetalle]);
 
-  const subtotalExtras = extraList.reduce((sum, e) => sum + e.precio * e.cantidad, 0);
-  const subtotalPlatos = total - subtotalTartas - subtotalEnvio - subtotalExtras;
-
   return (
     <Box sx={{ mt: 3 }}>
       <Typography variant="h6" gutterBottom>📋 Resumen del Pedido</Typography>
 
-      {resumenDias.map(({ dia, resumen }) => (
-        <Typography key={dia} sx={{ mb: 1 }}>
-          📅 <strong>{dia.charAt(0).toUpperCase() + dia.slice(1)}:</strong> {resumen}
-        </Typography>
+      {resumenDias.map(({ dia, resumen }, idx) => (
+        typeof dia === 'string' && (
+          <Typography key={idx} variant="body2" sx={{ mb: 0.5 }}>
+            📅 <strong>{dia.charAt(0).toUpperCase() + dia.slice(1)}:</strong> {resumen}
+          </Typography>
+        )
       ))}
 
       {tartasMostradas.length > 0 && (
         <>
           <Divider sx={{ my: 2 }} />
-          <Typography variant="subtitle1" gutterBottom>🥧 Tartas seleccionadas</Typography>
+          <Typography variant="subtitle1">🥧 Tartas seleccionadas</Typography>
           {tartasMostradas.map(([tipo, cantidad]) => (
             <Typography key={tipo} sx={{ ml: 2 }}>
-              🥧 {cantidad} x <strong>{tartaLabelMap[tipo] || tipo}</strong> — ${(
-                cantidad * precios.tarta
-              ).toLocaleString('es-AR')}
+              🥧 {cantidad} x <strong>{tartaLabelMap[tipo] || tipo}</strong>
+              {!isEmpresa && ` — $${(cantidad * precios.tarta).toLocaleString('es-AR')}`}
             </Typography>
           ))}
         </>
@@ -65,38 +85,122 @@ const ResumenFinal = ({
       {extraList.length > 0 && (
         <>
           <Divider sx={{ my: 2 }} />
-          <Typography variant="subtitle1" gutterBottom>🧂 Extras</Typography>
+          <Typography variant="subtitle1">🧂 Extras</Typography>
           {extraList.map(({ dia, nombre, cantidad, precio }, i) => (
             <Typography key={i} sx={{ ml: 2 }}>
-              ➕ {cantidad} x <strong>{nombre}</strong> ({dia}) — ${(
-                cantidad * precio
-              ).toLocaleString('es-AR')}
+              ➕ {cantidad} x <strong>{nombre?.charAt(0).toUpperCase() + nombre.slice(1)}</strong> ({dia})
+              {!isEmpresa && ` — $${(cantidad * precio).toLocaleString('es-AR')}`}
             </Typography>
           ))}
         </>
       )}
 
-      <Divider sx={{ my: 2 }} />
+      {!isEmpresa && (
+        <>
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="subtitle1">🧮 Desglose del Total:</Typography>
+          <Typography sx={{ ml: 2 }}>🍽️ Platos: ${subtotalPlatos.toLocaleString('es-AR')}</Typography>
+          <Typography sx={{ ml: 2 }}>🧂 Extras: ${subtotalExtras.toLocaleString('es-AR')}</Typography>
+          <Typography sx={{ ml: 2 }}>🚚 Envío: ${subtotalEnvio.toLocaleString('es-AR')}</Typography>
+          <Typography sx={{ ml: 2 }}>🥧 Tartas: ${subtotalTartas.toLocaleString('es-AR')}</Typography>
 
-      <Typography variant="subtitle1" gutterBottom>🧮 Desglose del Total:</Typography>
-      <Typography sx={{ ml: 2 }}>🍽️ Platos: ${subtotalPlatos.toLocaleString('es-AR')}</Typography>
-      <Typography sx={{ ml: 2 }}>🧂 Extras: ${subtotalExtras.toLocaleString('es-AR')}</Typography>
-      <Typography sx={{ ml: 2 }}>🚚 Envío: ${subtotalEnvio.toLocaleString('es-AR')}</Typography>
-      <Typography sx={{ ml: 2 }}>🥧 Tartas: ${subtotalTartas.toLocaleString('es-AR')}</Typography>
+          {descuento > 0 && (
+            <Typography sx={{ ml: 2, mt: 1, color: 'green', fontWeight: 'bold' }}>
+              🎉 Descuento por superar {precios.umbral_descuento} platos
+            </Typography>
+          )}
 
-      <Divider sx={{ my: 2 }} />
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="h6" sx={{ mt: 2 }}>
+            💰 Total Final: <strong>${totalFinal.toLocaleString('es-AR')}</strong>
+          </Typography>
+        </>
+      )}
 
-      <Typography variant="body1"><strong>Observaciones:</strong> {observaciones || 'Ninguna'}</Typography>
-      <Typography variant="body1" sx={{ mt: 1 }}><strong>Método de pago:</strong> {metodoPago || 'No especificado'}</Typography>
-
-      <Typography variant="h6" sx={{ mt: 2 }}>
-        💰 Total Final: <strong>${total.toLocaleString('es-AR')}</strong>
+      <Typography variant="body1" sx={{ mt: 2 }}>
+        <strong>Observaciones:</strong> {observaciones || 'Ninguna'}
       </Typography>
 
-      <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-        <Button variant="outlined" fullWidth onClick={onEditar}>⬅️ Editar</Button>
-        <Button variant="contained" color="success" fullWidth onClick={onConfirmarFinal}>
-          ✅ Confirmar Pedido
+      <Divider sx={{ my: 3 }} />
+
+      {/* 💳 MÉTODO DE PAGO */}
+      <Typography variant="h6" sx={{ mb: 1 }}>
+        💳 ¿Cómo vas a pagar?
+      </Typography>
+      <RadioGroup value={metodoPago} onChange={(e) => onMetodoPagoChange(e.target.value)} row>
+        <FormControlLabel value="transferencia" control={<Radio />} label="Transferencia" />
+        <FormControlLabel value="efectivo" control={<Radio />} label="Efectivo" />
+      </RadioGroup>
+
+      {metodoPago === 'transferencia' && (
+        <>
+          <Box sx={{ mt: 3 }}>
+            <InputLabel sx={{ mb: 1, fontWeight: 'bold' }}>📎 Subí el comprobante de pago</InputLabel>
+            <Button component="label" variant="outlined" color="success" fullWidth sx={{ mb: 1 }}>
+              Seleccionar archivo
+              <input
+                type="file"
+                hidden
+                accept="image/jpeg,image/png,image/jpg"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file && ['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
+                    onComprobanteChange(file);
+                  } else {
+                    alert('❌ Solo se permiten imágenes JPG o PNG');
+                    onComprobanteChange(null);
+                  }
+                }}
+              />
+            </Button>
+
+            {comprobante && (
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                Archivo cargado: <strong>{comprobante.name}</strong>
+              </Typography>
+            )}
+          </Box>
+
+          <Box
+            sx={{
+              backgroundColor: '#f4f6f8',
+              mt: 3,
+              p: 2,
+              border: '1px dashed #999',
+              borderRadius: 2
+            }}
+          >
+            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+              🏦 Datos para Transferencia
+            </Typography>
+            <Typography variant="body2">Banco: <strong>Santander</strong></Typography>
+            <Typography variant="body2">Tipo de cuenta: <strong>Caja de Ahorro en Pesos</strong></Typography>
+            <Typography variant="body2">Titular: <strong>Molina Guerra Matias Mauricio</strong></Typography>
+            <Typography variant="body2">DNI: <strong>32224452</strong></Typography>
+
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body2">
+                <strong>CBU:</strong> 0720068788000038359572 <CopyText text="0720068788000038359572" />
+              </Typography>
+              <Typography variant="body2"><strong>Alias:</strong> MOLINAGUERRA</Typography>
+            </Box>
+          </Box>
+        </>
+      )}
+
+      {/* ACCIONES */}
+      <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
+        <Button variant="outlined" fullWidth onClick={onEditar} disabled={guardando}>
+          ⬅️ Editar
+        </Button>
+        <Button
+          variant="contained"
+          color="success"
+          fullWidth
+          onClick={onConfirmarFinal}
+          disabled={guardando}
+        >
+          {guardando ? 'Guardando...' : '✅ Confirmar Pedido'}
         </Button>
       </Box>
     </Box>

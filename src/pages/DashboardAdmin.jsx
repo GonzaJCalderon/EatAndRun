@@ -17,6 +17,8 @@ import api from "../api/api";
 import UserCard from "../components/UserCard";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import SemanaManage from "../components/SemanaManage";
+
 
 ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
@@ -35,29 +37,214 @@ const [nuevaFechaInicio, setNuevaFechaInicio] = useState('');
 const [nuevaFechaFin, setNuevaFechaFin] = useState('');
 const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 const [confirmDelete, setConfirmDelete] = useState({ open: false, userId: null });
+const [empresas, setEmpresas] = useState([]);
+const [modalEmpresaAbierto, setModalEmpresaAbierto] = useState(false);
+const [modalCrearUsuario, setModalCrearUsuario] = useState(false);
+const [modalEditar, setModalEditar] = useState(false);
+const [usuarioEditando, setUsuarioEditando] = useState(null);
+
+const [semanasHabilitadas, setSemanasHabilitadas] = useState([]);
+const [semanasDisponibles, setSemanasDisponibles] = useState([]);
+
+const fetchSemanasDisponibles = async () => {
+  try {
+    const res = await api.get("/semana/disponibles");
+    setSemanasDisponibles(res.data.semanas || []);
+  } catch (err) {
+    console.error("❌ Error al obtener semanas disponibles:", err);
+  }
+};
+
+
+
+const fetchSemanasHabilitadas = async () => {
+  try {
+    const res = await api.get('/semana/activas');
+    setSemanasHabilitadas(res.data.semanas || []);
+  } catch (err) {
+    console.error('❌ Error al obtener semanas habilitadas:', err);
+  }
+};
+
+const guardarSemana = async (semanaId, { inicio, fin, cierre }) => {
+  try {
+    await api.put("/semana", {
+      fecha_inicio: inicio,
+      fecha_fin: fin,
+      cierre
+    });
+    fetchSemanasHabilitadas();
+    setSnackbar({ open: true, message: "✅ Semana actualizada", severity: "success" });
+  } catch (err) {
+    console.error("❌ Error al guardar semana:", err);
+    setSnackbar({ open: true, message: "❌ Error al guardar semana", severity: "error" });
+  }
+};
+
+const eliminarSemana = async (semanaId) => {
+  if (!window.confirm('¿Eliminar esta semana? Asegurate que no tenga pedidos.')) return;
+
+  try {
+    await api.delete(`/semana/${semanaId}`);
+    setSnackbar({ open: true, message: '✅ Semana eliminada correctamente', severity: 'success' });
+    fetchSemanasHabilitadas(); // refresca
+  } catch (err) {
+    console.error("❌ Error al eliminar semana:", err.response?.data || err);
+    setSnackbar({ open: true, message: `❌ ${err.response?.data?.error || 'No se pudo eliminar'}`, severity: 'error' });
+  }
+};
+
+
+const guardarDiasSemana = async (semanaId, dias) => {
+  try {
+    await api.put("/semana/dias", { dias_habilitados: dias });
+    fetchSemanasHabilitadas();
+    setSnackbar({ open: true, message: "✅ Días actualizados", severity: "success" });
+  } catch (err) {
+    console.error("❌ Error al guardar días:", err);
+    setSnackbar({ open: true, message: "❌ Error al guardar días", severity: "error" });
+  }
+};
+const toggleEstadoSemana = async (semanaId, nuevoEstado) => {
+  try {
+    const res = await api.put("/semana/habilitar", {
+      id: semanaId,
+      habilitado: nuevoEstado
+    });
+
+    console.log("✅ Backend respondió:", res.data); // <--- importante para ver qué pasó
+
+    fetchSemanasHabilitadas();
+    setSnackbar({
+      open: true,
+      message: nuevoEstado ? "✅ Semana habilitada" : "❌ Semana bloqueada",
+      severity: "success"
+    });
+  } catch (err) {
+    console.error("❌ Error al cambiar estado:", err.response?.data || err);
+    setSnackbar({ open: true, message: "❌ Error al cambiar estado", severity: "error" });
+  }
+};
+
+
+const abrirModalEdicion = (usuario) => {
+  setUsuarioEditando(usuario);
+  setModalEditar(true);
+};
+
+const [nuevoUsuario, setNuevoUsuario] = useState({
+  nombre: '',
+  apellido: '',
+  email: '',
+  password: '',
+  rol: 'usuario'
+});
+
+
+const [diasHabilitados, setDiasHabilitados] = useState({
+  lunes: true,
+  martes: true,
+  miercoles: true,
+  jueves: true,
+  viernes: true
+});
+
+const [nuevaEmpresa, setNuevaEmpresa] = useState({
+  nombre: '',
+  responsable_email: '',
+cuit:''
+});
+
+const handleEditarUsuario = async () => {
+  try {
+    const payload = {
+      name: usuarioEditando.nombre,
+      apellido: usuarioEditando.apellido,
+      email: usuarioEditando.email,
+      telefono: usuarioEditando.telefono,
+      direccion_principal: usuarioEditando.direccion_principal,
+      direccion_alternativa: usuarioEditando.direccion_secundaria
+    };
+
+    await api.put(`/admin/users/${usuarioEditando.id}`, payload);
+
+    if (usuarioEditando.rol) {
+      await api.put(`/admin/users/${usuarioEditando.id}/role`, {
+        rol: usuarioEditando.rol // ✅ aquí está la clave
+      });
+    }
+
+    setSnackbar({ open: true, message: '✅ Usuario actualizado', severity: 'success' });
+    setModalEditar(false);
+    fetchUsuarios(); // 👈 refresca lista
+  } catch (err) {
+    console.error('❌ Error al editar usuario:', err.response?.data || err);
+    setSnackbar({ open: true, message: '❌ Error al editar usuario', severity: 'error' });
+  }
+};
 
 
 
 
+const handleCrearUsuario = async () => {
+  try {
+    await api.post('/admin/users', nuevoUsuario);
+    setSnackbar({ open: true, message: '✅ Usuario creado', severity: 'success' });
+    fetchUsuarios();
+    setModalCrearUsuario(false);
+    setNuevoUsuario({ nombre: '', apellido: '', email: '', password: '', rol: 'usuario' });
+  } catch (err) {
+    console.error('❌ Error al crear usuario:', err);
+    setSnackbar({ open: true, message: '❌ Error al crear usuario', severity: 'error' });
+  }
+};
+
+
+useEffect(() => {
+  fetchSemanasDisponibles();
+}, []);
 
 
 useEffect(() => {
   fetchSemanaActiva();
+  fetchPedidos();
+  fetchUsuarios();
+  fetchEmpresas();
+  fetchSemanasHabilitadas(); // ✅ esto es lo importante
 }, []);
+
 
 const fetchSemanaActiva = async () => {
   try {
     const res = await api.get('/semana/actual');
- setNuevaFechaInicio(res.data.semana_inicio?.split('T')[0] || '');
-setNuevaFechaFin(res.data.semana_fin?.split('T')[0] || '');
 
-setNuevaFechaCierre(res.data.cierre?.split('T')[0] || '');
-setSemanaActiva(res.data);
+    setNuevaFechaInicio(res.data.semana_inicio?.split('T')[0] || '');
+    setNuevaFechaFin(res.data.semana_fin?.split('T')[0] || '');
+    setNuevaFechaCierre(res.data.cierre?.split('T')[0] || '');
+
+    // 🆕 esto es lo importante:
+    setDiasHabilitados(res.data.dias_habilitados || {
+      lunes: true,
+      martes: true,
+      miercoles: true,
+      jueves: true,
+      viernes: true
+    });
+
+   setSemanaActiva({
+  id: res.data.id,
+  fecha_inicio: res.data.semana_inicio,
+  fecha_fin: res.data.semana_fin,
+  cierre: res.data.cierre,
+  habilitado: res.data.habilitado,
+  dias_habilitados: res.data.dias_habilitados
+});
 
   } catch (err) {
     console.error('❌ Error al obtener semana activa:', err);
   }
 };
+
 
 
 
@@ -71,37 +258,120 @@ setSemanaActiva(res.data);
   empresa: 2,
   delivery: 3,
   admin: 4,
-  moderador: 5
+  moderador: 5,
+  empleado: 6
+};
+
+const handleCrearEmpresa = async () => {
+  try {
+    await api.post('/admin/empresas', nuevaEmpresa);
+    setSnackbar({ open: true, message: '✅ Empresa creada correctamente', severity: 'success' });
+    fetchEmpresas();
+    setModalEmpresaAbierto(false);
+    setNuevaEmpresa({ nombre: '', responsable_email: '' });
+  } catch (err) {
+    console.error("❌ Error al crear empresa:", err);
+    setSnackbar({ open: true, message: '❌ Error al crear empresa', severity: 'error' });
+  }
+};
+
+const actualizarDiasHabilitados = async () => {
+  try {
+    await api.put('/semana/dias', { dias_habilitados: diasHabilitados });
+    fetchSemanaActiva();
+    alert('✅ Días habilitados guardados correctamente');
+  } catch (err) {
+    console.error('❌ Error al guardar días habilitados:', err);
+    alert('Error al guardar días habilitados');
+  }
 };
 
 const actualizarFechasSemana = async () => {
+  if (!nuevaFechaInicio || !nuevaFechaFin || !nuevaFechaCierre) {
+    alert('⛔ Todas las fechas son obligatorias');
+    return;
+  }
+
+  if (new Date(nuevaFechaInicio) > new Date(nuevaFechaFin)) {
+    alert('⛔ La fecha de inicio no puede ser posterior a la fecha de fin');
+    return;
+  }
+
   try {
+    console.log('🛰️ Enviando fechas al backend:', {
+      fecha_inicio: nuevaFechaInicio,
+      fecha_fin: nuevaFechaFin,
+      cierre: nuevaFechaCierre
+    });
+
     await api.put('/semana', {
       fecha_inicio: nuevaFechaInicio,
       fecha_fin: nuevaFechaFin,
       cierre: nuevaFechaCierre
     });
 
-    fetchSemanaActiva();
+    const nuevaSemana = await api.get('/semana/actual');
+    console.log('🧾 Semana después de update:', nuevaSemana.data);
+
+    fetchSemanaActiva(); // actualiza UI
     alert('✅ Semana actualizada correctamente');
   } catch (err) {
-    console.error('❌ Error al actualizar fechas de semana:', err);
+    console.error('❌ Error al actualizar fechas de semana:', err.response?.data || err);
     alert('Error al actualizar las fechas de la semana');
   }
 };
 
 
+
+
+
+const fetchEmpresas = async () => {
+  try {
+    const res = await api.get('/admin/empresas');
+    setEmpresas(res.data);
+  } catch (err) {
+    console.error("❌ Error al obtener empresas:", err);
+  }
+};
+
+const eliminarEmpresa = async (empresaId) => {
+  if (!window.confirm('¿Eliminar esta empresa? Esta acción no se puede deshacer.')) return;
+
+  try {
+    await api.delete(`/admin/empresas/${empresaId}`);
+    setSnackbar({ open: true, message: '✅ Empresa eliminada', severity: 'success' });
+    fetchEmpresas(); // refrescamos
+  } catch (err) {
+    console.error('❌ Error al eliminar empresa:', err);
+    setSnackbar({ open: true, message: '❌ Error al eliminar empresa', severity: 'error' });
+  }
+};
+
+
+useEffect(() => {
+  fetchEmpresas();
+}, []);
+
 const toggleHabilitacion = async () => {
   try {
+    if (!semanaActiva?.id) {
+      console.warn("⛔ semanaActiva.id no está disponible");
+      return;
+    }
+
     await api.put('/semana/habilitar', {
+      id: semanaActiva.id,
       habilitado: !semanaActiva.habilitado
     });
+
     fetchSemanaActiva();
     alert(`🔁 Semana ${!semanaActiva.habilitado ? 'habilitada' : 'bloqueada'}`);
   } catch (err) {
     console.error('❌ Error al cambiar estado:', err);
   }
 };
+
+
 
   const fetchPedidos = async () => {
     try {
@@ -348,23 +618,99 @@ const datosGraficoBarras = {
         />
       </Box>
 
-      <Box sx={{ mt: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-        <Button variant="contained" color="primary" onClick={actualizarFechasSemana}>
-          💾 Guardar semana
-        </Button>
+      <Box sx={{ mt: 3 }}>
+  <Typography variant="h6" gutterBottom>
+    🔒 Días habilitados individualmente
+  </Typography>
+
+  <Grid container spacing={1}>
+    {['lunes', 'martes', 'miercoles', 'jueves', 'viernes'].map((dia) => (
+      <Grid item xs={6} sm={4} md={2.4} key={dia}>
         <Button
-          onClick={toggleHabilitacion}
-          variant="contained"
-          color={semanaActiva.habilitado ? 'error' : 'success'}
+          fullWidth
+          variant={diasHabilitados[dia] ? 'contained' : 'outlined'}
+          color={diasHabilitados[dia] ? 'success' : 'error'}
+          onClick={() => setDiasHabilitados(prev => ({
+            ...prev,
+            [dia]: !prev[dia]
+          }))}
         >
-          {semanaActiva.habilitado ? '❌ Bloquear pedidos' : '✅ Habilitar pedidos'}
+          {dia.charAt(0).toUpperCase() + dia.slice(1)}: {diasHabilitados[dia] ? '✅' : '❌'}
         </Button>
-      </Box>
+      </Grid>
+    ))}
+  </Grid>
+</Box>
+
+
+   <Box sx={{ mt: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+  <Button variant="contained" color="primary" onClick={actualizarFechasSemana}>
+    💾 Guardar semana
+  </Button>
+  <Button
+    variant="contained"
+    color="secondary"
+    onClick={actualizarDiasHabilitados}
+  >
+    🗓️ Guardar días habilitados
+  </Button>
+  <Button
+    onClick={toggleHabilitacion}
+    variant="contained"
+    color={semanaActiva.habilitado ? 'error' : 'success'}
+  >
+    {semanaActiva.habilitado ? '❌ Bloquear pedidos' : '✅ Habilitar pedidos'}
+  </Button>
+</Box>
+
     </>
   ) : (
     <Typography>Cargando semana activa...</Typography>
   )}
 </Card>
+<Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
+  🛠️ Otras semanas habilitadas
+</Typography> 
+
+<Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
+  📦 Semanas disponibles para tomar pedidos
+</Typography>
+
+{semanasDisponibles.length > 0 ? (
+  semanasDisponibles.map((semana) => (
+    <Box key={semana.id} sx={{ my: 2, p: 2, border: '1px dashed #ccc', borderRadius: 2 }}>
+      <Typography>
+        Semana: <strong>{semana.semana_inicio}</strong> → <strong>{semana.semana_fin}</strong>
+      </Typography>
+      <Typography>Inicio toma de pedidos: <strong>{semana.inicio_toma_pedidos}</strong></Typography>
+      <Typography>Estado: {semana.habilitado ? '✅ Habilitada' : '❌ Bloqueada'}</Typography>
+      <Typography>Cierre: {new Date(semana.cierre).toLocaleString('es-AR')}</Typography>
+    </Box>
+  ))
+) : (
+  <Typography sx={{ mt: 2 }}>📭 No hay semanas disponibles aún</Typography>
+)}
+
+
+
+{semanasHabilitadas.length > 0 ? (
+  semanasHabilitadas.map((semana) => (
+  <SemanaManage
+  key={semana.id}
+  semana={semana}
+  onGuardar={guardarSemana}
+  onGuardarDias={guardarDiasSemana}
+  onToggle={toggleEstadoSemana}
+  onEliminar={eliminarSemana} // ✅ NUEVO
+/>
+
+  ))
+) : (
+  <Typography variant="body1" sx={{ mt: 2 }}>
+    📭 No hay otras semanas habilitadas actualmente.
+  </Typography>
+)}
+
 
 
       <Grid container spacing={3}>
@@ -406,6 +752,14 @@ const datosGraficoBarras = {
       <Typography variant="h5" sx={{ mt: 6, mb: 2 }}>
         👤 Gestión de Usuarios
       </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+  
+</Box>
+
+     
+
+
+
 
       <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
         <input
@@ -415,6 +769,14 @@ const datosGraficoBarras = {
           onChange={(e) => setBusqueda(e.target.value)}
           style={{ padding: 8, width: '100%', maxWidth: 300, borderRadius: 4, border: '1px solid #ccc' }}
         />
+        <Button
+  variant="contained"
+  color="success"
+  onClick={() => setModalCrearUsuario(true)}
+>
+  ➕ Crear Usuario
+</Button>
+
 
         <Select
           size="small"
@@ -427,6 +789,9 @@ const datosGraficoBarras = {
           <MenuItem value="empresa">Empresa</MenuItem>
           <MenuItem value="delivery">Delivery</MenuItem>
           <MenuItem value="admin">Admin</MenuItem>
+           <MenuItem value="empleado">Empleado</MenuItem> 
+           <MenuItem value="moderador">Moderador</MenuItem>
+
         </Select>
 
         <Button variant="outlined" onClick={exportarUsuariosExcel}>
@@ -439,14 +804,15 @@ const datosGraficoBarras = {
           <Typography>No hay usuarios que coincidan con la búsqueda.</Typography>
         ) : (
           usuariosFiltrados.map((usuario) => (
-          <UserCard
+    <UserCard
   key={usuario.id}
   usuario={usuario}
   onVer={abrirModalUsuario}
-onEliminar={confirmarEliminarUsuario}
-
+  onEliminar={confirmarEliminarUsuario}
   onRolChange={cambiarRol}
+  onEditar={abrirModalEdicion} // ✅ ESTO FALTABA
 />
+
 
           ))
         )}
@@ -475,7 +841,7 @@ onEliminar={confirmarEliminarUsuario}
 </Dialog>
 
       <Box textAlign="center" sx={{ mt: 5 }}>
-        <Button
+        {/* <Button
           variant="contained"
           color="primary"
           startIcon={<HistoryEduIcon />}
@@ -483,7 +849,7 @@ onEliminar={confirmarEliminarUsuario}
           size="large"
         >
           Ver historial de pedidos
-        </Button>
+        </Button> */}
       </Box>
       <Snackbar
   open={snackbar.open}
@@ -511,6 +877,191 @@ onEliminar={confirmarEliminarUsuario}
     <Button onClick={eliminarUsuario} color="error" variant="contained">Eliminar</Button>
   </DialogActions>
 </Dialog>
+<Dialog open={modalCrearUsuario} onClose={() => setModalCrearUsuario(false)}>
+  <DialogTitle>➕ Crear nuevo usuario</DialogTitle>
+  <DialogContent dividers>
+    <TextField
+      label="Nombre"
+      fullWidth
+      value={nuevoUsuario.nombre}
+      onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, nombre: e.target.value })}
+      sx={{ mb: 2 }}
+    />
+    <TextField
+      label="Apellido"
+      fullWidth
+      value={nuevoUsuario.apellido}
+      onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, apellido: e.target.value })}
+      sx={{ mb: 2 }}
+    />
+    <TextField
+      label="Email"
+      fullWidth
+      value={nuevoUsuario.email}
+      onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, email: e.target.value })}
+      sx={{ mb: 2 }}
+    />
+    <TextField
+      label="Contraseña"
+      fullWidth
+      type="password"
+      value={nuevoUsuario.password}
+      onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, password: e.target.value })}
+      sx={{ mb: 2 }}
+    />
+    <Select
+      fullWidth
+      value={nuevoUsuario.rol}
+      onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, rol: e.target.value })}
+    >
+      <MenuItem value="usuario">Usuario</MenuItem>
+      <MenuItem value="empresa">Empresa</MenuItem>
+      <MenuItem value="delivery">Delivery</MenuItem>
+      <MenuItem value="admin">Admin</MenuItem>
+      <MenuItem value="empleado">Empleado</MenuItem>
+      <MenuItem value="moderador">Moderador</MenuItem>
+
+    </Select>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setModalCrearUsuario(false)}>Cancelar</Button>
+    <Button
+      variant="contained"
+      onClick={handleCrearUsuario}
+      disabled={!nuevoUsuario.nombre || !nuevoUsuario.email || !nuevoUsuario.password}
+    >
+      Crear
+    </Button>
+  </DialogActions>
+</Dialog>
+
+<Dialog open={modalEditar} onClose={() => setModalEditar(false)}>
+  <DialogTitle>✏️ Editar Usuario</DialogTitle>
+  <DialogContent dividers>
+    {usuarioEditando ? (
+      <>
+        <TextField
+          label="Nombre"
+          fullWidth
+          sx={{ mb: 2 }}
+          value={usuarioEditando.nombre || ''}
+          onChange={(e) =>
+            setUsuarioEditando((prev) => ({ ...prev, nombre: e.target.value }))
+          }
+        />
+        <TextField
+          label="Apellido"
+          fullWidth
+          sx={{ mb: 2 }}
+          value={usuarioEditando.apellido || ''}
+          onChange={(e) =>
+            setUsuarioEditando((prev) => ({ ...prev, apellido: e.target.value }))
+          }
+        />
+        <TextField
+          label="Email"
+          fullWidth
+          sx={{ mb: 2 }}
+          value={usuarioEditando.email || ''}
+          onChange={(e) =>
+            setUsuarioEditando((prev) => ({ ...prev, email: e.target.value }))
+          }
+        />
+        <TextField
+          label="Teléfono"
+          fullWidth
+          sx={{ mb: 2 }}
+          value={usuarioEditando.telefono || ''}
+          onChange={(e) =>
+            setUsuarioEditando((prev) => ({ ...prev, telefono: e.target.value }))
+          }
+        />
+        <TextField
+          label="Dirección principal"
+          fullWidth
+          sx={{ mb: 2 }}
+          value={usuarioEditando.direccion_principal || ''}
+          onChange={(e) =>
+            setUsuarioEditando((prev) => ({ ...prev, direccion_principal: e.target.value }))
+          }
+        />
+        <TextField
+          label="Dirección secundaria"
+          fullWidth
+          sx={{ mb: 2 }}
+          value={usuarioEditando.direccion_secundaria || ''}
+          onChange={(e) =>
+            setUsuarioEditando((prev) => ({ ...prev, direccion_secundaria: e.target.value }))
+          }
+        />
+<Select
+  fullWidth
+  value={usuarioEditando.rol}
+  onChange={(e) =>
+    setUsuarioEditando((prev) => ({ ...prev, rol: e.target.value }))
+  }
+>
+  <MenuItem value="usuario">Usuario</MenuItem>
+  <MenuItem value="empresa">Empresa</MenuItem>
+  <MenuItem value="delivery">Delivery</MenuItem>
+  <MenuItem value="admin">Admin</MenuItem>
+  <MenuItem value="empleado">Empleado</MenuItem>
+  <MenuItem value="moderador">Moderador</MenuItem> {/* ✅ ¡Este faltaba! */}
+</Select>
+
+      </>
+    ) : (
+      <Typography>Cargando datos del usuario...</Typography>
+    )}
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setModalEditar(false)}>Cancelar</Button>
+    <Button
+      variant="contained"
+      onClick={handleEditarUsuario}
+      disabled={!usuarioEditando?.nombre || !usuarioEditando?.email}
+    >
+      Guardar cambios
+    </Button>
+  </DialogActions>
+</Dialog>
+
+
+
+
+
+{/* <Dialog open={modalEmpresaAbierto} onClose={() => setModalEmpresaAbierto(false)}>
+  <DialogTitle>➕ Crear nueva empresa</DialogTitle>
+  <DialogContent dividers>
+    <TextField
+      label="🏢 Nombre de la empresa"
+      fullWidth
+      sx={{ mb: 2 }}
+      value={nuevaEmpresa.nombre}
+      onChange={(e) => setNuevaEmpresa({ ...nuevaEmpresa, nombre: e.target.value })}
+    />
+    <TextField
+      label="✉️ Email del responsable"
+      fullWidth
+      value={nuevaEmpresa.responsable_email}
+      onChange={(e) => setNuevaEmpresa({ ...nuevaEmpresa, responsable_email: e.target.value })}
+    />
+    <TextField
+  label="CUIT"
+  fullWidth
+  value={nuevaEmpresa.cuit ?? ''} // 👈 esto lo protege
+  onChange={(e) => setNuevaEmpresa({ ...nuevaEmpresa, cuit: e.target.value })}
+/>
+
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setModalEmpresaAbierto(false)}>Cancelar</Button>
+    <Button variant="contained" onClick={handleCrearEmpresa} disabled={!nuevaEmpresa.nombre || !nuevaEmpresa.responsable_email}>
+      Crear
+    </Button>
+  </DialogActions>
+</Dialog> */}
+
 
 
     </Container>

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   Container, Typography, TextField, IconButton, Button,
-  Card, CardContent, Box, Stack, Tabs, Tab,
+  Card, CardContent, Box, Stack,
   Snackbar, Alert, CircularProgress
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -10,111 +10,116 @@ import UploadIcon from '@mui/icons-material/Upload';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { motion } from 'framer-motion';
 
+// 👇 Componente input file reseteable con forwardRef
+const FileInputResetable = React.forwardRef(({ onChange, disabled }, ref) => {
+  const [inputKey, setInputKey] = useState(Date.now());
+
+  React.useImperativeHandle(ref, () => ({
+    reset: () => setInputKey(Date.now())
+  }));
+
+  return (
+    <input
+      key={inputKey}
+      type="file"
+      hidden
+      accept="image/*"
+      onChange={onChange}
+      disabled={disabled}
+      data-testid="file-input"
+    />
+  );
+});
+
 const EditarMenu = () => {
-  const [activeTab, setActiveTab] = useState(0); // 0 = usuario, 1 = empresa
-  const [platosUsuario, setPlatosUsuario] = useState([]);
-  const [platosEmpresa, setPlatosEmpresa] = useState([]);
+  const [platosMenu, setPlatosMenu] = useState([]);
   const [loading, setLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [loadingImagenes, setLoadingImagenes] = useState([]);
-const [semanaActiva, setSemanaActiva] = useState(null);
+  const fileInputRefs = useRef([]); // Para controlar reset de cada input file
 
   const token = localStorage.getItem('authToken');
-
-  const endpointBase = 'https://eatandrun-back-production.up.railway.app/api/fixed';
-
-  const fetchSemanaActiva = async () => {
-  try {
-    const res = await fetch('https://eatandrun-back-production.up.railway.app/api/semana/actual', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const data = await res.json();
-    setSemanaActiva(data);
-  } catch (err) {
-    console.error("❌ Error al obtener semana activa:", err);
-  }
-};
-  
-useEffect(() => {
-  fetchSemanaActiva();
-  fetchPlatosPorRol('usuario');
-  fetchPlatosPorRol('empresa');
-}, []);
+const isProd = window.location.hostname !== 'localhost';
+const endpointBase = isProd
+  ? 'https://eatandrun-back-production.up.railway.app/api/fixed'
+  : 'http://localhost:4000/api/fixed'; // o tu puerto
 
 
- const fetchPlatosPorRol = async (rol) => {
-  try {
-    const res = await fetch(`${endpointBase}/by-role?role=${rol}`, {
-
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Error al obtener menú');
-
-    rol === 'usuario' ? setPlatosUsuario(data) : setPlatosEmpresa(data);
-  } catch (err) {
-    console.error(`❌ Error al cargar menú de ${rol}:`, err);
-    showSnackbar(`❌ Error al cargar menú de ${rol}`, 'error');
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-  const getCurrentMenu = () => activeTab === 0 ? platosUsuario : platosEmpresa;
-  const setCurrentMenu = activeTab === 0 ? setPlatosUsuario : setPlatosEmpresa;
-  const forRole = activeTab === 0 ? 'usuario' : 'empresa';
-
-  const handleInputChange = (index, campo, valor) => {
-    const nuevos = [...getCurrentMenu()];
-    nuevos[index][campo] = valor;
-    setCurrentMenu(nuevos);
+  const fetchMenuCompleto = async () => {
+    try {
+      const res = await fetch(`${endpointBase}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al obtener menú');
+      // Ordenar DESC por fecha (del más nuevo al más antiguo)
+      const ordenados = [...data].sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      );
+      setPlatosMenu(ordenados);
+    } catch (err) {
+      console.error('❌ Error al cargar menú:', err);
+      showSnackbar('❌ Error al cargar menú', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
-const handleImagenChange = async (index, file) => {
-  handleInputChange(index, '_file', file);
+  useEffect(() => {
+    fetchMenuCompleto();
+  }, []);
 
-  const nuevosLoading = [...loadingImagenes];
-  nuevosLoading[index] = true;
-  setLoadingImagenes(nuevosLoading);
+  const handleInputChange = (index, campo, valor) => {
+    const nuevos = [...platosMenu];
+    nuevos[index][campo] = valor;
+    setPlatosMenu(nuevos);
+  };
 
-  const formData = new FormData();
-  formData.append('image', file);
-
-  try {
-    const res = await fetch('https://eatandrun-back-production.up.railway.app/api/upload', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
-      body: formData
-    });
-
-    const data = await res.json();
-    if (data.imageUrl) {
-      handleInputChange(index, 'image_url', data.imageUrl);
+  const handleQuitarImagen = (index) => {
+    handleInputChange(index, 'image_url', '');
+    handleInputChange(index, '_file', null);
+    // Resetear input file
+    if (fileInputRefs.current[index]) {
+      fileInputRefs.current[index].reset();
     }
-  } catch (err) {
-    console.error('❌ Error al subir imagen:', err);
-    showSnackbar('❌ Error al subir imagen', 'error');
-  } finally {
+  };
+
+  const handleImagenChange = async (index, file) => {
+    if (!file) return;
+    handleInputChange(index, '_file', file);
+
     const nuevosLoading = [...loadingImagenes];
-    nuevosLoading[index] = false;
+    nuevosLoading[index] = true;
     setLoadingImagenes(nuevosLoading);
-  }
-};
 
+    const formData = new FormData();
+    formData.append('image', file);
 
+    try {
+      const res = await fetch('https://eatandrun-back-production.up.railway.app/api/images/upload', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData
+      });
 
-const guardarPlato = async (index) => {
-  if (semanaActiva && !semanaActiva.habilitado) {
-  showSnackbar('🚫 La semana está bloqueada. No se pueden guardar cambios.', 'warning');
-  return;
-}
+      const data = await res.json();
+      if (data.imageUrl) {
+        handleInputChange(index, 'image_url', data.imageUrl);
+      } else {
+        showSnackbar('❌ Error al subir imagen', 'error');
+      }
+    } catch (err) {
+      console.error('❌ Error al subir imagen:', err);
+      showSnackbar('❌ Error al subir imagen', 'error');
+    } finally {
+      const nuevosLoading = [...loadingImagenes];
+      nuevosLoading[index] = false;
+      setLoadingImagenes(nuevosLoading);
+    }
+  };
 
-  const menu = getCurrentMenu();
-  const plato = menu[index];
+  const guardarPlato = async (index) => {
+  const plato = platosMenu[index];
   const isNew = !plato.id;
 
   try {
@@ -122,10 +127,16 @@ const guardarPlato = async (index) => {
     body.append('name', plato.name);
     body.append('description', plato.description || '');
     body.append('price', plato.price || 0);
-    body.append('for_role', forRole);
+    body.append('for_role', JSON.stringify(['usuario', 'empresa', 'empleado', 'admin']));
 
     if (plato.image_url) {
-      body.append('image_url', plato.image_url); // imagen ya subida
+      body.append('image_url', plato.image_url);
+    }
+
+    // LOG: Mostrar todo lo que se manda en el FormData
+    console.log('🟢 GUARDAR PLATO: Nuevo?', isNew);
+    for (let [key, value] of body.entries()) {
+      console.log('📦 FormData:', key, value);
     }
 
     const res = await fetch(
@@ -134,17 +145,23 @@ const guardarPlato = async (index) => {
         method: isNew ? 'POST' : 'PUT',
         headers: {
           Authorization: `Bearer ${token}`
-          // No agregar Content-Type si usás FormData
         },
         body
       }
     );
 
+    // LOG: Mostrar response
+    console.log('🔵 [RESPONSE guardarPlato]', res);
+
     const data = await res.json();
+
+    // LOG: Mostrar data del backend (respuesta JSON)
+    console.log('🟡 [RESPONSE BODY guardarPlato]', data);
+
     if (!res.ok) throw new Error(data.error || 'Error al guardar');
 
     showSnackbar(isNew ? '✅ Plato creado' : '✅ Plato actualizado');
-    fetchPlatosPorRol(forRole);
+    fetchMenuCompleto();
   } catch (err) {
     console.error('❌ Error al guardar plato:', err);
     showSnackbar('❌ Error al guardar', 'error');
@@ -152,20 +169,13 @@ const guardarPlato = async (index) => {
 };
 
 
-
   const eliminarPlato = async (index) => {
-    if (semanaActiva && !semanaActiva.habilitado) {
-  showSnackbar('🚫 La semana está bloqueada. No se pueden eliminar platos.', 'warning');
-  return;
-}
-
-    const menu = getCurrentMenu();
-    const id = menu[index].id;
+    const id = platosMenu[index]?.id;
 
     if (!id) {
-      const nuevos = [...menu];
+      const nuevos = [...platosMenu];
       nuevos.splice(index, 1);
-      setCurrentMenu(nuevos);
+      setPlatosMenu(nuevos);
       return;
     }
 
@@ -180,18 +190,16 @@ const guardarPlato = async (index) => {
       if (!res.ok) throw new Error('No se pudo eliminar');
 
       showSnackbar('🗑️ Plato eliminado');
-      fetchPlatosPorRol(forRole);
+      fetchMenuCompleto();
     } catch (err) {
       console.error('❌ Error al eliminar:', err);
       showSnackbar('❌ Error al eliminar el plato', 'error');
     }
   };
 
+  // Crea un plato vacío y lo pone al principio del array
   const agregarPlato = () => {
-    setCurrentMenu([
-      ...getCurrentMenu(),
-      { name: '', description: '', price: '', image_url: '' }
-    ]);
+    setPlatosMenu(prev => [{ name: '', description: '', price: '', image_url: '' }, ...prev]);
   };
 
   const showSnackbar = (message, severity = 'success') => {
@@ -218,25 +226,24 @@ const guardarPlato = async (index) => {
         🍽️ Editar Menú Fijo
       </Typography>
 
-      <Tabs
-        value={activeTab}
-        onChange={(e, newIndex) => setActiveTab(newIndex)}
-        centered
-        sx={{ mb: 4 }}
-      >
-        <Tab label="👤 Usuario" />
-        <Tab label="🏢 Empresa" />
-      </Tabs>
-
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
           <CircularProgress />
         </Box>
       ) : (
         <>
-          {getCurrentMenu().map((plato, index) => (
+          <Button
+            variant="outlined"
+
+            onClick={agregarPlato}
+            fullWidth
+            sx={{ mb: 2 }}
+          >
+            ➕ Agregar plato
+          </Button>
+          {platosMenu.map((plato, index) => (
             <motion.div
-              key={index}
+              key={plato.id || `nuevo-${index}`}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
@@ -263,27 +270,37 @@ const guardarPlato = async (index) => {
                       onChange={(e) => handleInputChange(index, 'price', e.target.value)}
                       fullWidth
                     />
+
                     {plato.image_url && (
-                      <img
-                        src={plato.image_url}
-                        alt="plato"
-                        style={{ width: 120, height: 120, borderRadius: 8 }}
-                      />
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <img
+                          src={plato.image_url}
+                          alt="plato"
+                          style={{ width: 120, height: 120, borderRadius: 8 }}
+                        />
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          onClick={() => handleQuitarImagen(index)}
+                        >
+                          ❌ Quitar imagen
+                        </Button>
+                      </Box>
                     )}
+
                     <Button
-  variant="outlined"
-  component="label"
-  startIcon={loadingImagenes[index] ? <CircularProgress size={20} /> : <UploadIcon />}
-  disabled={loadingImagenes[index]}
->
-  {loadingImagenes[index] ? 'Subiendo...' : 'Subir Imagen'}
-  <input
-    type="file"
-    hidden
-    accept="image/*"
-    onChange={(e) => handleImagenChange(index, e.target.files[0])}
-  />
-</Button>
+                      variant="outlined"
+                      component="label"
+                      startIcon={loadingImagenes[index] ? <CircularProgress size={20} /> : <UploadIcon />}
+                      disabled={loadingImagenes[index]}
+                    >
+                      {loadingImagenes[index] ? 'Subiendo...' : 'Subir Imagen'}
+                      <FileInputResetable
+                        ref={el => (fileInputRefs.current[index] = el)}
+                        onChange={e => handleImagenChange(index, e.target.files[0])}
+                        disabled={loadingImagenes[index]}
+                      />
+                    </Button>
 
                     <Box display="flex" justifyContent="space-between">
                       <Button
@@ -293,10 +310,7 @@ const guardarPlato = async (index) => {
                       >
                         💾 Guardar
                       </Button>
-                      <IconButton
-                        onClick={() => eliminarPlato(index)}
-                        color="error"
-                      >
+                      <IconButton onClick={() => eliminarPlato(index)} color="error">
                         <DeleteIcon />
                       </IconButton>
                     </Box>
@@ -305,15 +319,6 @@ const guardarPlato = async (index) => {
               </Card>
             </motion.div>
           ))}
-
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={agregarPlato}
-            fullWidth
-          >
-            ➕ Agregar plato
-          </Button>
         </>
       )}
 

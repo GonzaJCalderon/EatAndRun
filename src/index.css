@@ -33,10 +33,13 @@ button {
 
 
 html, body {
-  width: 100%;
-  box-sizing: border-box;
-  overflow-x: auto; /* ✅ ahora sí deja que aparezca el scroll horizontal cuando es necesario */
+  height: 100%;
+  min-height: 100vh;
+  overflow-x: auto;
+  overflow-y: auto; /* ✅ importante */
+  scroll-padding-top: 90px;
 }
+
 
 /* Mostrar barra de scroll más estilizada si querés */
 ::-webkit-scrollbar {
