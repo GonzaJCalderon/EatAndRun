@@ -87,12 +87,8 @@ pedidos.forEach(p => {
 
               <TableCell>
                 {Object.entries(platos).map(([nombrePlato, cantidad]) => {
-                  // Transform ID:24 into "Wok de Pollo"
-                  let nombreMostrar = nombrePlato;
-                  if (nombrePlato.startsWith('ID:')) {
-                    const id = nombrePlato.replace('ID:', '');
-                    nombreMostrar = mapaPlatos[id] || nombrePlato;
-                  }
+                  // Transform ID:24 into "Wok de Pollo" usando el mapa directamente
+                  const nombreMostrar = mapaPlatos[nombrePlato] || nombrePlato;
 
                   return (
                     <Box key={nombrePlato} sx={{ mb: 1 }}>
