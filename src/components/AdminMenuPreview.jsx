@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import {
   Box, Typography, Grid, Card, CardContent, CardMedia,
-  Divider, Button, Accordion, AccordionSummary, AccordionDetails
+  Button, IconButton, Tooltip
 } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -55,17 +56,26 @@ const AdminMenuPreview = () => {
     fetchMenus();
   }, []);
 
+  const [fechasSemana, setFechasSemana] = useState({ lunes: '', martes: '', miercoles: '', jueves: '', viernes: '' });
+
   const agruparPorDia = (platos) => {
     const agrupado = { lunes: [], martes: [], miercoles: [], jueves: [], viernes: [] };
+    const fechas = { lunes: '', martes: '', miercoles: '', jueves: '', viernes: '' };
 
     platos.forEach(p => {
-      const fecha = new Date(p.date);
-      const dia = fecha.getDay();
+      const fecha = dayjs(p.date).add(1, 'day'); // Fix UTC offset si viene con 'Z'
+      const dia = fecha.day();
       const map = { 1: 'lunes', 2: 'martes', 3: 'miercoles', 4: 'jueves', 5: 'viernes' };
       const diaTexto = map[dia];
-      if (diaTexto) agrupado[diaTexto].push(p);
+      if (diaTexto) {
+        agrupado[diaTexto].push(p);
+        if (!fechas[diaTexto]) {
+          fechas[diaTexto] = fecha.format('D [de] MMMM'); // ej: "21 de Octubre"
+        }
+      }
     });
 
+    setFechasSemana(fechas);
     return agrupado;
   };
 
@@ -76,6 +86,37 @@ const AdminMenuPreview = () => {
   );
 
   const renderPlatoCompacto = (plato) => (
+    <Grid item xs={12} sm={6} md={4} lg={3} key={plato.id || plato.name}>
+      <Card sx={{ 
+        display: 'flex', 
+        alignItems: 'center',
+        p: 1,
+        borderRadius: 2, 
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        bgcolor: '#fff',
+        height: '100%'
+      }}>
+        {plato.image_url && (
+          <CardMedia
+            component="img"
+            sx={{ width: 60, height: 60, borderRadius: 1, objectFit: 'cover', mr: 1.5 }}
+            image={plato.image_url}
+            alt={plato.name || plato.nombre}
+          />
+        )}
+        <Box>
+          <Typography variant="subtitle2" fontWeight="bold" sx={{ lineHeight: 1.1 }}>
+            {plato.name || plato.nombre}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            {plato.description || plato.descripcion}
+          </Typography>
+        </Box>
+      </Card>
+    </Grid>
+  );
+
+  const renderEspecialColumna = (plato) => (
     <Card sx={{ 
       display: 'flex', 
       alignItems: 'center',
@@ -84,21 +125,12 @@ const AdminMenuPreview = () => {
       borderRadius: 2, 
       boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
       bgcolor: '#fff',
-      minWidth: 260
     }} key={plato.id || plato.name}>
-      {plato.image_url && (
-        <CardMedia
-          component="img"
-          sx={{ width: 60, height: 60, borderRadius: 1, objectFit: 'cover', mr: 1.5 }}
-          image={plato.image_url}
-          alt={plato.name || plato.nombre}
-        />
-      )}
       <Box>
         <Typography variant="subtitle2" fontWeight="bold" sx={{ lineHeight: 1.1 }}>
           {plato.name || plato.nombre}
         </Typography>
-        <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 180, display: 'block' }}>
+        <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 220, display: 'block' }}>
           {plato.description || plato.descripcion}
         </Typography>
       </Box>
@@ -106,33 +138,34 @@ const AdminMenuPreview = () => {
   );
 
   const renderTarta = (tarta, idx) => (
-    <Card sx={{ 
-      display: 'flex', 
-      alignItems: 'center',
-      mb: 1.5, 
-      p: 1,
-      borderRadius: 2, 
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-      bgcolor: '#fff',
-      minWidth: 260
-    }} key={idx}>
-      {tarta.img && (
-        <CardMedia
-          component="img"
-          sx={{ width: 60, height: 60, borderRadius: 1, objectFit: 'cover', mr: 1.5 }}
-          image={tarta.img}
-          alt={tarta.nombre}
-        />
-      )}
-      <Box>
-        <Typography variant="subtitle2" fontWeight="bold" sx={{ lineHeight: 1.1 }}>
-          {tarta.nombre}
-        </Typography>
-        <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 180, display: 'block' }}>
-          {tarta.descripcion || '—'}
-        </Typography>
-      </Box>
-    </Card>
+    <Grid item xs={12} sm={6} md={4} lg={3} key={idx}>
+      <Card sx={{ 
+        display: 'flex', 
+        alignItems: 'center',
+        p: 1,
+        borderRadius: 2, 
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        bgcolor: '#fff',
+        height: '100%'
+      }}>
+        {tarta.img && (
+          <CardMedia
+            component="img"
+            sx={{ width: 60, height: 60, borderRadius: 1, objectFit: 'cover', mr: 1.5 }}
+            image={tarta.img}
+            alt={tarta.nombre}
+          />
+        )}
+        <Box>
+          <Typography variant="subtitle2" fontWeight="bold" sx={{ lineHeight: 1.1 }}>
+            {tarta.nombre}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            {tarta.descripcion || '—'}
+          </Typography>
+        </Box>
+      </Card>
+    </Grid>
   );
 
 
@@ -181,18 +214,29 @@ const AdminMenuPreview = () => {
 
       {/* Menú Fijo Global */}
       <Box sx={{ mb: 5, p: 3, bgcolor: '#f8fafc', borderRadius: 3 }}>
-        <Typography variant="h5" color="primary.main" fontWeight="bold" sx={{ mb: 2 }}>
-          🍽️ Menú Fijo (Disponible de Lunes a Viernes)
-        </Typography>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-          {menuFijo.map(renderPlatoCompacto)}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h5" color="primary.main" fontWeight="bold">
+            🍽️ Menú Fijo (Disponible de Lunes a Viernes)
+          </Typography>
+          <Button variant="contained" size="small" startIcon={<EditIcon />} onClick={() => window.location.href = '/admin/editar-menu'}>
+            Editar Menú Fijo
+          </Button>
         </Box>
+        <Grid container spacing={2}>
+          {menuFijo.map(renderPlatoCompacto)}
+        </Grid>
       </Box>
 
       {/* Menú Especial por Días */}
-      <Typography variant="h5" color="secondary.main" fontWeight="bold" sx={{ mb: 2 }}>
-        ⭐ Especiales por Día
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h5" color="secondary.main" fontWeight="bold">
+          ⭐ Especiales por Día
+        </Typography>
+        <Button variant="contained" color="secondary" size="small" startIcon={<EditIcon />} onClick={() => window.location.href = '/admin/editar-platos'}>
+          Editar Especiales Semanales
+        </Button>
+      </Box>
+      
       <Box sx={{ 
         display: 'flex', 
         gap: 2, 
@@ -213,16 +257,19 @@ const AdminMenuPreview = () => {
             flexDirection: 'column',
             border: '1px solid #fde68a'
           }}>
-            <Typography variant="h6" align="center" fontWeight="bold" sx={{ mb: 2, textTransform: 'capitalize', color: '#b45309' }}>
+            <Typography variant="h6" align="center" fontWeight="bold" sx={{ textTransform: 'capitalize', color: '#b45309', mb: 0.5 }}>
               📅 {dia}
+            </Typography>
+            <Typography variant="caption" align="center" sx={{ display: 'block', mb: 2, color: '#92400e', fontWeight: 'bold' }}>
+              {fechasSemana[dia] || 'Sin fecha asignada'}
             </Typography>
 
             <Box>
               {(menuEspecialPorDia[dia] && menuEspecialPorDia[dia].length > 0) ? (
-                menuEspecialPorDia[dia].map(renderPlatoCompacto)
+                menuEspecialPorDia[dia].map(renderEspecialColumna)
               ) : (
-                <Typography variant="body2" color="text.secondary" align="center">
-                  No hay especiales para este día
+                <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 2, fontStyle: 'italic' }}>
+                  No hay especiales cargados
                 </Typography>
               )}
             </Box>
@@ -232,12 +279,17 @@ const AdminMenuPreview = () => {
 
       {/* Tartas Globales */}
       <Box sx={{ mt: 5, p: 3, bgcolor: '#fff1f2', borderRadius: 3, border: '1px solid #ffe4e6' }}>
-        <Typography variant="h5" fontWeight="bold" color="#be123c" sx={{ mb: 2 }}>
-          🥧 Tartas (Disponibles todos los días)
-        </Typography>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-          {tartasUnicas.map(renderTarta)}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h5" fontWeight="bold" color="#be123c">
+            🥧 Tartas (Disponibles todos los días)
+          </Typography>
+          <Button variant="contained" color="error" size="small" startIcon={<EditIcon />} onClick={() => window.location.href = '/admin/editar-tartas'}>
+            Editar Tartas
+          </Button>
         </Box>
+        <Grid container spacing={2}>
+          {tartasUnicas.map(renderTarta)}
+        </Grid>
       </Box>
     </Box>
   );
