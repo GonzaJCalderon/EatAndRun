@@ -98,6 +98,8 @@ useEffect(() => {
     <Box sx={{ width: '100%', mt: 2 }}>
       {diasSemana.map((dia) => {
         const estaHabilitado = diasHabilitados?.[dia] === true;
+        if (!estaHabilitado) return null;
+
         const diaData = menuData?.[dia] || {};
 
         // 🧠 APLICAMOS ORDENAMIENTO
@@ -137,11 +139,6 @@ useEffect(() => {
             </AccordionSummary>
 
             <AccordionDetails>
-              {!estaHabilitado ? (
-                <Alert severity="warning" sx={{ mb: 2 }}>
-                  🚫 El día {prettyName(dia)} está deshabilitado para pedidos.
-                </Alert>
-              ) : (
                 <>
                   {platosFijos.length === 0 && platosEspeciales.length === 0 ? (
                     <Typography color="text.secondary" sx={{ mb: 2 }}>
@@ -199,7 +196,6 @@ useEffect(() => {
 
                   )}
                 </>
-              )}
             </AccordionDetails>
           </Accordion>
         );

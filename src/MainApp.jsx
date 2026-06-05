@@ -608,15 +608,6 @@ return (
                 <strong>{new Date(semanaActiva.semana_inicio).toLocaleDateString('es-AR')}</strong> al{' '}
                 <strong>{new Date(semanaActiva.semana_fin).toLocaleDateString('es-AR')}</strong>
               </Typography>
-
-              {/* DÍAS BLOQUEADOS */}
-              {Object.entries(semanaActiva.dias_habilitados)
-                .filter(([_, habilitado]) => !habilitado)
-                .map(([dia]) => (
-                  <Typography key={dia} variant="body2" color="error" sx={{ mb: 1 }}>
-                    🚫 El día {dia.charAt(0).toUpperCase() + dia.slice(1)} está deshabilitado para pedidos.
-                  </Typography>
-                ))}
             </>
           )}
 
