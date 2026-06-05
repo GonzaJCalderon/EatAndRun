@@ -132,7 +132,7 @@ const ModalEdicionPedido = ({ open, onClose, pedido, mapaPlatos, platosDelDia = 
                     label="Día/Tipo"
                   >
                     {DIAS_SEMANA.map(d => <MenuItem key={d} value={d}>{getDiaLabel(d)}</MenuItem>)}
-                    <MenuItem value="tartas">TARTA SEMANAL</MenuItem>
+                    {item.dia === 'tartas' && <MenuItem value="tartas">TARTA SEMANAL</MenuItem>}
                   </Select>
                 </FormControl>
               </Grid>
@@ -147,7 +147,7 @@ const ModalEdicionPedido = ({ open, onClose, pedido, mapaPlatos, platosDelDia = 
                     <MenuItem value="fijo">Plato Fijo</MenuItem>
                     <MenuItem value="daily">Plato del Día</MenuItem>
                     <MenuItem value="extra">Extra</MenuItem>
-                    <MenuItem value="tarta">Tarta</MenuItem>
+                    {item.type === 'tarta' && <MenuItem value="tarta">Tarta</MenuItem>}
                   </Select>
                 </FormControl>
               </Grid>
