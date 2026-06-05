@@ -86,50 +86,36 @@ const EditarPrecios = () => {
       </Button>
 
       <Typography variant="h4" gutterBottom>
-        💰 Editar Precios
+        ⚙️ Configuración Global de Precios
       </Typography>
 
-      <Typography variant="h6" sx={{ mt: 3 }}>
-        ⚙️ Configuración de Descuentos
-      </Typography>
-
-      <Box sx={{ mb: 2 }}>
-        <TextField
-          fullWidth
-          label="Umbral para Descuento (mín. platos)"
-          type="number"
-          value={preciosBase.umbral_descuento}
-          onChange={(e) => handleBaseChange('umbral_descuento', e.target.value)}
-        />
-      </Box>
-
-      <Box sx={{ mb: 3 }}>
-        <TextField
-          fullWidth
-          label="Descuento por Plato ($)"
-          type="number"
-          value={preciosBase.descuento_por_plato}
-          onChange={(e) => handleBaseChange('descuento_por_plato', e.target.value)}
-        />
-      </Box>
-
-      <Typography variant="h6" sx={{ mt: 3 }}>
-        💸 Precios Base
-      </Typography>
-
-      {Object.entries(preciosBase)
-        .filter(([key]) => !['descuento_por_plato', 'umbral_descuento'].includes(key))
-        .map(([key, value]) => (
-          <Box key={key} sx={{ mb: 2 }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 4, mb: 4 }}>
+        {[
+          'plato',
+          'envio',
+          'tarta',
+          'postre',
+          'ensalada',
+          'proteina',
+          'descuento_por_plato',
+          'umbral_descuento'
+        ].map((key) => {
+          if (preciosBase[key] === undefined) return null;
+          return (
             <TextField
-              fullWidth
-              label={key.charAt(0).toUpperCase() + key.slice(1)}
+              key={key}
+              label={key.replace(/_/g, ' ').toUpperCase()}
               type="number"
-              value={value}
+              value={preciosBase[key]}
               onChange={(e) => handleBaseChange(key, e.target.value)}
+              sx={{ minWidth: 180 }}
             />
-          </Box>
-        ))}
+          );
+        })}
+        <Button variant="contained" color="success" onClick={guardar} sx={{ alignSelf: 'center', height: '56px' }}>
+          Guardar Precios
+        </Button>
+      </Box>
 
       <Divider sx={{ my: 4 }} />
 
@@ -137,27 +123,18 @@ const EditarPrecios = () => {
         🥧 Precios por Tarta
       </Typography>
 
-      {Object.entries(preciosTarta).map(([key, precio]) => (
-        <Box key={key} sx={{ mb: 2 }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 2 }}>
+        {Object.entries(preciosTarta).map(([key, precio]) => (
           <TextField
-            fullWidth
-            label={`Tarta: ${key}`}
+            key={key}
+            label={`TARTA: ${key.toUpperCase()}`}
             type="number"
             value={precio}
             onChange={(e) => handleTartaChange(key, e.target.value)}
+            sx={{ minWidth: 180 }}
           />
-        </Box>
-      ))}
-
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={guardar}
-        fullWidth
-        sx={{ mt: 3 }}
-      >
-        Guardar cambios
-      </Button>
+        ))}
+      </Box>
     </Container>
   );
 };

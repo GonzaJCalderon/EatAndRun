@@ -49,12 +49,9 @@ const AdminTartas = () => {
   const [subiendo, setSubiendo] = useState(false);
   const isMobile = useMediaQuery('(max-width:600px)');
 
-  const [formPrecios, setFormPrecios] = useState(null);
-  const [guardandoPrecios, setGuardandoPrecios] = useState(false);
 
   useEffect(() => {
     fetchTartas();
-    fetchPrecios();
   }, []);
 
   const fetchTartas = async () => {
@@ -63,36 +60,6 @@ const AdminTartas = () => {
       setTartas(res.data);
     } catch (err) {
       console.error('Error cargando tartas:', err);
-    }
-  };
-
-  const fetchPrecios = async () => {
-    try {
-      const res = await api.get('/config/precios');
-      setFormPrecios(res.data);
-    } catch (err) {
-      console.error('Error cargando precios:', err);
-    }
-  };
-
-  const handlePreciosChange = (e) => {
-    const { name, value } = e.target;
-    setFormPrecios((prev) => ({
-      ...prev,
-      [name]: Number(value)
-    }));
-  };
-
-  const guardarPrecios = async () => {
-    setGuardandoPrecios(true);
-    try {
-      await api.put('/config/precios', formPrecios);
-      alert('✅ Precios actualizados correctamente');
-    } catch (err) {
-      console.error('Error al guardar precios:', err);
-      alert('❌ Error al guardar precios');
-    } finally {
-      setGuardandoPrecios(false);
     }
   };
 
@@ -199,40 +166,6 @@ const AdminTartas = () => {
       <Typography variant="h4" gutterBottom textAlign={isMobile ? 'center' : 'left'}>
         🥧 Editor de Tartas
       </Typography>
-
-      {/* FORMULARIO DE PRECIOS */}
-      <Typography variant="h5" sx={{ mt: 4 }}>⚙️ Configuración Global de Precios</Typography>
-      {formPrecios ? (
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 2 }}>
-          {[
-            'plato',
-            'envio',
-            'tarta',
-            'postre',
-            'ensalada',
-            'proteina',
-            'descuento_por_plato',
-            'umbral_descuento'
-          ].map((key) => (
-            <TextField
-              key={key}
-              label={key.replace(/_/g, ' ').toUpperCase()}
-              name={key}
-              type="number"
-              value={formPrecios[key]}
-              onChange={handlePreciosChange}
-              sx={{ minWidth: 180 }}
-            />
-          ))}
-          <Button variant="contained" color="success" onClick={guardarPrecios} disabled={guardandoPrecios}>
-            {guardandoPrecios ? 'Guardando...' : 'Guardar Precios'}
-          </Button>
-        </Box>
-      ) : (
-        <Typography color="text.secondary" sx={{ mt: 2 }}>
-          🔄 Cargando configuración de precios...
-        </Typography>
-      )}
 
       <Box sx={{ display: 'flex', justifyContent: isMobile ? 'center' : 'flex-start', mb: 2, mt: 4 }}>
         <Button startIcon={<AddIcon />} variant="contained" onClick={() => {
