@@ -7,10 +7,6 @@ import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 import PrintIcon from '@mui/icons-material/Print';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import AddBoxIcon from '@mui/icons-material/AddBox';
-import LogoutIcon from '@mui/icons-material/Logout';
-import BusinessIcon from '@mui/icons-material/Business';
-import BakeryDiningIcon from '@mui/icons-material/BakeryDining';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 
 const AdminHome = () => {
   const colorTexto = '#fff';
@@ -20,126 +16,128 @@ const AdminHome = () => {
       label: 'Ver pedidos',
       icon: <ListAltIcon sx={{ fontSize: 40 }} />,
       href: '/admin/ver-pedidos',
-      color: '#1976d2' // Azul fuerte
+      color: '#1976d2'
     },
     {
-      label: 'Menú semanal',
+      label: 'Crear o Editar menú semanal',
       icon: <RestaurantMenuIcon sx={{ fontSize: 40 }} />,
       href: '/admin/editar-menu',
-      color: '#009688' // Teal
+      color: '#0288d1'
     },
     {
-      label: 'Menú del día',
-      icon: <CalendarMonthIcon sx={{ fontSize: 40 }} />,
+      label: '📆 Crear o editar menú del día',
+      icon: <AddBoxIcon sx={{ fontSize: 40 }} />,
       href: '/admin/editar-platos',
-      color: '#4caf50' // Verde
+      color: '#009688'
     },
+    // {
+    //   label: '✏️ Editar menú del día',
+    //   icon: <RestaurantMenuIcon sx={{ fontSize: 40 }} />,
+    //   href: '/admin/editar-menu-del-dia',
+    //   color: '#ff7043'
+    // },
+
     {
-      label: 'Empresas',
-      icon: <BusinessIcon sx={{ fontSize: 40 }} />,
-      href: '/admin/empresas',
-      color: '#f57c00' // Naranja
-    },
+  label: '🏢 Gestionar Empresas',
+  icon: <DashboardIcon sx={{ fontSize: 40 }} />,
+  href: '/admin/empresas',
+  color: '#3949ab'
+},
+
+
     {
-      label: 'Tartas',
-      icon: <BakeryDiningIcon sx={{ fontSize: 40 }} />,
-      href: '/admin/editar-tartas',
-      color: '#ab47bc' // Violeta medio
-    },
+  label: '🥧 Editar Tartas',
+  icon: <AddBoxIcon sx={{ fontSize: 40 }} />,
+  href: '/admin/editar-tartas',
+  color: '#ba68c8'
+},
+
+
     {
-      label: 'Estadísticas y Gestión',
+      label: '📈 Ver estadísticas, Gestion de Usuarios y Definir Semana de pedidos',
       icon: <DashboardIcon sx={{ fontSize: 40 }} />,
       href: '/admin/dashboard',
-      color: '#512da8' // Violeta oscuro
+      color: '#7b1fa2'
     },
     {
-      label: 'Producción semanal',
+      label: '📋 Producción semanal',
       icon: <PrintIcon sx={{ fontSize: 40 }} />,
       href: '/admin/produccion',
-      color: '#2e7d32' // Verde oscuro
+      color: '#2e7d32'
     },
     {
       label: 'Editar precios',
       icon: <MonetizationOnIcon sx={{ fontSize: 40 }} />,
       href: '/admin/editar-precios',
-      color: '#d84315' // Naranja rojizo
+      color: '#ed6c02'
     },
     {
-      label: 'Vista previa menú',
+      label: '📋 Ver menú semanal',
       icon: <RestaurantMenuIcon sx={{ fontSize: 40 }} />,
       href: '/admin/ver-menu',
-      color: '#0288d1' // Azul claro
+      color: '#4caf50'
     },
     {
       label: 'Volver a la app',
       icon: <ArrowBackIcon sx={{ fontSize: 40 }} />,
-      href: '/app',
-      color: '#616161' // Gris
+      href: '/App',
+      color: '#616161'
     },
     {
-      label: 'Cerrar sesión',
-      icon: <LogoutIcon sx={{ fontSize: 40 }} />,
+      label: '🚪 Cerrar sesión',
+      icon: <ArrowBackIcon sx={{ fontSize: 40 }} />,
       href: '#logout',
-      color: '#c62828' // Rojo oscuro
+      color: '#c62828'
     }
   ];
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 6, pb: 8 }}>
-      <Typography variant="h4" gutterBottom textAlign="center" fontWeight="bold" sx={{ mb: 5 }}>
+    <Container sx={{ mt: 6, pb: 8 }}>
+      <Typography variant="h4" gutterBottom textAlign="center">
         🛠️ Panel de Administración
       </Typography>
 
-      <Grid container spacing={2}>
+      <Grid container spacing={3} sx={{ mt: 4 }}>
         {opciones.map(({ label, icon, href, color }, index) => (
-          <Grid item xs={12} sm={6} md={3} key={index} sx={{ display: 'flex' }}>
+          <Grid item xs={12} sm={6} md={4} key={index} sx={{ display: 'flex' }}>
             <motion.div
-              style={{ flexGrow: 1, width: '100%', display: 'flex' }}
+              style={{ flexGrow: 1, width: '100%' }}
               whileHover={{ scale: 1.03 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.3 }}
             >
               <Box
                 onClick={() => {
                   if (href === '#logout') {
-                    localStorage.removeItem('token');
-                    window.location.href = '/login';
+                    localStorage.removeItem('token'); // Si usás sessionStorage, cambialo
+                    window.location.href = '/login'; // Ajustá si tenés otra ruta de login
                   } else {
                     window.location.assign(href);
                   }
                 }}
                 sx={{
-                  height: 140, // Altura fija y uniforme
+                  height: 160,
                   width: '100%',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  borderRadius: 4,
+                  borderRadius: 3,
                   bgcolor: color,
                   color: colorTexto,
                   cursor: 'pointer',
-                  boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
+                  boxShadow: 4,
+                  fontWeight: 'bold',
+                  fontSize: '1.1rem',
+                  textAlign: 'center',
                   p: 2,
                   transition: 'all 0.3s ease-in-out',
                   ':hover': {
-                    boxShadow: '0 8px 20px rgba(0,0,0,0.3)',
-                    filter: 'brightness(1.1)' // Efecto de brillo al pasar el mouse
+                    boxShadow: 8
                   }
                 }}
               >
-                <Box sx={{ mb: 1, opacity: 0.9 }}>{icon}</Box>
-                <Typography 
-                  variant="subtitle1" 
-                  sx={{ 
-                    fontWeight: 'bold', 
-                    px: 1, 
-                    lineHeight: 1.2, 
-                    textAlign: 'center',
-                    wordBreak: 'break-word' // Evita que textos largos rompan la caja
-                  }}
-                >
-                  {label}
-                </Typography>
+                {icon && <Box sx={{ mb: 1 }}>{icon}</Box>}
+                {label}
               </Box>
             </motion.div>
           </Grid>
