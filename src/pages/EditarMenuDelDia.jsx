@@ -329,14 +329,7 @@ const API_BASE = isLocal
                                 multiline
                                 rows={2}
                               />
-                              <TextField
-                                label="Precio"
-                                type="number"
-                                size="small"
-                                value={plato.price || ''}
-                                onChange={(e) => handleInputChange(index, 'price', e.target.value)}
-                                fullWidth
-                              />
+
                             </Box>
                           </Box>
 

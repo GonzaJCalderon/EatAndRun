@@ -271,14 +271,7 @@ const endpointBase = isProd
                           onChange={(e) => handleInputChange(index, 'description', e.target.value)}
                           fullWidth
                         />
-                        <TextField
-                          label="Precio"
-                          type="number"
-                          size="small"
-                          value={plato.price}
-                          onChange={(e) => handleInputChange(index, 'price', e.target.value)}
-                          fullWidth
-                        />
+
 
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1, mb: 1 }}>
                           {plato.image_url ? (
