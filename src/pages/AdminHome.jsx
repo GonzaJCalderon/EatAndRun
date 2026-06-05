@@ -106,16 +106,28 @@ const AdminHome = () => {
   ];
 
   return (
-    <Container sx={{ mt: 6, pb: 8 }}>
+    <Container maxWidth="xl" sx={{ mt: 6, pb: 8 }}>
       <Typography variant="h4" gutterBottom textAlign="center">
         🛠️ Panel de Administración
       </Typography>
 
-      <Grid container spacing={3} sx={{ mt: 4 }}>
+      <Box 
+        sx={{ 
+          mt: 4, 
+          display: 'grid', 
+          gap: 3, 
+          gridTemplateColumns: {
+            xs: 'repeat(1, 1fr)',
+            sm: 'repeat(2, 1fr)',
+            md: 'repeat(3, 1fr)',
+            lg: 'repeat(5, 1fr)' // Exactamente 5 columnas de igual tamaño en PC
+          }
+        }}
+      >
         {opciones.map(({ label, icon, href, color }, index) => (
-          <Grid item xs={12} sm={6} md={4} key={index} sx={{ display: 'flex' }}>
+          <Box key={index} sx={{ display: 'flex', width: '100%' }}>
             <motion.div
-              style={{ flexGrow: 1, width: '100%' }}
+              style={{ flexGrow: 1, width: '100%', display: 'flex' }}
               whileHover={{ scale: 1.03 }}
               transition={{ duration: 0.3 }}
             >
@@ -154,9 +166,9 @@ const AdminHome = () => {
                 {label}
               </Box>
             </motion.div>
-          </Grid>
+          </Box>
         ))}
-      </Grid>
+      </Box>
     </Container>
   );
 };
