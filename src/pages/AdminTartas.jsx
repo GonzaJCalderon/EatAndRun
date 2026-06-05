@@ -39,8 +39,7 @@ const AdminTartas = () => {
     key: '',
     nombre: '',
     descripcion: '',
-    img: '',
-    precio: 13500
+    img: ''
   });
 
   const [modoEditar, setModoEditar] = useState(false);
@@ -104,7 +103,7 @@ const AdminTartas = () => {
 
   const cerrarDialogo = () => {
     setDialogOpen(false);
-    setForm({ key: '', nombre: '', descripcion: '', img: '', precio: 13500 });
+    setForm({ key: '', nombre: '', descripcion: '', img: '' });
     setModoEditar(false);
     setEditarId(null);
     setSubiendo(false);
@@ -171,7 +170,7 @@ const AdminTartas = () => {
         <Button startIcon={<AddIcon />} variant="contained" onClick={() => {
           setDialogOpen(true);
           setModoEditar(false);
-          setForm({ key: '', nombre: '', descripcion: '', img: '', precio: 13500 });
+          setForm({ key: '', nombre: '', descripcion: '', img: '' });
         }}>
           Nueva Tarta
         </Button>
@@ -185,7 +184,7 @@ const AdminTartas = () => {
               <CardContent>
                 <Typography variant="h6">{tarta.nombre}</Typography>
                 <Typography variant="body2" color="text.secondary">{tarta.descripcion}</Typography>
-                <Typography variant="body2" color="text.secondary">💰 ${tarta.precio?.toLocaleString('es-AR') || 'N/A'}</Typography>
+
               </CardContent>
               <CardActions>
                 <IconButton onClick={() => handleEditar(tarta)}><EditIcon /></IconButton>
@@ -202,7 +201,7 @@ const AdminTartas = () => {
         <DialogContent>
           <TextField label="Nombre" name="nombre" value={form.nombre} onChange={handleChange} fullWidth sx={{ mt: 1 }} />
           <TextField label="Descripción" name="descripcion" value={form.descripcion} onChange={handleChange} fullWidth multiline rows={3} sx={{ mt: 2 }} />
-          <TextField label="Precio" name="precio" type="number" value={form.precio} onChange={handleChange} fullWidth sx={{ mt: 2 }} />
+
           <Button variant="outlined" component="label" sx={{ mt: 2 }}>
             {subiendo ? <CircularProgress size={20} /> : '📷 Subir Imagen'}
             <input type="file" hidden accept="image/*" onChange={handleFileUpload} />
