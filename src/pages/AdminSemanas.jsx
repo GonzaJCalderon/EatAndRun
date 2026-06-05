@@ -69,7 +69,8 @@ const AdminSemanas = () => {
       loadData();
     } catch (err) {
       console.error('❌ Error al crear semana:', err);
-      setSnackbar({ open: true, message: '❌ Error al crear semana', severity: 'error' });
+      const msg = err.response?.data?.error || '❌ Error al crear semana';
+      setSnackbar({ open: true, message: msg, severity: 'error' });
     }
   };
 
@@ -80,7 +81,8 @@ const AdminSemanas = () => {
       setSnackbar({ open: true, message: "✅ Semana actualizada", severity: "success" });
     } catch (err) {
       console.error("❌ Error al guardar semana:", err);
-      setSnackbar({ open: true, message: "❌ Error al actualizar semana", severity: "error" });
+      const msg = err.response?.data?.error || '❌ Error al actualizar semana';
+      setSnackbar({ open: true, message: msg, severity: "error" });
     }
   };
 
