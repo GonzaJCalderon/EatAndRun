@@ -93,7 +93,8 @@ const AdminSemanas = () => {
       loadData();
     } catch (err) {
       console.error("❌ Error al eliminar semana:", err);
-      setSnackbar({ open: true, message: `❌ Error: no se pudo eliminar`, severity: 'error' });
+      const msg = err.response?.data?.error || "❌ Error: no se pudo eliminar";
+      setSnackbar({ open: true, message: msg, severity: "error" });
     }
   };
 
@@ -185,7 +186,7 @@ const AdminSemanas = () => {
         {semanasDisponibles.filter(s => !s.habilitado).map(semana => (
           <Grid item xs={12} sm={6} md={4} key={semana.id}>
              <Card sx={{ p: 2, opacity: 0.8 }}>
-                <Typography variant="h6">Semana del <strong>{semana.fecha_inicio?.split('T')[0]}</strong> al <strong>{semana.fecha_fin?.split('T')[0]}</strong></Typography>
+                <Typography variant="h6">Semana del <strong>{semana.semana_inicio?.split('T')[0]}</strong> al <strong>{semana.semana_fin?.split('T')[0]}</strong></Typography>
                 <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
                    <Button size="small" variant="contained" color="success" onClick={() => toggleEstadoSemana(semana.id, true)}>Rehabilitar</Button>
                    <Button size="small" variant="outlined" color="error" onClick={() => eliminarSemana(semana.id)}>Eliminar</Button>
