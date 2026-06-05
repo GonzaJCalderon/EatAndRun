@@ -22,6 +22,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import BusinessIcon from '@mui/icons-material/Business';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import heroRegistro from '../assets/imgs/hero-registro.png';
 
 const Registro = ({ onRegister }) => {
   const [searchParams] = useSearchParams();
@@ -132,7 +133,7 @@ const Registro = ({ onRegister }) => {
   }, [codigoEmpresa]);
 
   // Misma imagen que usaba la Landing
-  const bgImage = 'https://res.cloudinary.com/dwiga4jg8/image/upload/q_100,f_auto/Fondo_APLICACION_EAR_2_qbxnl7.png';
+  const bgImage = heroRegistro;
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
