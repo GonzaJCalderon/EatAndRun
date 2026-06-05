@@ -5,17 +5,23 @@ import {
   Box,
   Button,
   Grid,
-  MenuItem,
   Paper,
   TextField,
   Typography,
   Alert,
-  Divider
+  Divider,
+  ToggleButton,
+  ToggleButtonGroup,
+  InputAdornment,
+  IconButton,
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import API from '../api/api';
-import registerImage from '../assets/imgs/register-ilustration.png';
 import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
+import PersonIcon from '@mui/icons-material/Person';
+import BusinessIcon from '@mui/icons-material/Business';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 const Registro = ({ onRegister }) => {
   const [searchParams] = useSearchParams();
@@ -36,6 +42,7 @@ const Registro = ({ onRegister }) => {
 
   const [loading, setLoading] = useState(false);
   const [empresaAsignada, setEmpresaAsignada] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
 
@@ -46,6 +53,10 @@ const Registro = ({ onRegister }) => {
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleRoleChange = (_, newRole) => {
+    if (newRole !== null) setForm({ ...form, role: newRole });
   };
 
   const handleSubmit = async (e) => {
@@ -184,38 +195,96 @@ const Registro = ({ onRegister }) => {
               </Alert>
             )}
 
-            {/* Formulario compacto — todo en 2 columnas para reducir largo */}
+            {/* Formulario compacto — reordenado y con ojito en contraseña */}
             <Box component="form" onSubmit={handleSubmit}>
               <Grid container spacing={1.5}>
+
+                {/* Fila 1: Nombre / Apellido */}
                 <Grid item xs={6}>
                   <TextField size="small" label="Nombre" name="nombre" fullWidth required value={form.nombre} onChange={handleChange} />
                 </Grid>
                 <Grid item xs={6}>
                   <TextField size="small" label="Apellido" name="apellido" fullWidth required value={form.apellido} onChange={handleChange} />
                 </Grid>
-                <Grid item xs={12}>
+
+                {/* Fila 2: Email / Teléfono */}
+                <Grid item xs={7}>
                   <TextField size="small" label="Email" name="email" type="email" fullWidth required value={form.email} onChange={handleChange} />
                 </Grid>
-                <Grid item xs={6}>
-                  <TextField size="small" label="Contraseña" name="password" type="password" fullWidth required value={form.password} onChange={handleChange} />
-                </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={5}>
                   <TextField size="small" label="Teléfono" name="telefono" fullWidth required value={form.telefono} onChange={handleChange} />
                 </Grid>
+
+                {/* Fila 3: Dirección full width */}
                 <Grid item xs={12}>
-                  <TextField size="small" label="Dirección principal" name="direccion" fullWidth required value={form.direccion} onChange={handleChange} />
+                  <TextField size="small" label="Dirección" name="direccion" fullWidth required value={form.direccion} onChange={handleChange} />
                 </Grid>
 
+                {/* Fila 4: Contraseña con ojito */}
+                <Grid item xs={12}>
+                  <TextField
+                    size="small"
+                    label="Contraseña"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    fullWidth
+                    required
+                    value={form.password}
+                    onChange={handleChange}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton size="small" onClick={() => setShowPassword(!showPassword)} edge="end">
+                            {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+
+                {/* Selector de rol tipo pastilla */}
                 {!codigoEmpresa && (
                   <Grid item xs={12}>
-                    <TextField size="small" select label="Tipo de usuario" name="role" value={form.role} onChange={handleChange} fullWidth>
-                      {roles.map((r) => (
-                        <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>
-                      ))}
-                    </TextField>
+                    <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                      Tipo de cuenta
+                    </Typography>
+                    <ToggleButtonGroup
+                      value={form.role}
+                      exclusive
+                      onChange={handleRoleChange}
+                      fullWidth
+                      size="small"
+                      sx={{
+                        '& .MuiToggleButton-root': {
+                          border: '1.5px solid #e0e0e0',
+                          borderRadius: '8px !important',
+                          fontWeight: 600,
+                          fontSize: '0.82rem',
+                          py: 0.8,
+                          gap: 0.5,
+                          color: 'text.secondary',
+                          '&.Mui-selected': {
+                            backgroundColor: '#E8F5E9',
+                            color: '#2E7D32',
+                            borderColor: '#4CAF50',
+                          },
+                          '&:hover': { backgroundColor: '#f1f8f1' },
+                        },
+                        gap: 1,
+                      }}
+                    >
+                      <ToggleButton value="usuario">
+                        <PersonIcon fontSize="small" sx={{ mr: 0.5 }} /> Usuario
+                      </ToggleButton>
+                      <ToggleButton value="empresa">
+                        <BusinessIcon fontSize="small" sx={{ mr: 0.5 }} /> Empresa
+                      </ToggleButton>
+                    </ToggleButtonGroup>
                   </Grid>
                 )}
 
+                {/* Campos extra si es Empresa */}
                 {form.role === 'empresa' && (
                   <>
                     <Grid item xs={6}>
@@ -226,6 +295,7 @@ const Registro = ({ onRegister }) => {
                     </Grid>
                   </>
                 )}
+
               </Grid>
 
               <Button
