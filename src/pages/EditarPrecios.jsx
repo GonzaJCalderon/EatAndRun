@@ -6,7 +6,8 @@ import {
   TextField,
   Button,
   Box,
-  Divider
+  Divider,
+  Alert
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import api from '../api/api';
@@ -74,6 +75,10 @@ const EditarPrecios = () => {
       <Typography variant="h4" gutterBottom>
         ⚙️ Configuración Global de Precios
       </Typography>
+
+      <Alert severity="info" sx={{ mb: 4, borderRadius: 2 }}>
+        <strong>Importante:</strong> Los valores definidos en este panel controlan de manera centralizada los precios en toda la aplicación. Al guardar los cambios, el costo del Menú Fijo, Menú del Día, Tartas y adicionales se actualizará instantáneamente para todos los clientes al momento de realizar sus pedidos.
+      </Alert>
 
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 4, mb: 4 }}>
         {[
