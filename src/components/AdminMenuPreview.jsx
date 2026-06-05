@@ -69,6 +69,8 @@ const AdminMenuPreview = () => {
     return agrupado;
   };
 
+  const menuEspecialPorDia = agruparPorDia(menuEspecial);
+
   const tartasUnicas = tartas.filter((t, index, self) => 
     index === self.findIndex((x) => x.nombre === t.nombre)
   );
