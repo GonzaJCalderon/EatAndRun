@@ -49,10 +49,10 @@ const EditarPrecios = () => {
     }));
   };
 
-  const handleTartaChange = (key, valor) => {
+  const handleTartaChange = (id, valor) => {
     setPreciosTarta((prev) => ({
       ...prev,
-      [key]: parseInt(valor) || 0
+      [id]: { ...prev[id], precio: parseInt(valor) || 0 }
     }));
   };
 
@@ -63,8 +63,8 @@ const EditarPrecios = () => {
       localStorage.setItem("precios_eatandrun", JSON.stringify(preciosBase));
 
       // Guardar precios de tartas
-      for (const key in preciosTarta) {
-        await api.put(`/tartas/${key}`, { precio: preciosTarta[key] });
+      for (const id in preciosTarta) {
+        await api.put(`/tartas/${id}`, { precio: preciosTarta[id].precio });
       }
 
       alert("✅ Datos actualizados correctamente");
@@ -124,13 +124,13 @@ const EditarPrecios = () => {
       </Typography>
 
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 2 }}>
-        {Object.entries(preciosTarta).map(([key, precio]) => (
+        {Object.entries(preciosTarta).map(([id, tarta]) => (
           <TextField
-            key={key}
-            label={`TARTA: ${key.toUpperCase()}`}
+            key={id}
+            label={`TARTA: ${tarta.nombre ? tarta.nombre.toUpperCase() : 'DESCONOCIDA'}`}
             type="number"
-            value={precio}
-            onChange={(e) => handleTartaChange(key, e.target.value)}
+            value={tarta.precio}
+            onChange={(e) => handleTartaChange(id, e.target.value)}
             sx={{ minWidth: 180 }}
           />
         ))}
