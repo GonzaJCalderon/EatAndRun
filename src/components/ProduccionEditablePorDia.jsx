@@ -5,7 +5,9 @@ import {
   TableRow, TableCell, TableBody, Paper
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import EditIcon from '@mui/icons-material/Edit';
 import dayjs from '../utils/day';
+import ModalEdicionPedido from './ModalEdicionPedido';
 
 const diasOrdenados = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
 
@@ -16,23 +18,22 @@ const extraMap = {
 };
 
 const ProduccionEditablePorDia = ({ pedidos, mapaPlatos = {}, onGuardarCambios }) => {
-  const [ediciones, setEdiciones] = useState({});
+  const [modalOpen, setModalOpen] = useState(false);
+  const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null);
 
-  const handleChange = (pedidoId, path, value) => {
-    setEdiciones(prev => ({
-      ...prev,
-      [pedidoId]: {
-        ...prev[pedidoId],
-        [path]: value
-      }
-    }));
+  const handleOpenModal = (p) => {
+    setPedidoSeleccionado(p);
+    setModalOpen(true);
   };
 
-  const handleGuardar = (pedidoId) => {
-    const cambios = ediciones[pedidoId];
-    if (cambios) {
-      onGuardarCambios(pedidoId, cambios);
-    }
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setPedidoSeleccionado(null);
+  };
+
+  const handleGuardarDesdeModal = (pedidoId, nuevosItems, notaAdmin) => {
+    onGuardarCambios(pedidoId, nuevosItems);
+    handleCloseModal();
   };
 
   // Agrupar pedidos por día
@@ -66,11 +67,10 @@ pedidos.forEach(p => {
       <TableHead>
         <TableRow>
           <TableCell><strong>Nombre y Apellido</strong></TableCell>
-          <TableCell><strong>Platos</strong></TableCell>
-          <TableCell><strong>Extras</strong></TableCell>
-          <TableCell><strong>📝 Nota libre</strong></TableCell>
-          <TableCell><strong>Observaciones</strong></TableCell>
-          <TableCell><strong>Guardar</strong></TableCell>
+          <TableCell><strong>Resumen de Platos</strong></TableCell>
+          <TableCell><strong>Resumen Extras</strong></TableCell>
+          <TableCell><strong>Observaciones / Notas</strong></TableCell>
+          <TableCell><strong>Acción</strong></TableCell>
         </TableRow>
       </TableHead>
       <TableBody>
@@ -86,62 +86,32 @@ pedidos.forEach(p => {
               <TableCell>{nombre}</TableCell>
 
               <TableCell>
-                {Object.entries(platos).map(([nombrePlato, cantidad]) => {
-                  // Transform ID:24 into "Wok de Pollo" usando el mapa directamente
-                  const nombreMostrar = mapaPlatos[nombrePlato] || nombrePlato;
-
-                  return (
-                    <Box key={nombrePlato} sx={{ mb: 1 }}>
-                      <Typography>{nombreMostrar}</Typography>
-                      <TextField
-                        size="small"
-                        type="number"
-                        defaultValue={cantidad}
-                        onChange={(e) =>
-                          handleChange(id, `diarios.${dia}.${nombrePlato}`, Number(e.target.value))
-                        }
-                      />
-                    </Box>
-                  );
-                })}
+                {Object.keys(platos).length === 0 ? <Typography variant="caption" color="textSecondary">Ninguno</Typography> : 
+                  Object.entries(platos).map(([nombrePlato, cantidad]) => {
+                    const nombreMostrar = mapaPlatos[nombrePlato] || nombrePlato;
+                    return <Typography key={nombrePlato} variant="body2">• {cantidad}x {nombreMostrar}</Typography>;
+                  })
+                }
               </TableCell>
 
               <TableCell>
-                {Object.entries(extras).map(([extraId, cantidad]) => {
-                  const cleanId = extraId.replace(/^ID:/, '');
-                  const nombreExtra = extraMap[cleanId] || `Extra ${cleanId}`;
-                  return (
-                    <Box key={extraId} sx={{ mb: 1 }}>
-                      <Typography>{nombreExtra}</Typography>
-                      <TextField
-                        size="small"
-                        type="number"
-                        defaultValue={cantidad}
-                        onChange={(e) =>
-                          handleChange(id, `extras.${dia}.${extraId}`, Number(e.target.value))
-                        }
-                      />
-                    </Box>
-                  );
-                })}
+                {Object.keys(extras).length === 0 ? <Typography variant="caption" color="textSecondary">Ninguno</Typography> : 
+                  Object.entries(extras).map(([extraId, cantidad]) => {
+                    const cleanId = extraId.replace(/^ID:/, '');
+                    const nombreExtra = extraMap[cleanId] || `Extra ${cleanId}`;
+                    return <Typography key={extraId} variant="body2">• {cantidad}x {nombreExtra}</Typography>;
+                  })
+                }
               </TableCell>
 
               <TableCell>
-                <TextField
-                  fullWidth
-                  multiline
-                  defaultValue={p.nota_admin || ''}
-                  onChange={(e) => handleChange(id, 'nota_admin', e.target.value)}
-                />
+                {p.observaciones && <Typography variant="body2"><strong>Obs:</strong> {p.observaciones}</Typography>}
+                {p.nota_admin && <Typography variant="body2" color="primary"><strong>Nota:</strong> {p.nota_admin}</Typography>}
               </TableCell>
 
               <TableCell>
-                <Typography variant="body2">{p.observaciones || '—'}</Typography>
-              </TableCell>
-
-              <TableCell>
-                <Button variant="contained" onClick={() => handleGuardar(id)}>
-                  Guardar
+                <Button variant="outlined" startIcon={<EditIcon />} onClick={() => handleOpenModal(p)}>
+                  Editar Pedido
                 </Button>
               </TableCell>
             </TableRow>
@@ -190,30 +160,12 @@ pedidos.forEach(p => {
                         </Typography>
                       </TableCell>
                       <TableCell>{tarta}</TableCell>
+                      <TableCell>{cantidad}</TableCell>
+                      <TableCell>{p.nota_admin || '—'}</TableCell>
+                      <TableCell>{p.observaciones || '—'}</TableCell>
                       <TableCell>
-                        <TextField
-                          type="number"
-                          size="small"
-                          defaultValue={cantidad}
-                          onChange={(e) =>
-                            handleChange(id, `tartas.${tarta}`, Number(e.target.value))
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          fullWidth
-                          multiline
-                          defaultValue={p.nota_admin || ''}
-                          onChange={(e) => handleChange(id, 'nota_admin', e.target.value)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">{p.observaciones || '—'}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="contained" onClick={() => handleGuardar(id)}>
-                          Guardar
+                        <Button variant="outlined" startIcon={<EditIcon />} onClick={() => handleOpenModal(p)}>
+                          Editar Pedido
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -247,8 +199,15 @@ pedidos.forEach(p => {
 ))}
 
 
-      {/* Tartas en accordion separado */}
       {renderTartas()}
+
+      <ModalEdicionPedido
+        open={modalOpen}
+        onClose={handleCloseModal}
+        pedido={pedidoSeleccionado}
+        mapaPlatos={mapaPlatos}
+        onSave={handleGuardarDesdeModal}
+      />
     </Box>
   );
 };
