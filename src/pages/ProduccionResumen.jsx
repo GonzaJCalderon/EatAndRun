@@ -150,11 +150,13 @@ const fetchPedidosYDiccionario = async () => {
     // Mapeo Tartas (por slug/key viejo y por ID)
     if (resTartas.data && Array.isArray(resTartas.data)) {
       resTartas.data.forEach(tarta => {
-        const slug = `tarta-${tarta.gusto.toLowerCase().replace(/ /g, '-')}`;
-        dict[slug] = `Tarta de ${tarta.gusto}`;
-        dict[`tarta-${slug}`] = `Tarta de ${tarta.gusto}`;
-        dict[`ID:${tarta.id}`] = `Tarta de ${tarta.gusto}`;
-        dict[`ID:${tarta.gusto}`] = `Tarta de ${tarta.gusto}`;
+        const gustoStr = tarta.gusto || tarta.name || '';
+        if (!gustoStr) return;
+        const slug = `tarta-${gustoStr.toLowerCase().replace(/ /g, '-')}`;
+        dict[slug] = `Tarta de ${gustoStr}`;
+        dict[`tarta-${slug}`] = `Tarta de ${gustoStr}`;
+        if (tarta.id) dict[`ID:${tarta.id}`] = `Tarta de ${gustoStr}`;
+        dict[`ID:${gustoStr}`] = `Tarta de ${gustoStr}`;
       });
     }
 
