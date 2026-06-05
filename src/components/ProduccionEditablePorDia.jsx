@@ -1,311 +1,237 @@
+import React, { useState } from 'react';
 import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Typography,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  TextField,
-  Box,
-  Button
+  Accordion, AccordionSummary, AccordionDetails,
+  Typography, Box, TextField, Button, Table, TableHead,
+  TableRow, TableCell, TableBody, Paper
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { useState, useEffect } from 'react';
 
-const diasSemana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
+const diasOrdenados = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
 
 const extraMap = {
   "1": "🍰 Postre",
   "2": "🥗 Ensalada",
-  "3": "💪 Proteína",
-  "ID:1": "🍰 Postre",
-  "ID:2": "🥗 Ensalada",
-  "ID:3": "💪 Proteína"
+  "3": "💪 Proteína"
 };
 
-const ProduccionEditablePorDia = ({ pedidos, onGuardarCambios, onResumenEditado }) => {
-  const [edit, setEdit] = useState({});
+const ProduccionEditablePorDia = ({ pedidos, onGuardarCambios }) => {
+  const [ediciones, setEdiciones] = useState({});
 
-  const isDirty = (pedidoId) => !!edit[pedidoId];
-
-  const handleCantidadChange = (pedidoId, dia, tipo, nombre, nuevaCantidad) => {
-    setEdit(prev => {
-      const updated = {
-        ...prev,
-        [pedidoId]: {
-          ...(prev[pedidoId] || {}),
-          [dia]: {
-            ...(prev[pedidoId]?.[dia] || {}),
-            [tipo]: {
-              ...(prev[pedidoId]?.[dia]?.[tipo] || {}),
-              [nombre]: nuevaCantidad
-            }
-          }
-        }
-      };
-      return updated;
-    });
-  };
-
-  const handleObservacionChange = (pedidoId, value) => {
-    setEdit(prev => ({
+  const handleChange = (pedidoId, path, value) => {
+    setEdiciones(prev => ({
       ...prev,
       [pedidoId]: {
-        ...(prev[pedidoId] || {}),
-        observaciones: value
-      }
-    }));
-  };
-
-  const handleNotaPorFila = (pedidoId, dia, nota) => {
-    setEdit(prev => ({
-      ...prev,
-      [pedidoId]: {
-        ...(prev[pedidoId] || {}),
-        notas: {
-          ...(prev[pedidoId]?.notas || {}),
-          [dia]: nota
-        }
+        ...prev[pedidoId],
+        [path]: value
       }
     }));
   };
 
   const handleGuardar = (pedidoId) => {
-    const cambios = edit[pedidoId];
-    if (!cambios) return;
-    onGuardarCambios(pedidoId, cambios);
-    setEdit(prev => {
-      const nuevo = { ...prev };
-      delete nuevo[pedidoId];
-      return nuevo;
-    });
+    const cambios = ediciones[pedidoId];
+    if (cambios) {
+      onGuardarCambios(pedidoId, cambios);
+    }
   };
 
-  // 🧠 Generador de resumen actualizado en base a datos + edición
-  const calcularResumenActual = () => {
-    const resumen = {};
-    const observaciones = {};
-    const total = {};
+  // Agrupar pedidos por día
+const pedidosPorDia = {};
 
-    pedidos.forEach(pedido => {
-      const id = pedido.id;
-      const usuario = pedido.usuario || {};
-      const nombreUsuario = `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim();
+pedidos.forEach(p => {
+  const diarios = p.pedido?.diarios || {};
+  const fechaPorDia = p.pedido?.fecha_dia_por_dia || {}; // ← vos podés generar esto en el backend si querés, o bien derivarlo del campo `fecha_dia` en cada ítem
 
-      diasSemana.forEach(dia => {
-        const platos = pedido.pedido?.diarios?.[dia] || {};
-        const extras = pedido.pedido?.extras?.[dia] || {};
-        const tartas = pedido.pedido?.tartas || {};
+  Object.entries(diarios).forEach(([dia, platos]) => {
+    const fechaStr = fechaPorDia?.[dia] || null;
+    let clave = dia;
 
-        const editPedido = edit[id]?.[dia] || {};
+    if (fechaStr) {
+      const fecha = dayjs(fechaStr);
+      const nombreDia = fecha.format('dddd'); // lunes, martes...
+      const fechaLegible = fecha.format('DD/MM');
+      clave = `${nombreDia} ${fechaLegible}`;
+    }
 
-        const editPlatos = editPedido.platos || {};
-        const editExtras = editPedido.extras || {};
-        const editTartas = edit[id]?.[dia]?.tartas || {};
+    if (!pedidosPorDia[clave]) pedidosPorDia[clave] = [];
+    pedidosPorDia[clave].push(p);
+  });
+});
 
-        const platosFinal = { ...platos, ...editPlatos };
-        const extrasFinal = { ...extras, ...editExtras };
-        const tartasFinal = { ...tartas, ...editTartas };
+  const renderTablaPorDia = (dia, listaPedidos) => (
+    <Table size="small">
+      <TableHead>
+        <TableRow>
+          <TableCell><strong>Nombre y Apellido</strong></TableCell>
+          <TableCell><strong>Platos</strong></TableCell>
+          <TableCell><strong>Extras</strong></TableCell>
+          <TableCell><strong>📝 Nota libre</strong></TableCell>
+          <TableCell><strong>Observaciones</strong></TableCell>
+          <TableCell><strong>Guardar</strong></TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {listaPedidos.map(p => {
+          const id = p.id || p._id;
+          const usuario = p.usuario || {};
+          const nombre = `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim();
+          const platos = p.pedido?.diarios?.[dia] || {};
+          const extras = p.pedido?.extras?.[dia] || {};
 
-        const keyDia = dia.toUpperCase();
-        if (!resumen[keyDia]) resumen[keyDia] = {};
-        if (!observaciones[keyDia]) observaciones[keyDia] = [];
+          return (
+            <TableRow key={`${id}-${dia}`}>
+              <TableCell>{nombre}</TableCell>
 
-        Object.entries(platosFinal).forEach(([nombre, cantidad]) => {
-          const cantidadNum = Number(cantidad);
-          resumen[keyDia][nombre] = (resumen[keyDia][nombre] || 0) + cantidadNum;
-          total[nombre] = (total[nombre] || 0) + cantidadNum;
-        });
+              <TableCell>
+                {Object.entries(platos).map(([nombrePlato, cantidad]) => (
+                  <Box key={nombrePlato} sx={{ mb: 1 }}>
+                    <Typography>{nombrePlato}</Typography>
+                    <TextField
+                      size="small"
+                      type="number"
+                      defaultValue={cantidad}
+                      onChange={(e) =>
+                        handleChange(id, `diarios.${dia}.${nombrePlato}`, Number(e.target.value))
+                      }
+                    />
+                  </Box>
+                ))}
+              </TableCell>
 
-        Object.entries(extrasFinal).forEach(([nombre, cantidad]) => {
-          const cantidadNum = Number(cantidad);
-          const idNorm = nombre.replace(/^ID:/, '');
-          const nombrePlato = extraMap[nombre] || extraMap[idNorm] || `Extra ${idNorm}`;
-          resumen[keyDia][nombrePlato] = (resumen[keyDia][nombrePlato] || 0) + cantidadNum;
-          total[nombrePlato] = (total[nombrePlato] || 0) + cantidadNum;
-        });
+              <TableCell>
+                {Object.entries(extras).map(([extraId, cantidad]) => {
+                  const cleanId = extraId.replace(/^ID:/, '');
+                  const nombreExtra = extraMap[cleanId] || `Extra ${cleanId}`;
+                  return (
+                    <Box key={extraId} sx={{ mb: 1 }}>
+                      <Typography>{nombreExtra}</Typography>
+                      <TextField
+                        size="small"
+                        type="number"
+                        defaultValue={cantidad}
+                        onChange={(e) =>
+                          handleChange(id, `extras.${dia}.${extraId}`, Number(e.target.value))
+                        }
+                      />
+                    </Box>
+                  );
+                })}
+              </TableCell>
 
-        Object.entries(tartasFinal).forEach(([nombre, cantidad]) => {
-          const cantidadNum = Number(cantidad);
-          if (!resumen["TARTAS"]) resumen["TARTAS"] = {};
-          resumen["TARTAS"][nombre] = (resumen["TARTAS"][nombre] || 0) + cantidadNum;
-          total[nombre] = (total[nombre] || 0) + cantidadNum;
-        });
+              <TableCell>
+                <TextField
+                  fullWidth
+                  multiline
+                  defaultValue={p.nota_admin || ''}
+                  onChange={(e) => handleChange(id, 'nota_admin', e.target.value)}
+                />
+              </TableCell>
 
-        const obs = edit[id]?.observaciones || pedido.observaciones;
-        if (obs) {
-          if (Object.keys(tartasFinal).length > 0) {
-            if (!observaciones["TARTAS"]) observaciones["TARTAS"] = [];
-            observaciones["TARTAS"].push(`• ${nombreUsuario}: ${obs}`);
-          } else {
-            observaciones[keyDia].push(`• ${nombreUsuario}: ${obs}`);
-          }
-        }
-      });
-    });
+              <TableCell>
+                <Typography variant="body2">{p.observaciones || '—'}</Typography>
+              </TableCell>
 
-    onResumenEditado?.({ resumen, observaciones, total });
+              <TableCell>
+                <Button variant="contained" onClick={() => handleGuardar(id)}>
+                  Guardar
+                </Button>
+              </TableCell>
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
+  );
+
+  const renderTartas = () => {
+    const conTartas = pedidos.filter(p => Object.keys(p.pedido?.tartas || {}).length > 0);
+
+    if (conTartas.length === 0) return null;
+
+    return (
+      <Accordion>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography sx={{ fontWeight: 600 }}>🥧 TARTAS (semana)</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Paper elevation={1}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Empleado</TableCell>
+                  <TableCell>Tarta</TableCell>
+                  <TableCell>Cantidad</TableCell>
+                  <TableCell>📝 Nota libre</TableCell>
+                  <TableCell>Observaciones</TableCell>
+                  <TableCell>Guardar</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {conTartas.map(p => {
+                  const id = p.id || p._id;
+                  const nombre = `${p.usuario?.nombre || ''} ${p.usuario?.apellido || ''}`.trim();
+                  return Object.entries(p.pedido?.tartas || {}).map(([tarta, cantidad]) => (
+                    <TableRow key={`${id}-tarta-${tarta}`}>
+                      <TableCell>{nombre}</TableCell>
+                      <TableCell>{tarta}</TableCell>
+                      <TableCell>
+                        <TextField
+                          type="number"
+                          size="small"
+                          defaultValue={cantidad}
+                          onChange={(e) =>
+                            handleChange(id, `tartas.${tarta}`, Number(e.target.value))
+                          }
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          fullWidth
+                          multiline
+                          defaultValue={p.nota_admin || ''}
+                          onChange={(e) => handleChange(id, 'nota_admin', e.target.value)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">{p.observaciones || '—'}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="contained" onClick={() => handleGuardar(id)}>
+                          Guardar
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ));
+                })}
+              </TableBody>
+            </Table>
+          </Paper>
+        </AccordionDetails>
+      </Accordion>
+    );
   };
-
-  // ⚙️ Recalcular automáticamente al editar
-  useEffect(() => {
-    calcularResumenActual();
-  }, [edit, pedidos]);
 
   return (
     <Box>
-      {diasSemana.map(dia => {
-        const pedidosDia = pedidos.filter(p => p?.pedido?.diarios?.[dia]);
+      {Object.entries(pedidosPorDia).map(([claveDia, listaPedidos]) => (
+  <Accordion key={claveDia} defaultExpanded>
+    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+      <Typography sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>
+        📅 {claveDia.toUpperCase()}
+      </Typography>
+    </AccordionSummary>
+    <AccordionDetails>
+      {listaPedidos.length > 0 ? (
+        <Paper elevation={1}>{renderTablaPorDia(claveDia, listaPedidos)}</Paper>
+      ) : (
+        <Typography sx={{ p: 2 }}>Sin pedidos para {claveDia}</Typography>
+      )}
+    </AccordionDetails>
+  </Accordion>
+))}
 
-        return (
-          <Accordion key={dia} defaultExpanded>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="h6">📅 {dia.toUpperCase()}</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell><strong>Nombre y Apellido</strong></TableCell>
-                 
-                    <TableCell><strong>Platos</strong></TableCell>
-                    <TableCell><strong>Extras</strong></TableCell>
-                    <TableCell><strong>Tartas</strong></TableCell>
-                    <TableCell><strong>📝 Nota libre</strong></TableCell>
-                    <TableCell><strong>Observaciones</strong></TableCell>
-                    <TableCell><strong>Guardar</strong></TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {pedidosDia.map(pedido => {
-                    const usuario = pedido.usuario || {};
-                    const platos = pedido.pedido?.diarios?.[dia] || {};
-                    const extras = pedido.pedido?.extras?.[dia] || {};
-                    const tartas = pedido.pedido?.tartas || {};
-                    const observacionActual = edit[pedido.id]?.observaciones ?? pedido.observaciones ?? '';
-                    const notaLibre = edit[pedido.id]?.notas?.[dia] ?? '';
 
-                    return (
-                      <TableRow key={pedido.id} sx={isDirty(pedido.id) ? { backgroundColor: '#fff9c4' } : {}}>
-                        <TableCell>{usuario.nombre}</TableCell>
-                        <TableCell>{usuario.apellido}</TableCell>
-
-                        {/* PLATOS */}
-                        <TableCell>
-                          {Object.entries(platos).map(([nombre, cantidad]) => {
-                            const value = edit[pedido.id]?.[dia]?.platos?.[nombre] ?? cantidad;
-                            return (
-                              <Box key={nombre} mb={1}>
-                                <Typography variant="body2">{nombre}</Typography>
-                                <TextField
-                                  type="number"
-                                  size="small"
-                                  value={value}
-                                  onChange={(e) =>
-                                    handleCantidadChange(pedido.id, dia, 'platos', nombre, Number(e.target.value))
-                                  }
-                                  inputProps={{ min: 0 }}
-                                />
-                              </Box>
-                            );
-                          })}
-                        </TableCell>
-
-                        {/* EXTRAS */}
-                        <TableCell>
-                          {Object.entries(extras).map(([extraKey, qty]) => {
-                            const id = extraKey.replace(/^ID:/, '');
-                            const nombre = extraMap[extraKey] || extraMap[id] || `Extra ${id}`;
-                            const value = edit[pedido.id]?.[dia]?.extras?.[extraKey] ?? qty;
-
-                            return (
-                              <Box key={extraKey} mb={1}>
-                                <Typography variant="body2">{nombre}</Typography>
-                                <TextField
-                                  type="number"
-                                  size="small"
-                                  value={value}
-                                  onChange={(e) =>
-                                    handleCantidadChange(pedido.id, dia, 'extras', extraKey, Number(e.target.value))
-                                  }
-                                  inputProps={{ min: 0 }}
-                                />
-                              </Box>
-                            );
-                          })}
-                        </TableCell>
-
-                        {/* TARTAS */}
-                        <TableCell>
-                          {Object.entries(tartas).map(([nombre, cantidad]) => {
-                            const value = edit[pedido.id]?.[dia]?.tartas?.[nombre] ?? cantidad;
-                            return (
-                              <Box key={nombre} mb={1}>
-                                <Typography variant="body2">{nombre}</Typography>
-                                <TextField
-                                  type="number"
-                                  size="small"
-                                  value={value}
-                                  onChange={(e) =>
-                                    handleCantidadChange(pedido.id, dia, 'tartas', nombre, Number(e.target.value))
-                                  }
-                                  inputProps={{ min: 0 }}
-                                />
-                              </Box>
-                            );
-                          })}
-                        </TableCell>
-
-                        {/* NOTA LIBRE */}
-                        <TableCell>
-                          <TextField
-                            fullWidth
-                            multiline
-                            minRows={2}
-                            placeholder="✍️ Nota libre para producción"
-                            value={notaLibre}
-                            onChange={(e) => handleNotaPorFila(pedido.id, dia, e.target.value)}
-                          />
-                        </TableCell>
-
-                        {/* OBSERVACIONES */}
-                        <TableCell>
-                          <TextField
-                            multiline
-                            fullWidth
-                            minRows={2}
-                            value={observacionActual}
-                            onChange={(e) => handleObservacionChange(pedido.id, e.target.value)}
-                          />
-                        </TableCell>
-
-                        {/* GUARDAR */}
-                        <TableCell>
-                          <Button
-                            variant="contained"
-                            size="small"
-                            onClick={() => handleGuardar(pedido.id)}
-                          >
-                            Guardar
-                          </Button>
-                          {isDirty(pedido.id) && (
-                            <Typography variant="caption" color="warning.main" display="block">
-                              🟡 Cambios sin guardar
-                            </Typography>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </AccordionDetails>
-          </Accordion>
-        );
-      })}
+      {/* Tartas en accordion separado */}
+      {renderTartas()}
     </Box>
   );
 };

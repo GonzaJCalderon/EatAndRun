@@ -1,20 +1,12 @@
-// api/api.js
+// src/api/api.js
 import axios from 'axios';
 
-// Detecta si estás en producción
-const isProduction = import.meta.env.MODE === 'production';
+// ✅ En producción usa la variable de entorno de Vite
+// En desarrollo usa localhost si no hay variable definida
+const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
 
-const api = axios.create({
-  baseURL: import.meta.env.MODE === 'production'
-    ? 'https://eatandrun-back-production.up.railway.app/api'
-    : 'http://localhost:4000/api', // 👈 desarrollo local
-});
+const api = axios.create({ baseURL });
 
-console.log('🌐 API BASE URL:', api.defaults.baseURL);
-
-
-
-// 👉 Adjunta token a cada petición
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('authToken');

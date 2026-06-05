@@ -1,25 +1,46 @@
-import React from 'react';
+import React, {
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+  useRef
+} from 'react';
+
 import {
   Box,
   Typography,
-  IconButton,
   FormControlLabel,
   Checkbox,
-  Card
+  Card,
+  IconButton
 } from '@mui/material';
-import { ScrollMenu } from 'react-horizontal-scrolling-menu';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
-import { motion } from 'framer-motion';
 import UnifiedMenuCard from './UnifiedMenuCard';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import { dedupeByContenido } from '../utils/dedupe';
 
-const UnifiedDayMenuGallery = ({ day, fijos = [], especiales = [], selected = {}, onChange }) => {
-      console.log("📅 Día actual:", day);
-  console.log("📦 Platos fijos:", fijos);
-  console.log("🌟 Platos especiales:", especiales);
-  console.log("🎯 Selección actual:", selected);
+
+const chunkArray = (arr, size) => {
+  const chunks = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
+};
+
+const UnifiedDayMenuGallery = ({
+  day,
+  fijos = [],
+  especiales = [],
+  selected = {},
+  onChange,
+  disabled = false
+}) => {
+  const scrollRefEspeciales = useRef(null);
+  const scrollRefFijos = useRef(null);
+
   const handleCantidadChange = (plato, nuevaCantidad) => {
-    if (nuevaCantidad < 0) return;
+    if (disabled || nuevaCantidad < 0) return;
 
     const nuevaSeleccion = {
       ...selected,
@@ -33,7 +54,11 @@ const UnifiedDayMenuGallery = ({ day, fijos = [], especiales = [], selected = {}
     onChange(nuevaSeleccion);
   };
 
+
+
   const handleNoDeseaMenuChange = (event) => {
+    if (disabled) return;
+
     const deseaOmitir = event.target.checked;
 
     if (deseaOmitir) {
@@ -53,6 +78,136 @@ const UnifiedDayMenuGallery = ({ day, fijos = [], especiales = [], selected = {}
 
   const estaOmitido = selected.noDeseaMenu?.tipo === 'skip';
 
+  
+
+  // ✅ Dedupe: fijos
+const fijosSinDuplicados = useMemo(() => {
+  const vistos = new Set();
+  return fijos.filter((p) => {
+    const key = `${(p.nombre || '').trim().toLowerCase()}|${(p.descripcion || '').trim().toLowerCase()}`;
+    if (vistos.has(key)) return false;
+    vistos.add(key);
+    return true;
+  });
+}, [fijos]);
+
+
+  // ✅ Dedupe: especiales
+  const especialesSinDuplicados = useMemo(() => {
+    const vistos = new Set();
+    return especiales.filter((p) => {
+      return !vistos.has(p.id) && vistos.add(p.id);
+    });
+  }, [especiales]);
+
+  // 🧪 Debug opcional: dejarlo comentado si querés
+  /*
+  useEffect(() => {
+    const allPlatos = [...fijos, ...especiales];
+    const ids = new Set();
+    allPlatos.forEach((p) => {
+      if (ids.has(p.id)) {
+        console.warn(`⚠️ Plato duplicado (ID): ${p.id} en el día: ${day}`);
+      }
+      ids.add(p.id);
+    });
+  }, [fijos, especiales, day]);
+  */
+ useEffect(() => {
+  const nombres = fijos.map(p => p.nombre);
+  const duplicados = nombres.filter((v, i, a) => a.indexOf(v) !== i);
+  if (duplicados.length) {
+    console.warn(`⚠️ Platos fijos duplicados en "${day}":`, duplicados);
+  }
+}, [fijos, day]);
+
+  
+
+  const renderScrollGrid = (platos, scrollRef, isEspecial = false) => {
+    const scrollBy = (offset) => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollBy({
+          left: offset,
+          behavior: 'smooth'
+        });
+      }
+    };
+
+    return (
+      <>
+        <Box
+          ref={scrollRef}
+          sx={{
+            display: 'flex',
+            overflowX: 'auto',
+            gap: 2,
+            scrollSnapType: 'x mandatory',
+            px: 1,
+            pb: 1,
+            '&::-webkit-scrollbar': { height: 6 },
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: '#ccc',
+              borderRadius: 4
+            },
+            WebkitOverflowScrolling: 'touch'
+          }}
+        >
+          {isEspecial
+            ? platos.map((plato) => (
+                <Box
+                  key={`especial-${day}-${plato.id}`}
+                  sx={{
+                    scrollSnapAlign: 'start',
+                    flexShrink: 0,
+                    minWidth: { xs: 180, sm: 200, md: 220 }
+                  }}
+                >
+ <UnifiedMenuCard
+plato={plato}
+  cantidad={selected[plato.id]?.cantidad || 0}
+  onChange={(p, c) => handleCantidadChange(p, c)}
+/>
+
+
+                </Box>
+              ))
+            : chunkArray(platos, 2).map((colPlatos, colIdx) => (
+                <Box
+                  key={`col-${day}-${colIdx}`}
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2,
+                    minWidth: { xs: 180, sm: 200, md: 220 },
+                    scrollSnapAlign: 'start',
+                    flexShrink: 0
+                  }}
+                >
+                  {colPlatos.map((plato) => (
+                    <UnifiedMenuCard
+                      key={`fijo-${day}-${plato.id}`}
+                      plato={plato}
+                      cantidad={selected[plato.id]?.cantidad || 0}
+                      onChange={(p, c) => handleCantidadChange(p, c)}
+                    />
+                  ))}
+                </Box>
+              ))}
+        </Box>
+
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+          <IconButton onClick={() => scrollBy(-250)} size="small">
+            <ArrowBackIosNewIcon fontSize="small" />
+          </IconButton>
+          <IconButton onClick={() => scrollBy(250)} size="small">
+            <ArrowForwardIosIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      </>
+    );
+  };
+  
+
   return (
     <Card variant="outlined" sx={{ p: 2, mb: 4 }}>
       <Typography variant="h6" sx={{ mb: 2 }}>
@@ -65,6 +220,7 @@ const UnifiedDayMenuGallery = ({ day, fijos = [], especiales = [], selected = {}
             checked={estaOmitido}
             onChange={handleNoDeseaMenuChange}
             color="error"
+            disabled={disabled}
           />
         }
         label="❌ No deseo menú este día"
@@ -73,68 +229,21 @@ const UnifiedDayMenuGallery = ({ day, fijos = [], especiales = [], selected = {}
 
       {!estaOmitido && (
         <>
-          {fijos.length > 0 && (
+          {especialesSinDuplicados.length > 0 && (
             <>
               <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
-                📦 Platos fijos
+                ⭐ Menú especial del día
               </Typography>
-     <Box
-  sx={{
-    display: 'flex',
-    gap: 2,
-    overflowX: 'auto',
-    pb: 1,
-    scrollSnapType: 'x mandatory'
-  }}
->
-  {fijos.map((plato) => (
-   <Box key={`fijo-${plato.id}`} sx={{ flex: '0 0 auto', scrollSnapAlign: 'start' }}>
-  <UnifiedMenuCard
-    plato={plato}
-    cantidad={selected[plato.id]?.cantidad || 0}
-    onChange={(p, c) => handleCantidadChange(p, c)}
-  />
-</Box>
-
-  ))}
-</Box>
-
-
+              {renderScrollGrid(especialesSinDuplicados, scrollRefEspeciales, true)}
             </>
           )}
 
-          {especiales.length > 0 && (
+          {fijosSinDuplicados.length > 0 && (
             <>
-              <Typography variant="subtitle1" fontWeight="bold" sx={{ mt: 3, mb: 2 }}>
-                ⭐ Menú especial del día
+              <Typography variant="subtitle1" fontWeight="bold" sx={{ mt: 2, mb: 1 }}>
+                📦 Platos fijos
               </Typography>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                  gap: 2
-                }}
-              >
-                {especiales.map((plato) => {
-                  const cantidad = selected[plato.id]?.cantidad || 0;
-                  return (
-                <motion.div
-  key={`especial-${plato.id}`}
-  whileHover={{ scale: 1.03 }}
-  initial={{ opacity: 0, y: 10 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.3 }}
->
-  <UnifiedMenuCard
-    plato={plato}
-    cantidad={cantidad}
-    onChange={(p, c) => handleCantidadChange(p, c)}
-  />
-</motion.div>
-
-                  );
-                })}
-              </Box>
+              {renderScrollGrid(fijosSinDuplicados, scrollRefFijos)}
             </>
           )}
         </>

@@ -1,201 +1,275 @@
+import React, { useState } from 'react';
 import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Typography,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  IconButton,
-  TextField,
-  Box,
-  Button,
-  useTheme,
-  useMediaQuery
+  Accordion, AccordionSummary, AccordionDetails,
+  Typography, Box, TextField, Button, Table, TableHead,
+  TableRow, TableCell, TableBody, Paper
 } from '@mui/material';
-
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
-import { useState } from 'react';
 
-const diasSemana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
+const diasOrdenados = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
 
-const EditableProduccionTable = ({ pedidos, onGuardar }) => {
-  const [edicion, setEdicion] = useState({});
-  const [filaLibre, setFilaLibre] = useState({});
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+const ProduccionEditablePorDia = ({ pedidos, onGuardarCambios }) => {
+  const [ediciones, setEdiciones] = useState({});
 
-  const handleChange = (pedidoId, campo, valor) => {
-    setEdicion(prev => ({
+  const getNombreConEmpresa = (usuario = {}, empresa_nombre = null) => {
+    const nombre = `${usuario?.nombre || ''} ${usuario?.apellido || ''}`.trim();
+    const empresa = empresa_nombre || usuario?.empresa_nombre || usuario?.empresa?.nombre || null;
+    return empresa ? `${nombre} (${empresa})` : nombre;
+  };
+
+  const handleChange = (pedidoId, path, value) => {
+    setEdiciones(prev => ({
       ...prev,
       [pedidoId]: {
         ...prev[pedidoId],
-        [campo]: valor,
-      },
-    }));
-  };
-
-  const handleContador = (pedidoId, dia, plato, delta) => {
-    const cantidadActual =
-      edicion[pedidoId]?.[dia]?.[plato] ??
-      pedidos.find(p => p.id === pedidoId)?.pedido?.diarios?.[dia]?.[plato] ??
-      0;
-
-    const nuevaCantidad = Math.max(0, cantidadActual + delta);
-
-    setEdicion(prev => ({
-      ...prev,
-      [pedidoId]: {
-        ...(prev[pedidoId] || {}),
-        [dia]: {
-          ...(prev[pedidoId]?.[dia] || {}),
-          [plato]: nuevaCantidad,
-        },
-      },
+        [path]: value
+      }
     }));
   };
 
   const handleGuardar = (pedidoId) => {
-    const campos = edicion[pedidoId];
-    if (!campos) return;
-    onGuardar(pedidoId, campos);
-    setEdicion(prev => {
-      const copia = { ...prev };
-      delete copia[pedidoId];
-      return copia;
+    const cambios = ediciones[pedidoId];
+    if (cambios) {
+      onGuardarCambios(pedidoId, cambios);
+    }
+  };
+
+  const pedidosPorDia = diasOrdenados.reduce((acc, dia) => {
+    acc[dia] = [];
+    return acc;
+  }, {});
+
+  pedidos.forEach(p => {
+    const diarios = p.pedido?.diarios || {};
+    diasOrdenados.forEach(dia => {
+      if (diarios[dia]) {
+        pedidosPorDia[dia].push(p);
+      }
     });
+  });
+
+  const renderTablaPorDia = (dia, listaPedidos) => {
+    const pedidosEmpresa = {};
+    const pedidosUsuarios = [];
+
+    listaPedidos.forEach(p => {
+      const usuario = p.usuario || {};
+      const rol = usuario.rol;
+      const empresa = usuario.empresa_nombre || usuario.empresa?.nombre;
+
+      // Empresa/admin empresa/empleado (rol 2 o 6) → agrupar por empresa
+      if ((rol === 2 || rol === 6) && empresa) {
+        if (!pedidosEmpresa[empresa]) pedidosEmpresa[empresa] = [];
+        pedidosEmpresa[empresa].push(p);
+      } else if (rol === 1) {
+        // Usuario común
+        pedidosUsuarios.push(p);
+      }
+      // Moderador (5) no debe tener pedidos, si viene: ignorar
+    });
+
+    return (
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell><strong>Nombre y Apellido</strong></TableCell>
+            <TableCell><strong>Platos</strong></TableCell>
+            <TableCell><strong>Extras</strong></TableCell>
+            <TableCell><strong>Tartas</strong></TableCell>
+            <TableCell><strong>📝 Nota libre</strong></TableCell>
+            <TableCell><strong>Observaciones</strong></TableCell>
+            <TableCell><strong>Guardar</strong></TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {/* EMPRESAS */}
+          {Object.entries(pedidosEmpresa)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([empresa, pedidos]) => (
+              <React.Fragment key={empresa}>
+                <TableRow>
+                  <TableCell colSpan={7} sx={{
+                    backgroundColor: '#e0f7fa',
+                    fontWeight: 'bold',
+                    fontSize: '1rem',
+                    borderBottom: '2px solid #ccc'
+                  }}>
+                    🏢 {empresa}
+                  </TableCell>
+                </TableRow>
+                {pedidos.map(p => renderFilaPedido(p, dia))}
+              </React.Fragment>
+            ))}
+
+          {/* USUARIOS INDIVIDUALES */}
+          {pedidosUsuarios.length > 0 && (
+            <>
+              <TableRow>
+                <TableCell colSpan={7} sx={{
+                  backgroundColor: '#fff8e1',
+                  fontWeight: 'bold',
+                  fontSize: '1rem',
+                  borderBottom: '2px solid #ccc'
+                }}>
+                  👤 Usuarios individuales
+                </TableCell>
+              </TableRow>
+              {pedidosUsuarios.map(p => renderFilaPedido(p, dia))}
+            </>
+          )}
+        </TableBody>
+      </Table>
+    );
+  };
+
+  const renderFilaPedido = (p, dia) => {
+    const id = p.id || p._id;
+    const nombre = getNombreConEmpresa(p.usuario, p.empresa_nombre);
+    const platos = p.pedido?.diarios?.[dia] || {};
+    const extras = p.pedido?.extras?.[dia] || {};
+    const tartas = p.pedido?.tartas || {};
+
+    return (
+      <TableRow key={id}>
+        <TableCell>{nombre}</TableCell>
+        <TableCell>
+          {Object.entries(platos).map(([nombrePlato, cantidad]) => (
+            <Box key={nombrePlato} sx={{ mb: 1 }}>
+              <Typography>{nombrePlato}</Typography>
+              <TextField
+                size="small"
+                type="number"
+                defaultValue={cantidad}
+                onChange={(e) =>
+                  handleChange(id, `diarios.${dia}.${nombrePlato}`, Number(e.target.value))
+                }
+              />
+            </Box>
+          ))}
+        </TableCell>
+        <TableCell>
+          {Object.entries(extras).map(([extraId, cantidad]) => (
+            <Box key={extraId} sx={{ mb: 1 }}>
+              <Typography>{`Extra ${extraId}`}</Typography>
+              <TextField
+                size="small"
+                type="number"
+                defaultValue={cantidad}
+                onChange={(e) =>
+                  handleChange(id, `extras.${dia}.${extraId}`, Number(e.target.value))
+                }
+              />
+            </Box>
+          ))}
+        </TableCell>
+        <TableCell>
+          {Object.entries(tartas).map(([tarta, cantidad]) => (
+            <Box key={tarta} sx={{ mb: 1 }}>
+              <Typography>{tarta}</Typography>
+              <TextField
+                size="small"
+                type="number"
+                defaultValue={cantidad}
+                onChange={(e) =>
+                  handleChange(id, `tartas.${tarta}`, Number(e.target.value))
+                }
+              />
+            </Box>
+          ))}
+        </TableCell>
+        <TableCell>
+          <TextField
+            fullWidth
+            multiline
+            defaultValue={p.nota_admin || ''}
+            onChange={(e) => handleChange(id, 'nota_admin', e.target.value)}
+          />
+        </TableCell>
+        <TableCell>
+          <Typography variant="body2">{p.observaciones || '—'}</Typography>
+        </TableCell>
+        <TableCell>
+          <Button variant="contained" onClick={() => handleGuardar(id)}>
+            Guardar
+          </Button>
+        </TableCell>
+      </TableRow>
+    );
+  };
+
+  const renderTartas = () => {
+    const conTartas = pedidos.filter(p => Object.keys(p.pedido?.tartas || {}).length > 0);
+    if (conTartas.length === 0) return null;
+
+    return (
+      <Accordion>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography>🥧 Tartas (Todas las semanas)</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Empleado</TableCell>
+                <TableCell>Tarta</TableCell>
+                <TableCell>Cantidad</TableCell>
+                <TableCell>Guardar</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {conTartas.map(p => {
+                const id = p.id || p._id;
+                const nombre = getNombreConEmpresa(p.usuario, p.empresa_nombre);
+                return Object.entries(p.pedido?.tartas || {}).map(([tarta, cantidad]) => (
+                  <TableRow key={`${id}-${tarta}`}>
+                    <TableCell>{nombre}</TableCell>
+                    <TableCell>{tarta}</TableCell>
+                    <TableCell>
+                      <TextField
+                        type="number"
+                        size="small"
+                        defaultValue={cantidad}
+                        onChange={(e) =>
+                          handleChange(id, `tartas.${tarta}`, Number(e.target.value))
+                        }
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="contained" onClick={() => handleGuardar(id)}>
+                        Guardar
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ));
+              })}
+            </TableBody>
+          </Table>
+        </AccordionDetails>
+      </Accordion>
+    );
   };
 
   return (
-    <Box sx={{ mt: 4 }}>
-      {diasSemana.map(dia => {
-        const pedidosDia = pedidos.filter(p =>
-          p.pedido?.diarios?.[dia] ||
-          p.pedido?.extras?.[dia] ||
-          Object.keys(p.pedido?.tartas || {}).length > 0
-        );
-
-        return (
-          <Accordion key={dia} sx={{ width: '100%', maxWidth: '100vw' }}>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="h6">📅 {dia.toUpperCase()}</Typography>
-            </AccordionSummary>
-
-            <AccordionDetails
-              sx={{
-                overflowX: 'auto',
-                width: '100%',
-                display: 'block',
-                padding: 0,
-              }}
-            >
-              <Box sx={{ width: '100%' }}>
-                <Table size="small" sx={{ minWidth: 1100 }}>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell><strong>Usuario</strong></TableCell>
-                      <TableCell><strong>Dirección</strong></TableCell>
-                      <TableCell><strong>Email</strong></TableCell>
-                      <TableCell><strong>Teléfono</strong></TableCell>
-                      <TableCell><strong>Plato</strong></TableCell>
-                      <TableCell><strong>Cantidad</strong></TableCell>
-                      <TableCell><strong>Extras</strong></TableCell>
-                      <TableCell><strong>Tartas</strong></TableCell>
-                      <TableCell><strong>Observaciones</strong></TableCell>
-                      <TableCell><strong>Guardar</strong></TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {pedidosDia.map(pedido => {
-                      const { usuario, pedido: contenido } = pedido;
-                      const platos = contenido?.diarios?.[dia] || {};
-                      const extras = contenido?.extras?.[dia] || {};
-                      const tartas = contenido?.tartas || {};
-
-                      return (
-                        <TableRow key={pedido.id}>
-                          <TableCell>{usuario.nombre} {usuario.apellido}</TableCell>
-                          <TableCell>{usuario.direccion}</TableCell>
-                          <TableCell>{usuario.email}</TableCell>
-                          <TableCell>{usuario.telefono}</TableCell>
-                          <TableCell>
-                            {Object.keys(platos).map(plato => (
-                              <Box key={plato} display="flex" alignItems="center" gap={1}>
-                                {plato}
-                                <IconButton onClick={() => handleContador(pedido.id, dia, plato, -1)}>
-                                  <RemoveIcon fontSize="small" />
-                                </IconButton>
-                                <Typography>
-                                  {edicion[pedido.id]?.[dia]?.[plato] ?? platos[plato]}
-                                </Typography>
-                                <IconButton onClick={() => handleContador(pedido.id, dia, plato, 1)}>
-                                  <AddIcon fontSize="small" />
-                                </IconButton>
-                              </Box>
-                            ))}
-                          </TableCell>
-                          <TableCell>
-                            {Object.keys(platos).reduce((total, key) => {
-                              return total + (edicion[pedido.id]?.[dia]?.[key] ?? platos[key]);
-                            }, 0)}
-                          </TableCell>
-                          <TableCell>
-                            {Object.entries(extras).map(([extra, cantidad]) => (
-                              <Typography key={extra}>
-                                {extra}: {cantidad}
-                              </Typography>
-                            ))}
-                          </TableCell>
-                          <TableCell>
-                            {Object.entries(tartas).map(([tarta, cantidad]) => (
-                              <Typography key={tarta}>
-                                {tarta}: {cantidad}
-                              </Typography>
-                            ))}
-                          </TableCell>
-                          <TableCell>
-                            <TextField
-                              multiline
-                              fullWidth
-                              minRows={2}
-                              value={(edicion[pedido.id]?.observaciones ?? pedido.observaciones) || ''}
-                              onChange={(e) =>
-                                handleChange(pedido.id, 'observaciones', e.target.value)
-                              }
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Button onClick={() => handleGuardar(pedido.id)}>💾</Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </Box>
-
-              {/* Nota libre común */}
-              <Box mt={2} px={2}>
-                <TextField
-                  fullWidth
-                  label="✍️ Nota libre (uso interno)"
-                  placeholder="Escribir comentario, resumen o anotación..."
-                  value={filaLibre[dia] || ''}
-                  onChange={(e) =>
-                    setFilaLibre(prev => ({ ...prev, [dia]: e.target.value }))
-                  }
-                />
-              </Box>
-            </AccordionDetails>
-          </Accordion>
-        );
-      })}
+    <Box>
+      {diasOrdenados.map(dia => (
+        <Accordion key={dia} defaultExpanded>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>
+              📅 {dia.toUpperCase()}
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            {pedidosPorDia[dia].length > 0 ? (
+              <Paper elevation={1}>{renderTablaPorDia(dia, pedidosPorDia[dia])}</Paper>
+            ) : (
+              <Typography sx={{ p: 2 }}>Sin pedidos para {dia}</Typography>
+            )}
+          </AccordionDetails>
+        </Accordion>
+      ))}
+      {renderTartas()}
     </Box>
   );
 };
 
-export default EditableProduccionTable;
+export default ProduccionEditablePorDia;

@@ -15,7 +15,6 @@ const GestionarPlatos  = () => {
   const [descripcion, setDescripcion] = useState('');
   const [fecha, setFecha] = useState('');
   const [imagen, setImagen] = useState(null);
-  const [rol, setRol] = useState('usuario');
   const [cargando, setCargando] = useState(false);
   const [platosCreados, setPlatosCreados] = useState([]);
   const [platoEditando, setPlatoEditando] = useState(null);
@@ -89,8 +88,7 @@ const GestionarPlatos  = () => {
     const formData = new FormData();
     formData.append('name', nombre);
     formData.append('description', descripcion);
-    formData.append('date', fecha);
-    formData.append('for_role', rol);
+    formData.append('date', fecha)
     if (imagen) formData.append('image', imagen);
 
     try {

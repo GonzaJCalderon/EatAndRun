@@ -1,8 +1,18 @@
-
+import { useAppData } from './hooks/useAppData';
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { loadFromStorage, logout, selectUser } from './store/slices/authSlice';
+import PedidoConfirmado from './components/PedidoConfirmado';
+import dayjs from './utils/day.js'; // o la ruta relativa correcta
+import LogoAnimado from './components/LogoAnimado';
+import { usePreciosCompletos } from './hooks/usePreciosCompletos';
+
+
+
+// dayjs configurado para español ✅
+
+
 
 import {
   Container,
@@ -20,16 +30,23 @@ import InstagramIcon from '@mui/icons-material/Instagram';
 import { useSnackbar } from 'notistack';
 
 import TabsMenuContainer from './components/TabsMenuContainer';
+import AccordionMenuContainer from './components/AccordionMenuContainer';
 import PagoSection from './components/PagoSection';
 import ResumenFinal from './components/ResumenFinal';
-import TartaGallery, { tartaLabelMap } from './components/TartaGallery';
+import TartaGallery from './components/TartaGallery';
+import { tartaLabelMap } from './utils/tartaUtils';
+
 import WhatsAppButton from './components/WhatsAppButton';
 
 import { subirComprobanteCloudinary } from './utils/cloudinaryUpload';
 import { roleMap } from './utils/roles.js';
+import { getPrecios } from './utils/getPrecios';
+import CopyText from './components/CopyText';
+
 import api from './api/api';
 
 const logo = '/assets/eatandrun-logo.jpg';
+
 
 const mapearRoleIdANombre = (roleId) => {
   if (typeof roleId === 'string') return roleId;
@@ -42,8 +59,11 @@ function MainApp() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
 
+  // ✅ ✅ ✅ CORRECTO USO DEL HOOK AQUÍ
+  const { precios, loading: loadingPrecios } = usePreciosCompletos();
+
   const [cargandoUsuario, setCargandoUsuario] = useState(true);
-  const [menuDelDia, setMenuDelDia] = useState([]);
+
   const [menuFijosPorRol, setMenuFijosPorRol] = useState({ usuario: [], empresa: [] });
   const [seleccionesUsuario, setSeleccionesUsuario] = useState({});
   const [seleccionesEmpresa, setSeleccionesEmpresa] = useState({});
@@ -59,22 +79,30 @@ function MainApp() {
   const [extrasDetalle, setExtrasDetalle] = useState({});
   const [guardando, setGuardando] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
-  const [menuEspecialEmpresa, setMenuEspecialEmpresa] = useState([]);
+
   const [semanaActiva, setSemanaActiva] = useState(null);
   const [semanaCargada, setSemanaCargada] = useState(false);
  const [pedidoExitoso, setPedidoExitoso] = useState(false);
+ const [preciosTartaDB, setPreciosTartaDB] = useState({});
+
+ const [selecciones, setSelecciones] = useState({});
+ const [pedidoConfirmado, setPedidoConfirmado] = useState(null);
+ const { menuData, tartasDisponibles, menuListo } = useAppData(
+  user,
+  semanaActiva,
+  menuFijosPorRol,
+  setMenuFijosPorRol
+);
+
+
+
+
 
 
   const activeSelecciones = activeTab === 'usuario' ? seleccionesUsuario : seleccionesEmpresa;
   const setActiveSelecciones = activeTab === 'usuario' ? setSeleccionesUsuario : setSeleccionesEmpresa;
 
-  const [menuData, setMenuData] = useState({
-    lunes: { fijos: [], especiales: [] },
-    martes: { fijos: [], especiales: [] },
-    miercoles: { fijos: [], especiales: [] },
-    jueves: { fijos: [], especiales: [] },
-    viernes: { fijos: [], especiales: [] }
-  });
+
 
   const EXTRAS_MAP = {
   1: '🍰 Postre',
@@ -83,35 +111,32 @@ function MainApp() {
 };
 
 
-  useEffect(() => {
-const fetchSemanaActiva = async () => {
-  try {
-    const res = await fetch('https://eatandrun-back-production.up.railway.app/api/semana/actual');
-    const data = await res.json();
 
-    if (data?.error) {
-      console.warn("⚠️ Backend respondió error:", data.error);
-      setSemanaActiva(null); // 👈 importante para que no siga el flujo
-      return;
+useEffect(() => {
+  const fetchSemanaActiva = async () => {
+    try {
+      const res = await api.get('/semana/actual'); 
+      setSemanaActiva(res.data);
+    } catch (error) {
+      console.warn("⚠️ No se pudo obtener semana activa", error);
+      setSemanaActiva(null);
+    } finally {
+      setSemanaCargada(true);
     }
+  };
 
-    setSemanaActiva(data.semana || data);
-  } catch (error) {
-    console.warn("⚠️ No se pudo obtener semana activa", error);
-    setSemanaActiva(null);
-  } finally {
-    setSemanaCargada(true);
-  }
-};
+  fetchSemanaActiva();
+}, []);
 
-
-
-    fetchSemanaActiva();
-  }, []);
 
   useEffect(() => {
   if (pedidoGuardado) {
     // Limpiar estado del pedido
+    setPedidoConfirmado({
+  platos: activeSelecciones,
+  tartas: tartasSeleccionadas
+});
+
     setObservaciones('');
     setMetodoPago('');
     setComprobante(null);
@@ -123,12 +148,14 @@ const fetchSemanaActiva = async () => {
 }, [pedidoGuardado]);
 
 
-  useEffect(() => {
-    if (user && !activeTab) {
-      if (user.role === 99) setActiveTab('usuario');
-      else setActiveTab(mapearRoleIdANombre(user.role));
-    }
-  }, [user, activeTab]);
+useEffect(() => {
+  if (user && !activeTab) {
+    if (user.role === 99) setActiveTab('usuario');
+    else if (user.role === 'empleado') setActiveTab('empresa'); // 👈 esto es lo nuevo
+    else setActiveTab(mapearRoleIdANombre(user.role));
+  }
+}, [user, activeTab]);
+
 
   useEffect(() => {
     dispatch(loadFromStorage());
@@ -145,157 +172,16 @@ const fetchSemanaActiva = async () => {
 
   useEffect(() => {
     if (!cargandoUsuario && !user) navigate('/app');
-  }, [cargandoUsuario, user, navigate]);
+  }, [cargandoUsuario, user, navigate])
 
-  useEffect(() => {
-    const fetchEspecial = async () => {
-      try {
-        const token = localStorage.getItem('authToken');
-        const res = await fetch('https://eatandrun-back-production.up.railway.app/api/daily/empresa/especial', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await res.json();
-
-        const formatted = data.map(p => {
-          const fecha = new Date(p.date);
-          const diaSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'][fecha.getDay()];
-          return {
-            ...p,
-            nombre: p.name,
-            descripcion: p.description,
-            img: p.image_url,
-            cantidad: 0,
-            id: p.id?.toString(),
-            tipo: 'daily',
-            dia: diaSemana
-          };
-        }).filter(p => ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'].includes(p.dia));
-
-        setMenuEspecialEmpresa(formatted);
-      } catch (err) {
-        console.error("❌ Error al cargar menú especial:", err);
-      }
-    };
-
-    if (user && ['empresa', 'admin'].includes(mapearRoleIdANombre(user.role))) fetchEspecial();
-  }, [user]);
-
-  const fetchMenuFijo = async () => {
-    try {
-      const token = localStorage.getItem('authToken');
-      const roleName = mapearRoleIdANombre(user?.role);
-      if (!token || !roleName) return;
-const format = (data) =>
-  Array.isArray(data)
-    ? data.map(p => ({
-        nombre: p.name,
-        descripcion: p.description,
-        img: p.image_url,
-        cantidad: 0,
-        id: p.id || p._id,
-        tipo: 'fijo'
-      }))
-    : [];
-
-
-      if (roleName === 'admin') {
-        const [usuarioRes, empresaRes] = await Promise.all([
-          fetch(`https://eatandrun-back-production.up.railway.app/api/fixed/by-role?role=usuario`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`https://eatandrun-back-production.up.railway.app/api/fixed/by-role?role=empresa`, { headers: { Authorization: `Bearer ${token}` } })
-        ]);
-        const usuarioData = await usuarioRes.json();
-        const empresaData = await empresaRes.json();
-        setMenuFijosPorRol({ usuario: format(usuarioData), empresa: format(empresaData) });
-      } else {
-        const res = await fetch(`https://eatandrun-back-production.up.railway.app/api/fixed/by-role?role=${roleName}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await res.json();
-        setMenuFijosPorRol(prev => ({ ...prev, [roleName]: format(data) }));
-      }
-    } catch (err) {
-      console.error('❌ Error al cargar menú fijo:', err);
-    }
+useEffect(() => {
+  const fetchTartas = async () => {
+    const precios = await getTartaPrecios();
+    setPreciosTartaDB(precios);
   };
+  fetchTartas();
+}, []);
 
-  useEffect(() => {
-    if (user) fetchMenuFijo();
-  }, [user]);
-
-  useEffect(() => {
-    const fetchMenuDelDia = async () => {
-      try {
-        const token = localStorage.getItem('authToken');
-        const res = await fetch('https://eatandrun-back-production.up.railway.app/api/daily/', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await res.json();
-        setMenuDelDia(data);
-      } catch (err) {
-        console.error('❌ Error al cargar menú del día:', err);
-      }
-    };
-
-    if (user) fetchMenuDelDia();
-  }, [user]);
-
-  const agruparPorDiaSemana = (platos) => {
-    const resultado = { lunes: [], martes: [], miercoles: [], jueves: [], viernes: [] };
-    platos.forEach(plato => {
-      const fecha = new Date(plato.date);
-      const dia = fecha.getDay();
-      const diasMap = { 1: 'lunes', 2: 'martes', 3: 'miercoles', 4: 'jueves', 5: 'viernes' };
-      const diaSemana = diasMap[dia];
-      if (diaSemana) {
-        resultado[diaSemana].push({
-          nombre: plato.name,
-          descripcion: plato.description,
-          img: plato.image_url,
-          cantidad: 0,
-          id: plato.id,
-          tipo: 'daily'
-        });
-      }
-    });
-    return resultado;
-  };
-
-  useEffect(() => {
-    if (!user) return;
-
-const roleName = mapearRoleIdANombre(user.role);
-
-// ✅ Primero definimos fijosRol
-const fijosRol = roleName === 'admin'
-  ? [
-      ...(menuFijosPorRol.usuario || []).map(p => ({ ...p, rol: 'usuario' })),
-      ...(menuFijosPorRol.empresa || []).map(p => ({ ...p, rol: 'empresa' }))
-    ]
-  : (menuFijosPorRol[roleName] || []);
-
-
-// Luego sí podemos loguear
-console.log('🍽️ Menu Fijos Por Rol:', menuFijosPorRol);
-console.log('🍽️ Fijos Combinados para admin:', fijosRol);
-
-
-    const especialesAgrupados = agruparPorDiaSemana(menuDelDia);
-
-    const nuevoMenuData = {};
-
-    ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'].forEach((dia) => {
-      const especialesEmpresaFiltrados = menuEspecialEmpresa.filter(p => p.dia === dia);
-      nuevoMenuData[dia] = {
-        fijos: fijosRol.map(p => ({ ...p, tipo: 'fijo' })),
-        especiales: [
-          ...(especialesAgrupados[dia] || []),
-          ...especialesEmpresaFiltrados
-        ]
-      };
-    });
-
-    setMenuData(nuevoMenuData);
-  }, [menuDelDia, menuFijosPorRol, menuEspecialEmpresa, user]);
 
   useEffect(() => {
     const ahora = new Date();
@@ -305,44 +191,53 @@ console.log('🍽️ Fijos Combinados para admin:', fijosRol);
     if (ahora > deadline) setBloqueado(true);
   }, []);
 
-  const semanaCerrada = useMemo(() => {
-    if (!semanaActiva || !semanaActiva.habilitado) return true;
-    if (!semanaActiva.cierre) return false;
-    const cierre = new Date(semanaActiva.cierre);
-    const ahora = new Date();
-    return ahora > cierre;
-  }, [semanaActiva]);
+const semanaCerrada = useMemo(() => {
+  if (!semanaActiva || !semanaActiva.habilitado) return true;
 
-  const resumenDias = useMemo(() => {
-    const resumen = Object.entries(activeSelecciones).map(([dia, platos]) => {
-      const totalPlatos = Object.values(platos)
-        .filter(p => ['daily', 'fijo'].includes(p.tipo) || !p.tipo)
-        .reduce((sum, p) => sum + (p.cantidad || 0), 0);
+  const ahora = new Date();
 
-      const totalExtras = Object.values(platos)
-        .filter(p => p.tipo === 'extra')
-        .reduce((sum, p) => sum + (p.cantidad || 0), 0);
+  return !Object.entries(semanaActiva.dias_habilitados || {}).some(([dia, habilitado]) => {
+    if (!habilitado) return false;
+    const diaIndex = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'].indexOf(dia.toLowerCase());
+    const fechaDia = new Date(semanaActiva.semana_inicio);
+    fechaDia.setDate(fechaDia.getDate() + ((diaIndex + 7 - fechaDia.getDay()) % 7));
+    return fechaDia >= ahora;
+  });
+}, [semanaActiva]);
 
-      const deseaOmitir = Object.values(platos).some(p => p.tipo === 'skip');
 
-      return {
-        dia,
-        resumen: deseaOmitir
-          ? '❌ No desea menú'
-          : `${totalPlatos ? `${totalPlatos} plato${totalPlatos > 1 ? 's' : ''}` : ''}${totalExtras ? ` + ${totalExtras} extra${totalExtras > 1 ? 's' : ''}` : ''}`
-      };
-    });
 
-    const totalTartas = Object.entries(tartasSeleccionadas || {})
-      .filter(([_, cantidad]) => cantidad > 0)
-      .map(([tipo, cantidad]) => `🥧 ${cantidad} tarta${cantidad > 1 ? 's' : ''} de ${tartaLabelMap[tipo] || tipo}`);
 
-    if (totalTartas.length > 0) {
-      resumen.push({ dia: 'tartas', resumen: totalTartas.join(', ') });
-    }
+ const resumenDias = useMemo(() => {
+  const resumen = Object.entries(activeSelecciones).map(([dia, platos]) => {
+    const deseaOmitir = Object.values(platos).some(p => p.tipo === 'skip');
 
-    return resumen;
-  }, [activeSelecciones, tartasSeleccionadas]);
+    return {
+      dia,
+      resumen: deseaOmitir
+        ? '❌ No desea menú'
+        : Object.values(platos)
+            .filter(p => (p.tipo === 'daily' || p.tipo === 'fijo') && p.cantidad > 0)
+            .map(p => {
+              const nombre = p.nombre || p.name || `ID ${p.id}`;
+              return `🍽️ ${p.cantidad} x ${nombre}`;
+            })
+            .join(', ')
+    };
+  });
+
+  const totalTartas = Object.entries(tartasSeleccionadas || {})
+    .filter(([_, cantidad]) => cantidad > 0)
+    .map(([tipo, cantidad]) => `🥧 ${cantidad} tarta${cantidad > 1 ? 's' : ''} de ${tartaLabelMap[tipo] || tipo}`);
+
+  if (totalTartas.length > 0) {
+    resumen.push({ dia: 'tartas', resumen: totalTartas.join(', ') });
+  }
+
+  return resumen;
+}, [activeSelecciones, tartasSeleccionadas]);
+
+
 
 useEffect(() => {
   const nuevoDetalle = {};
@@ -369,41 +264,55 @@ useEffect(() => {
 
 
 
-  const estimarTotal = () => {
-    let total = 0;
+const estimarTotal = () => {
+  let total = 0;
+  let totalPlatos = 0;
 
-    const precios = JSON.parse(localStorage.getItem('precios_eatandrun')) || {
-      plato: 6300,
-      envio: 900,
-      tarta: 13500
-    };
 
-    const selecciones = activeTab === 'usuario' ? seleccionesUsuario : seleccionesEmpresa;
-    const dias = Object.values(selecciones);
+  const selecciones = activeTab === 'usuario' ? seleccionesUsuario : seleccionesEmpresa;
+  const dias = Object.values(selecciones);
 
-    const diasConPlatos = dias.filter(dia =>
-      Object.values(dia).some(p => ['daily', 'fijo'].includes(p.tipo) && p.cantidad > 0)
-    ).length;
+  const diasConPlatos = dias.filter(dia =>
+    Object.values(dia).some(p => ['daily', 'fijo'].includes(p.tipo) && p.cantidad > 0)
+  ).length;
 
-    dias.forEach(dia => {
-      Object.values(dia).forEach(p => {
-        const cant = parseInt(p?.cantidad || 0);
-        if (['daily', 'fijo'].includes(p.tipo) || !p.tipo) {
-          total += cant * precios.plato;
-        }
-        if (p.tipo === 'extra') {
-          total += cant * (p.precio || 0);
-        }
-      });
+  dias.forEach(dia => {
+    Object.values(dia).forEach(p => {
+      const cant = parseInt(p?.cantidad || 0);
+      if (['daily', 'fijo'].includes(p.tipo) || !p.tipo) {
+        totalPlatos += cant;
+        total += cant * precios.plato;
+      }
+      if (p.tipo === 'extra') {
+        total += cant * (p.precio || 0);
+      }
     });
+  });
 
-    total += diasConPlatos * precios.envio;
+  total += diasConPlatos * precios.envio;
 
-    const totalTartas = Object.values(tartasSeleccionadas).reduce((sum, val) => sum + val, 0);
-    total += totalTartas * precios.tarta;
+  const totalTartas = Object.values(tartasSeleccionadas).reduce((sum, val) => sum + val, 0);
+Object.entries(tartasSeleccionadas).forEach(([tipo, cantidad]) => {
+  const precio = preciosTartaDB[tipo] || 0;
+  total += cantidad * precio;
+});
 
-    return total;
+
+  // 💸 Aplicar descuento configurable
+  let descuentoPorCantidad = 0;
+  if (totalPlatos >= precios.umbral_descuento) {
+    descuentoPorCantidad = totalPlatos * precios.descuento_por_plato;
+    total -= descuentoPorCantidad;
+  }
+
+  return {
+    total,
+    descuento: descuentoPorCantidad,
+    totalPlatos
   };
+};
+
+
 
 const handleGuardarPedido = async () => {
   if (!semanaActiva?.habilitado) {
@@ -426,50 +335,48 @@ const handleGuardarPedido = async () => {
     const parsed = Number(p?.id || key);
     return isNaN(parsed) ? null : parsed;
   };
+Object.entries(activeSelecciones).forEach(([dia, platos]) => {
+  if (!semanaActiva?.dias_habilitados?.[dia]) return; // ❌ Día deshabilitado, ignorar
 
-  Object.entries(activeSelecciones).forEach(([dia, platos]) => {
-    Object.entries(platos).forEach(([key, p]) => {
-      if (!p || parseInt(p.cantidad) <= 0) return;
+  Object.entries(platos).forEach(([key, p]) => {
+    if (!p || parseInt(p.cantidad) <= 0) return;
 
-      const cantidad = parseInt(p.cantidad);
-      const tipo = p.tipo || 'daily';
+    const cantidad = parseInt(p.cantidad);
+    const tipo = p.tipo || 'daily';
 
-      if (tipo === 'skip') {
-        items.push({
-          item_type: 'skip',
-          item_id: null,
-          quantity: 1,
-          dia
-        });
-        return;
-      }
-
-      if (tipo === 'extra') {
-        const itemId = parseItemId(key, p);
-        if (itemId === null) {
-          console.warn('❌ Extra con ID inválido:', key, p);
-          return;
-        }
-
-        items.push({
-          item_type: 'extra',
-          item_id: itemId,
-          quantity: cantidad,
-          precio: p.precio,
-          dia
-        });
-        return;
-      }
-
-      // tipo 'daily' o 'fijo'
+    if (tipo === 'skip') {
       items.push({
-        item_type: tipo,
-        item_id: p.id || key,
-        quantity: cantidad,
+        item_type: 'skip',
+        item_id: null,
+        quantity: 1,
         dia
       });
+      return;
+    }
+
+    if (tipo === 'extra') {
+      const itemId = parseItemId(key, p);
+      if (itemId === null) return;
+
+      items.push({
+        item_type: 'extra',
+        item_id: itemId,
+        quantity: cantidad,
+        precio: p.precio,
+        dia
+      });
+      return;
+    }
+
+    items.push({
+      item_type: tipo,
+      item_id: p.id || key,
+      quantity: cantidad,
+      dia
     });
   });
+});
+
 
   Object.entries(tartasSeleccionadas).forEach(([tipo, cantidad]) => {
     if (cantidad > 0) {
@@ -487,23 +394,24 @@ const handleGuardarPedido = async () => {
     return;
   }
 
-  console.log("🧾 Payload items:", items); // ✅ DEBUG antes de enviar
+  const diasValidos = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
+
+const hayDiasInvalidos = items.some(item =>
+  item.dia && !diasValidos.includes(item.dia.toLowerCase())
+);
+
+if (hayDiasInvalidos) {
+  enqueueSnackbar('❌ Uno o más ítems tienen un día inválido', { variant: 'error' });
+  return;
+}
+
+
 
 setGuardando(true);
 try {
-  const token = localStorage.getItem("authToken");
-
-  // 🧠 DEBUG: mostrar token y rol actual antes de enviar pedido
-  if (token) {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    console.log("🔐 Token actual:", token);
-    console.log("🧑‍💼 Rol desde token JWT:", payload.role);
-  } else {
-    console.warn("🚨 No se encontró authToken en localStorage");
-  }
-
   const fechaEntregaFinal = semanaActiva?.semana_inicio;
-  const total = estimarTotal();
+const { total } = estimarTotal(); // usa el valor con descuento
+
 
   const res = await api.post('/orders', {
     items,
@@ -533,6 +441,14 @@ try {
   }
 };
 
+if (loadingPrecios || !precios) {
+  return (
+    <Container maxWidth="sm" sx={{ mt: 6 }}>
+      <Typography align="center">Cargando precios desde servidor...</Typography>
+      <CircularProgress sx={{ display: 'block', mx: 'auto', mt: 2 }} />
+    </Container>
+  );
+}
 
   if (cargandoUsuario) {
     return (
@@ -544,34 +460,110 @@ try {
   }
 
   if (!user) return null;
+if (confirmando) {
+  const { total, descuento, totalPlatos } = estimarTotal(); // ✅ 👈 AGREGAMOS ESTO
 
- if (confirmando) {
-  console.log("🧂 EXTRAS DETALLE PASADO AL RESUMEN FINAL:", extrasDetalle);
+  const preciosActualizados = getPrecios();
+
+            // DEBUG - Confirmar Pedido
+const tienePlatosSeleccionados = Object.values(activeSelecciones).some(dia =>
+  Object.values(dia).some(p => parseInt(p.cantidad) > 0)
+);
+
+const tieneTartasSeleccionadas = Object.values(tartasSeleccionadas).some(q => q > 0);
+
+const botonDeshabilitado =
+  semanaCerrada || !(tienePlatosSeleccionados || tieneTartasSeleccionadas);
+
+
   return (
     <Container maxWidth="sm" sx={{ mt: 4 }}>
       <ResumenFinal
+        precios={precios}
         resumenDias={resumenDias}
-        total={estimarTotal()}
         metodoPago={metodoPago}
+        onMetodoPagoChange={setMetodoPago}
+        comprobante={comprobante}
+        onComprobanteChange={setComprobante}
         observaciones={observaciones}
+        descuento={descuento}
         tartasSeleccionadas={tartasSeleccionadas}
-        precios={{ plato: 6300, envio: 900, tarta: 13500 }}
         extrasDetalle={extrasDetalle}
+         loading={loadingPrecios} 
+        isEmpresa={activeTab === 'empresa'}
         onEditar={() => setConfirmando(false)}
         onConfirmarFinal={handleGuardarPedido}
+         guardando={guardando}
+
+        // 👇 AGREGAR ESTOS CUATRO
+        subtotalPlatos={totalPlatos * preciosActualizados.plato}
+        subtotalExtras={Object.values(extrasDetalle)
+          .flatMap(d => Object.values(d))
+          .reduce((sum, e) => sum + e.precio * e.cantidad, 0)}
+        subtotalEnvio={Object.values(activeSelecciones)
+          .filter(dia =>
+            Object.values(dia).some(p => ['daily', 'fijo'].includes(p.tipo) && p.cantidad > 0)
+          ).length * preciosActualizados.envio}
+        subtotalTartas={Object.values(tartasSeleccionadas)
+          .reduce((sum, cant) => sum + cant * preciosActualizados.tarta, 0)}
       />
     </Container>
   );
 }
 
+
 if (pedidoExitoso) {
   return (
-    <Container maxWidth="sm" sx={{ mt: 6, textAlign: 'center' }}>
-      <Typography variant="h5" gutterBottom>🎉 ¡Pedido realizado con éxito!</Typography>
-      <Typography variant="body1" sx={{ mb: 3 }}>
-        Gracias por tu pedido. En breve recibirás la confirmación por WhatsApp 📱
-      </Typography>
-      <Button variant="contained" color="primary" onClick={() => setPedidoExitoso(false)}>
+    <Container maxWidth="sm" sx={{ mt: 4 }}>
+     <PedidoConfirmado
+  pedido={pedidoConfirmado?.platos}
+  tartas={pedidoConfirmado?.tartas}
+  metodoPago={metodoPago}
+/>
+
+
+      {metodoPago === 'transferencia' && (
+        <Box
+          sx={{
+            backgroundColor: '#f4f6f8',
+            mt: 3,
+            p: 2,
+            border: '1px dashed #999',
+            borderRadius: 2
+          }}
+        >
+          <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+            🏦 Datos para Transferencia
+          </Typography>
+          <Typography variant="body2">Banco: <strong>Santander</strong></Typography>
+          <Typography variant="body2">Tipo de cuenta: <strong>Caja de Ahorro en Pesos</strong></Typography>
+          <Typography variant="body2">Titular: <strong>Molina Guerra Matias Mauricio</strong></Typography>
+          <Typography variant="body2">DNI: <strong>32224452</strong></Typography>
+
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="body2">
+              <strong>CBU:</strong>{' '}
+              <CopyText text="0720068788000038359572" />
+            </Typography>
+            <Typography variant="body2">
+              <strong>Alias:</strong>{' '}
+              <CopyText text="MOLINAGUERRA" />
+            </Typography>
+          </Box>
+
+          <Typography variant="body2" sx={{ mt: 2, fontStyle: 'italic' }}>
+            📎 Recordá enviar el comprobante si aún no lo hiciste.
+          </Typography>
+        </Box>
+      )}
+
+      <Button
+        variant="contained"
+        color="primary"
+        fullWidth
+        onClick={() => setPedidoExitoso(false)}
+        sx={{ mt: 4 }}
+      >
         Hacer otro pedido
       </Button>
     </Container>
@@ -579,112 +571,177 @@ if (pedidoExitoso) {
 }
 
 
-  return (
-    <>
-      <Container maxWidth="sm" sx={{ mt: 4, pb: 10 }}>
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
-          <img src={logo} alt="Eat and Run Logo" style={{ width: '90px', height: '90px', borderRadius: '50%' }} />
-          <Typography variant="h5" fontWeight="bold">¡Hola {user.name}! 🌱</Typography>
-        </Box>
 
-        {bloqueado ? (
-          <Typography color="error" sx={{ mb: 2 }}>
-            🚫 Ya no se pueden modificar los pedidos.
-          </Typography>
-        ) : (
-          <>
-            {user.role === 99 && (
-              <Tabs value={activeTab} onChange={(e, val) => setActiveTab(val)} centered sx={{ mb: 2 }}>
-                <Tab label="🧍 Usuario" value="usuario" />
-                <Tab label="🏢 Empresa" value="empresa" />
-              </Tabs>
-            )}
-
-            {semanaCargada && (
-              semanaActiva?.habilitado ? (
-                <Typography variant="body2" sx={{ mb: 2 }}>
-                  📅 Pedidos habilitados del{' '}
-                  <strong>{new Date(semanaActiva.semana_inicio).toLocaleDateString('es-AR')}</strong> al{' '}
-                  <strong>{new Date(semanaActiva.semana_fin).toLocaleDateString('es-AR')}</strong>
-                </Typography>
-              ) : (
-                <Typography variant="body2" color="error" sx={{ mb: 2 }}>
-                  🚫 Semana no habilitada para pedidos.
-                </Typography>
-              )
-            )}
-
-            <TabsMenuContainer
-              menuData={menuData}
-              selecciones={activeSelecciones}
-              onSelect={setActiveSelecciones}
-            />
-
-            <TartaGallery seleccionadas={tartasSeleccionadas} onChange={setTartasSeleccionadas} />
-
-            <Typography variant="h6" sx={{ mt: 3 }}>📝 Observaciones</Typography>
-            <TextField
-              multiline
-              rows={3}
-              fullWidth
-              value={observaciones}
-              onChange={(e) => setObservaciones(e.target.value)}
-              sx={{ mt: 1, mb: 2 }}
-            />
-
-            <PagoSection
-              metodoPago={metodoPago}
-              onMetodoPagoChange={setMetodoPago}
-              onExtrasChange={(data) => {
-                setExtras(data);
-                setExtrasDetalle(data);
-              }}
-              onComprobanteChange={setComprobante}
-            />
-
-            <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>📋 Resumen de selección</Typography>
-            {resumenDias.map(({ dia, resumen }) => (
-              <Typography key={dia} variant="body2" sx={{ mb: 0.5 }}>
-                📅 <strong>{dia.charAt(0).toUpperCase() + dia.slice(1)}:</strong> {resumen}
-              </Typography>
-            ))}
-
-            <Typography variant="h6" sx={{ mt: 3 }}>
-              💰 Total estimado: <strong>${estimarTotal().toLocaleString('es-AR')}</strong>
-            </Typography>
-
-            <Button
-              variant="contained"
-              color="success"
-              fullWidth
-              disabled={!Object.values(activeSelecciones).some(d => Object.keys(d).length > 0) || semanaCerrada}
-              onClick={() => setConfirmando(true)}
-              sx={{ mt: 2 }}
-            >
-              Confirmar pedido
-            </Button>
-
-            <Button onClick={() => dispatch(logout())} variant="outlined" fullWidth sx={{ mt: 3 }}>
-              Cerrar sesión
-            </Button>
-          </>
-        )}
-      </Container>
-
-      <Box sx={{ textAlign: 'center', py: 3, backgroundColor: '#f9f9f9' }}>
-        <img src={logo} alt="Logo Footer" style={{ width: '60px', borderRadius: '50%' }} />
-        <Typography variant="body2" color="text.secondary">Eat & Run - Healthy Food 🍃</Typography>
-        <Box sx={{ mt: 1, display: 'flex', justifyContent: 'center', gap: 1 }}>
-          <InstagramIcon sx={{ color: '#E1306C' }} />
-          <Link href="https://www.instagram.com/eatandrun.mza/" target="_blank" rel="noopener noreferrer" underline="hover" variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-            @eatandrun.mza
-          </Link>
-        </Box>
+return (
+  
+  <>
+    <Container maxWidth="sm" sx={{ mt: 4, pb: 10 }}>
+      {/* HEADER */}
+      <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <LogoAnimado />
+        <Typography variant="h5" fontWeight="bold">¡Hola {user.name}! 🌱</Typography>
+        <Typography variant="h6" fontWeight="bold" sx={{ my: 2 }}>
+          🥗 Aquí podrás elegir tu comida semanal
+        </Typography>
       </Box>
 
-      <WhatsAppButton />
-    </>
+      {/* BLOQUEO DE PEDIDO */}
+      {bloqueado ? (
+        <Typography color="error" sx={{ mb: 2 }}>
+          🚫 Ya no se pueden modificar los pedidos.
+        </Typography>
+      ) : (
+        <>
+          {/* TABS (si es admin) */}
+          {user.role === 99 && (
+            <Tabs value={activeTab} onChange={(e, val) => setActiveTab(val)} centered sx={{ mb: 2 }}>
+              <Tab label="🧍 Usuario" value="usuario" />
+              <Tab label="🏢 Empresa" value="empresa" />
+            </Tabs>
+          )}
+
+          {/* SEMANA ACTIVA */}
+          {semanaCargada && semanaActiva?.habilitado && (
+            <>
+              <Typography variant="body2" sx={{ mb: 2 }}>
+                📅 Pedidos habilitados del{' '}
+                <strong>{new Date(semanaActiva.semana_inicio).toLocaleDateString('es-AR')}</strong> al{' '}
+                <strong>{new Date(semanaActiva.semana_fin).toLocaleDateString('es-AR')}</strong>
+              </Typography>
+
+              {/* DÍAS BLOQUEADOS */}
+              {Object.entries(semanaActiva.dias_habilitados)
+                .filter(([_, habilitado]) => !habilitado)
+                .map(([dia]) => (
+                  <Typography key={dia} variant="body2" color="error" sx={{ mb: 1 }}>
+                    🚫 El día {dia.charAt(0).toUpperCase() + dia.slice(1)} está deshabilitado para pedidos.
+                  </Typography>
+                ))}
+            </>
+          )}
+
+          {/* 1. MENÚ POR DÍA */}
+          <AccordionMenuContainer
+            menuData={menuData}
+            selecciones={activeSelecciones}
+            onSelect={setActiveSelecciones}
+            diasHabilitados={Object.fromEntries(
+              Object.entries(menuData).map(([dia, datos]) => [dia, datos.habilitado])
+            )}
+            semanaCerrada={semanaCerrada}
+          />
+
+          {/* 2. TARTAS */}
+          <TartaGallery
+            seleccionadas={tartasSeleccionadas}
+            onChange={setTartasSeleccionadas}
+            tartasDisponibles={tartasDisponibles}
+          />
+          
+
+          {/* 3. OBSERVACIONES */}
+          <Typography variant="h6" sx={{ mt: 3 }}>📝 Observaciones</Typography>
+          <TextField
+            multiline
+            rows={3}
+            fullWidth
+            value={observaciones}
+            onChange={(e) => setObservaciones(e.target.value)}
+            sx={{ mt: 1, mb: 2 }}
+          />
+
+          {/* 4. MÉTODO DE PAGO */}
+          {/* <PagoSection
+            metodoPago={metodoPago}
+            onMetodoPagoChange={setMetodoPago}
+            onExtrasChange={(data) => {
+              setExtras(data);
+              setExtrasDetalle(data);
+            }}
+            onComprobanteChange={setComprobante}
+          /> */}
+
+          {/* 5. RESUMEN Y TOTAL */}
+          {/* <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>📋 Resumen de selección</Typography>
+         {resumenDias.map(({ dia, resumen }, idx) => {
+  if (!dia || typeof dia !== 'string') return null; // 🔐 Protección
+
+  return (
+    <Typography key={idx} variant="body2" sx={{ mb: 0.5 }}>
+      📅 <strong>{dia.charAt(0).toUpperCase() + dia.slice(1)}:</strong> {resumen}
+    </Typography>
   );
+})} */}
+
+
+          {/* TOTAL */}
+          {/* {activeTab !== 'empresa' && (() => {
+            const { total, descuento } = estimarTotal();
+            return (
+              <>
+                {descuento > 0 && (
+                  <Typography variant="body2" color="success.main" sx={{ mb: 1 }}>
+                    🎉 ¡Descuento aplicado por superar 5 platos! Ahorro: <strong>${descuento.toLocaleString('es-AR')}</strong>
+                  </Typography>
+                )}
+                <Typography variant="h6" sx={{ mt: 1 }}>
+                  💰 Total estimado: <strong>${total.toLocaleString('es-AR')}</strong>
+                </Typography>
+              </>
+            );
+          })()} */}
+          
+          
+          {/* 6. BOTÓN DE CONFIRMACIÓN */}
+
+
+        <Button
+  id="confirmar-pedido-btn"
+  variant="contained"
+  color="success"
+  fullWidth
+  disabled={
+    semanaCerrada ||
+    !(
+      Object.values(activeSelecciones).some(dia =>
+        Object.values(dia).some(p => parseInt(p.cantidad) > 0)
+      ) ||
+      Object.values(tartasSeleccionadas).some(q => q > 0)
+    )
+  }
+  onClick={() => setConfirmando(true)}
+  sx={{ mt: 2 }}
+>
+  
+  Confirmar pedido
+</Button>
+
+
+          {/* CERRAR SESIÓN */}
+          <Button onClick={() => dispatch(logout())} variant="outlined" fullWidth sx={{ mt: 3 }}>
+            Cerrar sesión
+          </Button>
+        </>
+      )}
+    </Container>
+
+    {/* FOOTER */}
+    <Box sx={{ textAlign: 'center', py: 3, backgroundColor: '#f9f9f9' }}>
+      <img src={logo} alt="Logo Footer" style={{ width: '60px', borderRadius: '50%' }} />
+      <Typography variant="body2" color="text.secondary">Eat & Run - Healthy Food 🍃</Typography>
+      <Box sx={{ mt: 1, display: 'flex', justifyContent: 'center', gap: 1 }}>
+        <InstagramIcon sx={{ color: '#E1306C' }} />
+        <Link href="https://www.instagram.com/eatandrun.mza/" target="_blank" rel="noopener noreferrer" underline="hover" variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+          @eatandrun.mza
+        </Link>
+      </Box>
+    </Box>
+
+    {/* WHATSAPP */}
+    <WhatsAppButton />
+  </>
+);
+
 }
 
 export default MainApp;

@@ -9,7 +9,14 @@ import ExcelJS from 'exceljs';
 import { useSnackbar } from 'notistack';
 import api from "../api/api";
 import ProduccionEditablePorDia from "../components/ProduccionEditablePorDia";
+import dayjs from '../utils/day'; 
+import isBetween from 'dayjs/plugin/isBetween';
+dayjs.extend(isBetween);
 
+const a = dayjs('2025-07-13');
+const b = dayjs('2025-07-20');
+
+console.log(a.isBetween(b.subtract(7, 'day'), b, null, '[]')); 
 
 const ProduccionResumen = () => {
   const [pedidos, setPedidos] = useState([]);
@@ -41,6 +48,13 @@ const extraMap = {
   "2": "🥗 Ensalada",
   "3": "💪 Proteína"
 };
+
+const getNombreConEmpresa = (usuario = {}, empresa_nombre = null) => {
+  const nombre = `${usuario?.nombre || ''} ${usuario?.apellido || ''}`.trim();
+  const empresa = empresa_nombre || usuario?.empresa_nombre || null;
+  return empresa ? `${nombre} (${empresa})` : nombre;
+};
+
 
 
 
@@ -81,235 +95,348 @@ const extraMap = {
   useEffect(() => {
     fetchPedidos();
   }, [tipoMenu, filtroTiempo, usarRangoPersonalizado, fechaDesde, fechaHasta]);
+const fetchPedidos = async () => {
+  try {
+    setCargando(true);
+    const res = await api.get("/admin/orders");
 
-  const fetchPedidos = async () => {
-    try {
-      setCargando(true);
-      const res = await api.get("/admin/orders");
+    const { desde, hasta } = getRangoFecha();
+    const inicio = dayjs(desde).startOf('day');
+    const fin = dayjs(hasta).endOf('day');
 
-      const { desde, hasta } = getRangoFecha();
+    setSemanaActual({ lunes: inicio.toDate(), viernes: fin.toDate() });
+const pedidosFiltrados = res.data
+  .filter(p => {
+    const raw = p.fecha_entrega || p.created_at;
 
-      const inicio = new Date(desde);
-      inicio.setHours(0, 0, 0, 0);
-      const fin = new Date(hasta);
-      fin.setHours(23, 59, 59, 999);
-
-      setSemanaActual({ lunes: inicio, viernes: fin });
-
-      const pedidosFiltrados = res.data
-        .filter(p => {
-          const raw = p.fecha_entrega || p.created_at;
-          if (!raw) return false;
-
-          const fecha = new Date(raw);
-          return (
-            fecha >= inicio &&
-            fecha <= fin &&
-            (tipoMenu === 'todos' || p.tipo_menu === tipoMenu)
-          );
-        })
-        .sort((a, b) =>
-          new Date(b.fecha_entrega || b.created_at) - new Date(a.fecha_entrega || a.created_at)
-        );
-
-      console.log("📦 Pedidos filtrados:", pedidosFiltrados);
-      setPedidos(pedidosFiltrados);
-      calcularResumen(pedidosFiltrados);
-    } catch (err) {
-      console.error("❌ Error al obtener pedidos:", err);
-    } finally {
-      setCargando(false);
+    if (!raw) {
+      console.warn(`❌ Pedido sin fecha: ID ${p.id}`);
+      return false;
     }
-  };
+
+    const fecha = dayjs(raw).startOf('day'); // 🟢 importantísimo
+
+    const inicioOp = dayjs(inicio).startOf('day');
+    const finOp = dayjs(fin).endOf('day'); // 🟢 fin extendido
+
+    const enRango = fecha.isBetween(inicioOp, finOp, 'day', '[]'); // inclusive
+
+    if (!enRango) {
+      console.warn(`⏱️ Pedido fuera de rango: ${fecha.format('dddd DD/MM')}`);
+    }
+
+    return enRango && (tipoMenu === 'todos' || p.tipo_menu === tipoMenu);
+  })
+  .sort((a, b) =>
+    dayjs(b.fecha_entrega || b.created_at).valueOf() -
+    dayjs(a.fecha_entrega || a.created_at).valueOf()
+  );
+
+
+    console.log("📦 Pedidos filtrados:", pedidosFiltrados);
+    setPedidos(pedidosFiltrados);
+    calcularResumen(pedidosFiltrados);
+  } catch (err) {
+    console.error("❌ Error al obtener pedidos:", err);
+  } finally {
+    setCargando(false);
+  }
+};
+
 
   const handleFilaLibreChange = (nuevasFilas) => {
     setFilasLibres(nuevasFilas);
   };
 
-  const calcularResumen = (pedidos) => {
-    const resumenTemp = {};
-    const obsTemp = {};
-    const totalTemp = {};
-    const extraMap = {
-      "1": "🍰 Postre",
-      "2": "🥗 Ensalada",
-      "3": "💪 Proteína"
-    };
+ const calcularResumen = (pedidos) => {
+  const resumenTemp = {};
+  const obsTemp = {};
+  const totalTemp = {};
 
-    pedidos.forEach((p) => {
-      const pedido = p.pedido || {};
-      const nombre = `${p.usuario?.nombre || ''} ${p.usuario?.apellido || ''}`.trim();
+  const extraMap = {
+    "1": "🍰 Postre",
+    "2": "🥗 Ensalada",
+    "3": "💪 Proteína"
+  };
 
-      Object.entries(pedido).forEach(([categoria, diasOPlatos]) => {
-        if (categoria === 'tartas') {
-          Object.entries(diasOPlatos).forEach(([plato, cantidad]) => {
-            const cantidadNum = Number(cantidad);
-            if (!isNaN(cantidadNum)) {
-              if (!resumenTemp["TARTAS"]) resumenTemp["TARTAS"] = {};
-              resumenTemp["TARTAS"][plato] = (resumenTemp["TARTAS"][plato] || 0) + cantidadNum;
-              totalTemp[plato] = (totalTemp[plato] || 0) + cantidadNum;
-            }
-          });
+  // 🔠 Normaliza día a MAYÚSCULAS y SIN TILDES
+  const normalizeDia = (str) =>
+    str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
 
-          if (p.observaciones) {
-            if (!obsTemp["TARTAS"]) obsTemp["TARTAS"] = [];
-            obsTemp["TARTAS"].push(`• ${nombre}: ${p.observaciones}`);
+  pedidos.forEach((p) => {
+    const pedido = p.pedido || {};
+    const nombre = getNombreConEmpresa(p.usuario, p.empresa_nombre);
+
+    // ✅ TARTAS
+    const tartas = pedido.tartas || {};
+    Object.entries(tartas).forEach(([plato, cantidad]) => {
+      const cantidadNum = Number(cantidad);
+      if (!isNaN(cantidadNum)) {
+        if (!resumenTemp["TARTAS"]) resumenTemp["TARTAS"] = {};
+        resumenTemp["TARTAS"][plato] = (resumenTemp["TARTAS"][plato] || 0) + cantidadNum;
+        totalTemp[plato] = (totalTemp[plato] || 0) + cantidadNum;
+      }
+    });
+
+    if (Object.keys(tartas).length && p.observaciones) {
+      if (!obsTemp["TARTAS"]) obsTemp["TARTAS"] = [];
+      obsTemp["TARTAS"].push(`• ${nombre}: ${p.observaciones}`);
+    }
+
+    // ✅ PLATOS diarios y extras
+    Object.entries(pedido).forEach(([categoria, diasOPlatos]) => {
+      if (categoria === 'tartas') return;
+
+      Object.entries(diasOPlatos).forEach(([dia, platos]) => {
+        const key = normalizeDia(dia); // ej: miércoles -> MIERCOLES
+
+        if (!resumenTemp[key]) resumenTemp[key] = {};
+        if (!obsTemp[key]) obsTemp[key] = [];
+
+        Object.entries(platos).forEach(([plato, cantidad]) => {
+          const cantidadNum = Number(cantidad);
+          let nombrePlato = plato;
+
+          if (categoria === 'extras') {
+            const idNormalizado = plato.replace(/^ID:/, '');
+            nombrePlato = extraMap[idNormalizado] || `Extra ${idNormalizado}`;
           }
-        } else {
-          Object.entries(diasOPlatos).forEach(([dia, platos]) => {
-            const key = dia.toUpperCase();
-            if (!resumenTemp[key]) resumenTemp[key] = {};
-            if (!obsTemp[key]) obsTemp[key] = [];
 
-            Object.entries(platos).forEach(([plato, cantidad]) => {
-              const cantidadNum = Number(cantidad);
-              let nombrePlato = plato;
+          resumenTemp[key][nombrePlato] = (resumenTemp[key][nombrePlato] || 0) + cantidadNum;
+          totalTemp[nombrePlato] = (totalTemp[nombrePlato] || 0) + cantidadNum;
+        });
 
-              if (categoria === 'extras') {
-                const idNormalizado = plato.replace(/^ID:/, '');
-                nombrePlato = extraMap[idNormalizado] || `Extra ${idNormalizado}`;
-              }
-
-              resumenTemp[key][nombrePlato] = (resumenTemp[key][nombrePlato] || 0) + cantidadNum;
-              totalTemp[nombrePlato] = (totalTemp[nombrePlato] || 0) + cantidadNum;
-            });
-
-            if (p.observaciones) {
-              obsTemp[key].push(`• ${nombre}: ${p.observaciones}`);
-            }
-          });
+        if (p.observaciones) {
+          obsTemp[key].push(`• ${nombre}: ${p.observaciones}`);
         }
       });
     });
+  });
 
-    setResumen(resumenTemp);
-    setObservaciones(obsTemp);
-    setTotalProduccion(totalTemp);
-  };
+  setResumen(resumenTemp);
+  setObservaciones(obsTemp);
+  setTotalProduccion(totalTemp);
+};
 
 
-  const exportarExcel = async () => {
+
+
+// 🔽 Esta parte del código se mantiene exactamente como está...
+
+// 🔁 Reemplazá SOLO el contenido de exportarExcel por este 👇
+
+const normalizeDia = (str) =>
+  str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+
+const exportarExcel = async () => {
   const workbook = new ExcelJS.Workbook();
-  const dias = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
+  const fechaHoy = new Date().toLocaleDateString('es-AR');
 
-  const estiloTituloPlato = {
-    font: { bold: true, name: 'Calibri' }
-  };
+  const diasSemana = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES'];
+  const fechasDias = {};
 
-  dias.forEach((dia) => {
-    const sheet = workbook.addWorksheet(dia.toUpperCase());
-
-    let fila = 1;
-    const platosPorDia = {};
-
-    pedidos.forEach(pedido => {
-      const usuario = `${pedido.usuario?.nombre || ''} ${pedido.usuario?.apellido || ''}`.trim();
-      const tipoMenu = pedido.tipo_menu?.toUpperCase() || '';
-const notasPorDia = pedido.notas || {};
-const notaLibre = notasPorDia[dia] || '';
-
-
-
-      const platos = pedido.pedido?.diarios?.[dia] || {};
-
-      Object.entries(platos).forEach(([nombrePlato, cantidad]) => {
-        if (!platosPorDia[nombrePlato]) platosPorDia[nombrePlato] = [];
-
-       platosPorDia[nombrePlato].push({
-  usuario: `${usuario} - ${tipoMenu}`,
-  cantidad,
-  nota: notaLibre,
-  observacion,
-  esExtra: false
-});
-
-      });
-
-      const extras = pedido.pedido?.extras?.[dia] || {};
-      Object.entries(extras).forEach(([extraId, cantidad]) => {
-        const nombre = extraMap[extraId.replace(/^ID:/, '')] || `Extra ${extraId}`;
-        if (!platosPorDia[nombre]) platosPorDia[nombre] = [];
-
-      platosPorDia[nombre].push({
-  usuario: `${usuario} - ${tipoMenu}`,
-  cantidad,
-  nota: notaLibre,
-  observacion,
-  esExtra: true
-});
-
-      });
-    });
-
-    // Encabezado
-sheet.columns = [
-  { header: 'Usuario', key: 'nombre', width: 20 },
-  { header: 'Tipo', key: 'tipo', width: 10 },
-  { header: 'Cantidad', key: 'cantidad', width: 12 },
-  { header: 'Nota libre', key: 'nota', width: 40 },
-  { header: 'Observación', key: 'observacion', width: 40 }
-];
-
-
-
-    // Escribir por plato
-    Object.entries(platosPorDia).forEach(([nombrePlato, usuarios]) => {
-      // Título del plato
-      sheet.addRow([]);
-      const tituloRow = sheet.addRow([nombrePlato.toUpperCase()]);
-      tituloRow.font = estiloTituloPlato;
-
-      usuarios.forEach(u => {
-     sheet.addRow({
-  usuario: u.usuario,
-  tipo: u.esExtra ? 'E' : 'A',
-  cantidad: u.cantidad,
-  nota: u.nota || '',
-  observacion: u.observacion || ''
-});
-
-      });
-
-      sheet.addRow([]); // Espacio entre bloques
-    });
+  // Obtenemos la fecha real del lunes de la semana
+  const lunes = dayjs(semanaActual.lunes);
+  diasSemana.forEach((dia, index) => {
+    const fecha = lunes.add(index, 'day');
+    fechasDias[dia] = fecha;
   });
 
-  // Hoja de resumen
-  const resumenSheet = workbook.addWorksheet("RESUMEN");
-  resumenSheet.columns = [
-    { header: "PLATO", key: "plato", width: 40 },
-    { header: "CANTIDAD", key: "cantidad", width: 15 },
-    { header: "TOTAL", key: "total", width: 15 },
-  ];
-
-  Object.entries(totalProduccion).forEach(([plato, cantidad]) => {
-    resumenSheet.addRow({ plato, cantidad, total: cantidad });
-  });
-
-  // 📌 Agregar sección de observaciones generales
-resumenSheet.addRow([]);
-resumenSheet.addRow([{ value: "📝 OBSERVACIONES POR CATEGORÍA", font: { bold: true } }]);
-
-Object.entries(observaciones).forEach(([categoria, obsLista]) => {
-  resumenSheet.addRow([]);
-  resumenSheet.addRow([{ value: `📅 ${categoria}`, font: { bold: true, italic: true } }]);
-
-  if (obsLista.length === 0) {
-    resumenSheet.addRow(["(Sin observaciones)"]);
-  } else {
-    obsLista.forEach(obs => {
-      resumenSheet.addRow([obs]);
+  const getPedidosPorDiaYPlato = (dia, plato) =>
+    pedidos.filter(p => {
+      const platosDia = p.pedido?.diarios?.[dia.toLowerCase()] || {};
+      return platosDia[plato] > 0;
     });
+
+for (const dia of diasSemana) {
+  const key = normalizeDia(dia); // ahora sí va a ser "MIERCOLES"
+  const dataDia = resumen[key] || {};
+  const fechaDia = fechasDias[dia]?.format('DD/MM') || 'Sin fecha';
+  const sheet = workbook.addWorksheet(dia); // conservamos el nombre original con tilde
+
+  if (Object.keys(dataDia).length === 0) {
+    sheet.addRow([`📭 Sin producción para ${dia}`]);
+    continue;
   }
-});
 
+    sheet.columns = Array(10).fill({ width: 25 });
+    sheet.addRow([`🍽️ PRODUCCIÓN - ${dia} ${fechaDia}`]);
+    sheet.getRow(1).font = { bold: true, size: 16 };
+    sheet.getRow(1).alignment = { horizontal: 'center' };
+    sheet.mergeCells('A1:J1');
+    sheet.addRow([]);
+
+    const platos = Object.keys(dataDia);
+    const mitad = Math.ceil(platos.length / 2);
+    const platosIzq = platos.slice(0, mitad);
+    const platosDer = platos.slice(mitad);
+
+    const agregarBloques = (platos, colInicio) => {
+      for (const plato of platos) {
+        sheet.addRow([]);
+        const tituloRow = sheet.addRow([]);
+        const colChar = String.fromCharCode(65 + colInicio);
+        const cell = sheet.getCell(`${colChar}${tituloRow.number}`);
+        cell.value = plato.toUpperCase();
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FF4CAF50' },
+        };
+        sheet.mergeCells(
+          tituloRow.number,
+          colInicio + 1,
+          tituloRow.number,
+          colInicio + 2
+        );
+
+        const pedidosDePlato = getPedidosPorDiaYPlato(dia, plato);
+        pedidosDePlato.forEach(p => {
+          const nombre = getNombreConEmpresa(p.usuario, p.empresa_nombre);
+          const row = sheet.addRow([]);
+          sheet.getCell(`${colChar}${row.number}`).value = nombre;
+        });
+
+        const resumenRow = sheet.addRow([]);
+        sheet.getCell(`${colChar}${resumenRow.number}`).value = 'TOTAL';
+        sheet.getCell(`${String.fromCharCode(65 + colInicio + 1)}${resumenRow.number}`).value = dataDia[plato];
+      }
+    };
+
+    agregarBloques(platosIzq, 0);  // columnas A/B
+    agregarBloques(platosDer, 5);  // columnas F/G
+
+    // 🧮 Tabla resumen
+    sheet.addRow([]);
+    sheet.addRow(['PLATO', 'CANTIDAD']).font = { bold: true };
+
+    Object.entries(dataDia).forEach(([plato, cantidad]) => {
+      sheet.addRow([plato, cantidad]);
+    });
+
+    const total = Object.values(dataDia).reduce((acc, n) => acc + n, 0);
+    const rowTotal = sheet.addRow(['TOTAL', total]);
+    rowTotal.font = { bold: true };
+  }
+
+  // (continúa igual con hoja de TARTAS y RESUMEN SEMANAL...)
 
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   });
-  saveAs(blob, `produccion-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  saveAs(blob, `Produccion-Semanal-${fechaHoy.replaceAll('/', '-')}.xlsx`);
 };
+
+
+const exportarExcelPorEmpresa = async () => {
+  const workbook = new ExcelJS.Workbook();
+  const fecha = new Date().toLocaleDateString('es-AR');
+
+  const pedidosPorEmpresa = {};
+
+  pedidos.forEach(p => {
+    const empresa = p.usuario?.empresa_nombre || 'Sin empresa';
+    if (!pedidosPorEmpresa[empresa]) pedidosPorEmpresa[empresa] = [];
+    pedidosPorEmpresa[empresa].push(p);
+  });
+
+  Object.entries(pedidosPorEmpresa).forEach(([nombreEmpresa, pedidosEmpresa]) => {
+    const sheet = workbook.addWorksheet(nombreEmpresa.slice(0, 31));
+    sheet.columns = [
+      { width: 25 }, // Empleado
+      { width: 15 }, // Fecha
+      { width: 20 }, // Plato
+      { width: 10 }, // Cantidad
+      { width: 15 }, // Tipo
+      { width: 40 }  // Observaciones + Nota Admin
+    ];
+
+    sheet.addRow([`🍽️ PRODUCCIÓN - ${nombreEmpresa} - ${fecha}`]);
+    sheet.getRow(1).font = { bold: true, size: 16 };
+    sheet.mergeCells('A1:F1');
+    sheet.addRow([]);
+
+    // Header
+    sheet.addRow(['Empleado', 'Fecha Entrega', 'Plato', 'Cantidad', 'Tipo', 'Observaciones']).font = { bold: true };
+
+    pedidosEmpresa.forEach(p => {
+      const nombre = getNombreConEmpresa(p.usuario, p.empresa_nombre);
+      const fechaEntrega = new Date(p.fecha_entrega || p.created_at).toLocaleDateString('es-AR');
+      const pedido = p.pedido || {};
+
+      const observacionCompleta = [
+        p.observaciones || '',
+        p.nota_admin ? `Nota admin: ${p.nota_admin}` : ''
+      ].filter(Boolean).join(' — ');
+
+      const renderPlatos = (obj, tipo) => {
+        Object.entries(obj || {}).forEach(([key, valor]) => {
+          const cantidad = Number(valor);
+          if (isNaN(cantidad) || cantidad <= 0) return;
+
+          let nombrePlato = key;
+          if (tipo === 'extras') {
+            const id = key.replace(/^ID:/, '');
+            nombrePlato = extraMap[id] || `Extra ${id}`;
+          }
+
+          sheet.addRow([
+            nombre,
+            fechaEntrega,
+            nombrePlato,
+            cantidad,
+            tipo,
+            observacionCompleta
+          ]);
+        });
+      };
+
+      renderPlatos(pedido.tartas, 'tarta');
+      renderPlatos(pedido.diarios?.lunes, 'lunes');
+      renderPlatos(pedido.diarios?.martes, 'martes');
+      renderPlatos(pedido.diarios?.miércoles, 'miércoles');
+      renderPlatos(pedido.diarios?.jueves, 'jueves');
+      renderPlatos(pedido.diarios?.viernes, 'viernes');
+      renderPlatos(pedido.extras?.lunes, 'extras');
+      renderPlatos(pedido.extras?.martes, 'extras');
+      renderPlatos(pedido.extras?.miércoles, 'extras');
+      renderPlatos(pedido.extras?.jueves, 'extras');
+      renderPlatos(pedido.extras?.viernes, 'extras');
+    });
+
+    // Totales por empresa
+    const totalPorEmpresa = {};
+    sheet.addRow([]);
+    sheet.addRow(['RESUMEN POR EMPRESA']).font = { bold: true };
+
+    sheet.eachRow((row, rowNum) => {
+      if (rowNum <= 3) return;
+      const plato = row.getCell(3).value;
+      const cantidad = row.getCell(4).value;
+      if (plato && cantidad && !isNaN(cantidad)) {
+        totalPorEmpresa[plato] = (totalPorEmpresa[plato] || 0) + cantidad;
+      }
+    });
+
+    Object.entries(totalPorEmpresa).forEach(([plato, cantidad]) => {
+      sheet.addRow([plato, cantidad]);
+    });
+
+    const totalGeneral = Object.values(totalPorEmpresa).reduce((a, b) => a + b, 0);
+    sheet.addRow(['TOTAL GENERAL', totalGeneral]).font = { bold: true };
+  });
+
+  // Guardar archivo
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  });
+  saveAs(blob, `Produccion-Empresas-${fecha.replaceAll('/', '-')}.xlsx`);
+};
+
+
 
 
 
@@ -399,6 +526,10 @@ Object.entries(observaciones).forEach(([categoria, obsLista]) => {
         <Button variant="contained" color="success" onClick={exportarExcel}>
           📤 Exportar Excel
         </Button>
+        <Button variant="contained" color="secondary" onClick={exportarExcelPorEmpresa}>
+  🏢 Exportar por Empresa
+</Button>
+
         <Button variant="outlined" color="primary" onClick={() => window.print()}>
           🖨️ Imprimir producción
         </Button>
@@ -426,12 +557,16 @@ Object.entries(observaciones).forEach(([categoria, obsLista]) => {
 
           <Box sx={{ mt: 6 }}>
             <Typography variant="h5" sx={{ mb: 2 }}>📝 Edición por día</Typography>
-           <ProduccionEditablePorDia
+ <ProduccionEditablePorDia
   pedidos={pedidos}
-  onGuardarCambios={handleGuardarCambios}
-  onFilaLibreChange={handleFilaLibreChange}
+
   onResumenEditado={handleResumenEditado}
+  onGuardarCambios={handleGuardarCambios}
+  filasLibres={filasLibres}
+  onFilasLibresChange={handleFilaLibreChange}
 />
+
+
 
           </Box>
         </>

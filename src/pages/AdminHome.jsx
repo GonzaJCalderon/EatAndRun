@@ -27,7 +27,7 @@ const AdminHome = () => {
     {
       label: '📆 Crear o editar menú del día',
       icon: <AddBoxIcon sx={{ fontSize: 40 }} />,
-      href: '/admin/crear-dia',
+      href: '/admin/editar-platos',
       color: '#009688'
     },
     // {
@@ -36,6 +36,22 @@ const AdminHome = () => {
     //   href: '/admin/editar-menu-del-dia',
     //   color: '#ff7043'
     // },
+
+    {
+  label: '🏢 Gestionar Empresas',
+  icon: <DashboardIcon sx={{ fontSize: 40 }} />,
+  href: '/admin/empresas',
+  color: '#3949ab'
+},
+
+
+    {
+  label: '🥧 Editar Tartas',
+  icon: <AddBoxIcon sx={{ fontSize: 40 }} />,
+  href: '/admin/editar-tartas',
+  color: '#ba68c8'
+},
+
 
     {
       label: '📈 Ver estadísticas, Gestion de Usuarios y Definir Semana de pedidos',

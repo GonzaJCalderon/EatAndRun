@@ -47,7 +47,7 @@ const handleArchivo = (e) => {
 
   return (
     <Box sx={{ mt: 5, background: '#f2fef5', borderRadius: 3, p: 3 }}>
-      <Typography variant="h6" fontWeight="bold" color="success.main" sx={{ mb: 2 }}>
+      {/* <Typography variant="h6" fontWeight="bold" color="success.main" sx={{ mb: 2 }}>
         💰 ¿CUÁNTO PAGAR?
       </Typography>
 
@@ -68,7 +68,7 @@ const handleArchivo = (e) => {
           <strong>🥧 Tartas (8 porciones):</strong> $13500<br />
           Opciones: Acelga, JyQ, Capresse, Pollo, Verduras
         </Typography>
-      </Paper>
+      </Paper> */}
 
  
 

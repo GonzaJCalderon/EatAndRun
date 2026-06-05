@@ -6,7 +6,7 @@ import {
 import { saveAs } from "file-saver";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { motion } from "framer-motion";
-import API from "../api/api";
+import api from "../api/api";
 
 const HistorialAdmin = () => {
   const [pedidos, setPedidos] = useState([]);
@@ -22,8 +22,28 @@ const HistorialAdmin = () => {
 
   const fetchPedidos = async () => {
     try {
-      const res = await API.get("/orders/all");
+      const res = await api.get('/admin/orders');
       const ordenados = res.data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+      ordenados.forEach(p => {
+  if (p.pedido?.diarios && !p.pedido?.fecha_dia_por_dia) {
+    // Intentamos calcularlo si falta
+    const semanaBase = p.semana_inicio || p.fecha; // fallback
+    const base = new Date(semanaBase);
+    const diaMap = { lunes: 1, martes: 2, miercoles: 3, miércoles: 3, jueves: 4, viernes: 5 };
+
+    const fecha_dia_por_dia = {};
+    Object.keys(p.pedido.diarios).forEach(dia => {
+      const numeroDia = diaMap[dia.toLowerCase()];
+      if (numeroDia != null) {
+        const fecha = new Date(base);
+        fecha.setDate(fecha.getDate() - fecha.getDay() + numeroDia);
+        fecha_dia_por_dia[dia] = fecha.toISOString().slice(0, 10);
+      }
+    });
+    p.pedido.fecha_dia_por_dia = fecha_dia_por_dia;
+  }
+});
+
       setPedidos(ordenados);
     } catch (err) {
       console.error("❌ Error al obtener pedidos:", err);
@@ -146,9 +166,21 @@ const HistorialAdmin = () => {
                 <Typography variant="h6">
                   👤 {p.usuario?.nombre} ({p.usuario?.email})
                 </Typography>
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  📅 Fecha: {new Date(p.fecha).toLocaleDateString()}
-                </Typography>
+            <Typography variant="body2" sx={{ mb: 1 }}>
+  📅 Pedido creado: {new Date(p.fecha).toLocaleDateString()}
+</Typography>
+
+{p.pedido?.fecha_dia_por_dia && Object.keys(p.pedido.fecha_dia_por_dia).length > 0 && (
+  <Box sx={{ mb: 2 }}>
+    <Typography variant="subtitle2">📆 Fechas reales de entrega:</Typography>
+    {Object.entries(p.pedido.fecha_dia_por_dia).map(([dia, fecha], idx) => (
+      <Typography variant="body2" key={idx}>
+        • {dia.toUpperCase()}: {new Date(fecha).toLocaleDateString()}
+      </Typography>
+    ))}
+  </Box>
+)}
+
 
                 <Divider sx={{ my: 2 }} />
 
@@ -157,15 +189,19 @@ const HistorialAdmin = () => {
                     <Typography variant="subtitle2" sx={{ mt: 2 }}>
                       📅 {dia.toUpperCase()}
                     </Typography>
-                    {Object.entries(platos).map(([platoKey, datos], k) => {
-                      const nombreMostrar = datos?.nombreOriginal || platoKey;
-                      const cantidadMostrar = datos?.cantidad ?? 0;
-                      return (
-                        <Typography variant="body2" key={k}>
-                          🍽️ {nombreMostrar}: {cantidadMostrar} unidad{cantidadMostrar > 1 ? 'es' : ''}
-                        </Typography>
-                      );
-                    })}
+                  {Object.entries(platos).map(([platoKey, datos], k) => {
+  const esObjeto = typeof datos === 'object' && datos !== null;
+  const nombreMostrar = esObjeto ? (datos.nombreOriginal || platoKey) : platoKey;
+  const cantidadMostrar = esObjeto ? (datos.cantidad ?? 0) : datos;
+
+  return (
+    <Typography variant="body2" key={k}>
+      🍽️ {nombreMostrar}: {cantidadMostrar} unidad{cantidadMostrar !== 1 ? 'es' : ''}
+    </Typography>
+  );
+})}
+
+
                   </div>
                 ))}
 

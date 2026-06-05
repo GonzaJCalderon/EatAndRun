@@ -13,3 +13,8 @@ export const roleReverseMap = {
   admin: 4,
   moderador: 5,
 };
+
+export function mapearRoleIdANombre(roleId) {
+  if (typeof roleId === 'string') return roleId;
+  return roleMap[roleId] || null;
+}

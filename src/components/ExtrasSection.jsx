@@ -1,7 +1,8 @@
-// src/components/ExtrasSection.jsx
 import React from 'react';
 import { Typography, Box, TextField, Paper } from '@mui/material';
 import { motion } from 'framer-motion';
+import { useSelector } from 'react-redux';
+import { selectUser } from '../store/slices/authSlice';
 
 const EXTRAS = [
   { key: 1, label: '🍰 Postre', precio: 2800 },
@@ -9,36 +10,38 @@ const EXTRAS = [
   { key: 3, label: '💪 Proteína', precio: 3500 }
 ];
 
-const ExtrasSection = ({ dia, selectedGlobal, onSelect }) => {
+const ExtrasSection = ({ dia, selectedGlobal, onSelect, disabled = false }) => {
+  const user = useSelector(selectUser);
+  const ocultarPrecios = user?.role === 'empresa' || user?.role === 'empleado';
+
   const selected = selectedGlobal[dia] || {};
 
- const handleChange = (key, precio, value) => {
-  const cantidad = parseInt(value);
-  if (isNaN(cantidad) || cantidad < 0) return;
+  const handleChange = (key, precio, value) => {
+    if (disabled) return;
+    const cantidad = parseInt(value);
+    if (isNaN(cantidad) || cantidad < 0) return;
 
-  const current = { ...selected };
+    const current = { ...selected };
+    const itemKey = `extra-${key}`;
 
-  const itemKey = `extra-${key}`;
+    if (cantidad === 0) {
+      delete current[itemKey];
+    } else {
+      current[itemKey] = {
+        id: key,
+        tipo: 'extra',
+        cantidad,
+        precio
+      };
+    }
 
-  if (cantidad === 0) {
-    delete current[itemKey];
-  } else {
-    current[itemKey] = {
-      id: key,
-      tipo: 'extra',
-      cantidad,
-      precio
+    const nuevoEstado = {
+      ...selectedGlobal,
+      [dia]: current
     };
-  }
 
-  const nuevoEstado = {
-    ...selectedGlobal,
-    [dia]: current
+    onSelect(nuevoEstado);
   };
-
-  onSelect(nuevoEstado);
-};
-
 
   return (
     <Box sx={{ mt: 4 }}>
@@ -48,12 +51,7 @@ const ExtrasSection = ({ dia, selectedGlobal, onSelect }) => {
         transition={{ duration: 0.6, ease: 'easeOut' }}
         viewport={{ once: true }}
       >
-        <Typography
-          variant="h6"
-          fontWeight="bold"
-          gutterBottom
-          sx={{ textAlign: 'center' }}
-        >
+        <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ textAlign: 'center' }}>
           ➕ Extras para el día: <strong>{dia?.toUpperCase()}</strong>
         </Typography>
 
@@ -88,25 +86,25 @@ const ExtrasSection = ({ dia, selectedGlobal, onSelect }) => {
                   {extra.label}
                 </Typography>
 
-              <TextField
-  type="number"
-  size="small"
-  inputProps={{ min: 0 }}
-  value={selected?.[`extra-${extra.key}`]?.cantidad || ''}
-  onChange={(e) =>
-    handleChange(extra.key, extra.precio, e.target.value)
-  }
-  sx={{ mt: 1, width: '70px' }}
-/>
+                <TextField
+                  type="number"
+                  size="small"
+                  inputProps={{ min: 0 }}
+                  value={selected?.[`extra-${extra.key}`]?.cantidad || ''}
+                  onChange={(e) => handleChange(extra.key, extra.precio, e.target.value)}
+                  disabled={disabled}
+                  sx={{ mt: 1, width: '70px' }}
+                />
 
-
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ display: 'block', mt: 1 }}
-                >
-                  ${extra.precio}
-                </Typography>
+                {!ocultarPrecios && (
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mt: 1 }}
+                  >
+                    ${extra.precio}
+                  </Typography>
+                )}
               </Paper>
             </motion.div>
           ))}

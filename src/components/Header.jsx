@@ -9,6 +9,8 @@ import { useNavigate } from 'react-router-dom';
 import { logout, selectUser } from '../store/slices/authSlice';
 import { useState } from 'react';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import { Link } from 'react-router-dom';
+
 
 const Header = () => {
   const user = useSelector(selectUser);
@@ -28,6 +30,8 @@ const Header = () => {
     { label: '¿Quiénes Somos?', path: '/quienes-somos' },
     ...(user?.role === 'admin' ? [{ label: 'Panel Admin', path: '/admin' }] : []),
     ...(user?.role === 'delivery' ? [{ label: 'Reparto', path: '/delivery' }] : []),
+    ...(user?.role === 'empresa' ? [{ label: 'Empresa', path: '/admin/empresa' }] : []),
+
     ...(user ? [{ label: `Hola, ${user.name}`, path: '/perfil' }, { label: 'Salir', action: handleLogout }] : [{ label: 'Ingresar', path: '/login' }])
   ];
 

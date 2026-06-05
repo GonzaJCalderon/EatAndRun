@@ -7,165 +7,152 @@ import {
   Button,
   TextField,
   Typography,
-  Grid,
-  Paper
+  Paper,
+  InputAdornment,
+  IconButton,
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useSnackbar } from 'notistack';
-
 import api from '../api/api';
-import loginImage from '../assets/imgs/nutricionImg.png';
+
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const { enqueueSnackbar } = useSnackbar();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const response = await api.post('/auth/login', { email, password });
+      const { token, user } = response.data;
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
+      if (!token || !user) {
+        throw new Error('Login fallido. Respuesta incompleta del backend.');
+      }
 
-  try {
-    const response = await api.post('/auth/login', { email, password });
+      localStorage.setItem('authToken', token);
+      dispatch(setUser({ user, token }));
+      enqueueSnackbar(`Bienvenido ${user.name}!`, { variant: 'success' });
 
-    console.log('📦 Login response:', response.data); // 💥 Verificá el contenido
-
-    const token = response.data.token;
-    const user = response.data.user;
-
-    if (!token || !user) {
-      throw new Error('Login fallido. Respuesta incompleta del backend.');
+      switch (user.role) {
+        case 'admin':
+        case 'moderador':
+          navigate('/admin');
+          break;
+        case 'empresa':
+        case 'empleado':
+        case 'usuario':
+          navigate('/app');
+          break;
+        case 'delivery':
+          navigate('/delivery');
+          break;
+        default:
+          navigate('/');
+      }
+    } catch (err) {
+      const mensaje = err?.response?.data?.error || 'Email o contraseña incorrectos';
+      enqueueSnackbar(mensaje, { variant: 'error' });
+    } finally {
+      setLoading(false);
     }
-
-    localStorage.setItem('authToken', token);
-
-    dispatch(setUser({ user, token })); // 👈 payload correcto
-
-    enqueueSnackbar(`Bienvenido ${user.name}!`, { variant: 'success' });
-    console.log('👀 Usuario logueado:', user);
-
-    // Redirección
-    switch (user.role) {
-      case 'admin':
-      case 'moderador':
-        navigate('/admin');
-        break;
-      case 'empresa':
-      case 'usuario':
-        navigate('/app');
-        break;
-      case 'delivery':
-        navigate('/delivery');
-        break;
-      default:
-        navigate('/');
-    }
-  } catch (err) {
-    console.error('❌ Error en login:', err?.response?.data || err.message);
-    const mensaje = err?.response?.data?.error || 'Email o contraseña incorrectos';
-    enqueueSnackbar(mensaje, { variant: 'error' });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   return (
-    <Grid container component="main" sx={{ height: '100vh' }}>
-      {/* Imagen lateral */}
-      <Grid
-        item
-        xs={false}
-        sm={false}
-        md={7}
+    <Box
+      sx={{
+        minHeight: '100vh',
+        backgroundImage: `url(https://res.cloudinary.com/dwiga4jg8/image/upload/v1752840768/Fondo_APLICACION_EAR_1_nxvzab.png)`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        p: 2,
+      }}
+    >
+      <Paper
+        elevation={6}
         sx={{
-          display: { xs: 'none', md: 'block' },
-          backgroundImage: `url(${loginImage})`,
-          backgroundRepeat: 'no-repeat',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          p: { xs: 3, sm: 5 },
+          width: '100%',
+          maxWidth: 400,
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          borderRadius: 3,
+          textAlign: 'center',
         }}
       >
-        <Box
-          sx={{
-            height: '100%',
-            width: '100%',
-            backgroundColor: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
         >
-          <Typography variant="h3" color="white">
-            Eat & Run 🍃
+          <Typography component="h1" variant="h4" fontWeight="bold" gutterBottom>
+            Iniciar sesión
           </Typography>
-        </Box>
-      </Grid>
+        </motion.div>
 
-      {/* Formulario */}
-      <Grid item xs={12} sm={12} md={5} component={Paper} elevation={6} square>
-        <Box
-          sx={{
-            my: 8,
-            mx: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-          }}
-        >
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+          <TextField
+            label="Correo electrónico"
+            type="email"
+            fullWidth
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            error={email.length > 0 && !email.includes('@')}
+            helperText={email.length > 0 && !email.includes('@') ? 'Email inválido' : ''}
+            sx={{ mb: 2 }}
+          />
+
+          <TextField
+            label="Contraseña"
+            type={showPassword ? 'text' : 'password'}
+            fullWidth
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            sx={{ mb: 3 }}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowPassword(!showPassword)}
+                    edge="end"
+                    aria-label="toggle password visibility"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            disabled={loading}
+            sx={{
+              backgroundColor: '#68955C',
+              '&:hover': { backgroundColor: '#557d4c' },
+            }}
           >
-            <Typography component="h1" variant="h4" fontWeight="bold" gutterBottom>
-              Iniciar sesión
-            </Typography>
-          </motion.div>
-
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
-            <TextField
-              label="Correo electrónico"
-              type="email"
-              fullWidth
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              error={email.length > 0 && !email.includes('@')}
-              helperText={email.length > 0 && !email.includes('@') ? 'Email inválido' : ''}
-              sx={{ mb: 2 }}
-            />
-
-            <TextField
-              label="Contraseña"
-              type="password"
-              fullWidth
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              sx={{ mb: 3 }}
-            />
-
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              disabled={loading}
-              sx={{
-                backgroundColor: '#68955C',
-                '&:hover': { backgroundColor: '#557d4c' },
-              }}
-            >
-              {loading ? 'Ingresando...' : 'Ingresar'}
-            </Button>
-          </Box>
+            {loading ? 'Ingresando...' : 'Ingresar'}
+          </Button>
         </Box>
-      </Grid>
-    </Grid>
+      </Paper>
+    </Box>
   );
 };
 

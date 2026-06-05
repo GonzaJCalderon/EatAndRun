@@ -1,15 +1,16 @@
+// 🔁 ¡Versión adaptada para todos los roles!
+
 import React, { useEffect, useState } from 'react';
 import {
   Container, Typography, Card, CardContent, Divider,
-  TextField, Button, Box, MenuItem, Select, InputLabel,
-  FormControl, IconButton, Grid, Snackbar, Alert, CircularProgress
+  TextField, Button, Box,
+  IconButton, Grid, Snackbar, Alert, CircularProgress
 } from '@mui/material';
 import UploadIcon from '@mui/icons-material/Upload';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AddIcon from '@mui/icons-material/Add';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 
 const EditarMenuDelDia = () => {
   const [platos, setPlatos] = useState([]);
@@ -17,44 +18,40 @@ const EditarMenuDelDia = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   const [fechaFiltro, setFechaFiltro] = useState('');
-  const [rolFiltro, setRolFiltro] = useState('');
   const [subiendo, setSubiendo] = useState({});
-  const navigate = useNavigate();
+  const [semanaActiva, setSemanaActiva] = useState(null);
 
   const token = localStorage.getItem('authToken');
 
+  // 👇 Detecta si es local o no:
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-  const [semanaActiva, setSemanaActiva] = useState(null);
-
-useEffect(() => {
-  const fetchSemana = async () => {
-    try {
-      const res = await fetch('https://eatandrun-back-production.up.railway.app/api/semana/actual', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      setSemanaActiva(data);
-    } catch (err) {
-      console.error("❌ Error al cargar semana activa:", err);
-    }
-  };
-
-  fetchSemana();
-}, []);
+const API_BASE = isLocal
+  ? 'http://localhost:4000/api'
+  : 'https://eatandrun-back-production.up.railway.app/api';
 
 
   useEffect(() => {
+    const fetchSemana = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/daily/all`, {
+  headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        setSemanaActiva(data);
+      } catch (err) {
+        console.error("❌ Error al cargar semana activa:", err);
+      }
+    };
+
+    fetchSemana();
     fetchPlatos();
   }, []);
 
-  
-
   const fetchPlatos = async () => {
     try {
-      const res = await fetch('https://eatandrun-back-production.up.railway.app/api/daily/all', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+    const res = await fetch(`${API_BASE}/daily/all`, {
+  headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
       setPlatos(data);
@@ -63,6 +60,8 @@ useEffect(() => {
       showSnackbar('❌ Error al cargar platos', 'error');
     }
   };
+
+  
 
   const handleInputChange = (index, campo, valor) => {
     const nuevos = [...platos];
@@ -97,16 +96,9 @@ useEffect(() => {
     }
   };
 
-const guardarCambios = async (index) => {
+ const guardarCambios = async (index) => {
   const plato = platos[index];
   setCargando(true);
-
-  // ✅ Validación de semana activa
-  if (semanaActiva && !semanaActiva.habilitado) {
-    alert("🚫 La semana actual está bloqueada. No se pueden guardar o modificar platos.");
-    setCargando(false);
-    return;
-  }
 
   const isNuevo = !plato.id || plato.id.toString().startsWith('temp');
   const formData = new FormData();
@@ -114,7 +106,6 @@ const guardarCambios = async (index) => {
   formData.append('description', plato.description ?? '');
   formData.append('price', plato.price ?? 0);
   formData.append('date', plato.date);
-  formData.append('for_role', plato.for_role);
 
   if (plato.image_url) {
     formData.append('image_url', plato.image_url);
@@ -122,14 +113,12 @@ const guardarCambios = async (index) => {
 
   try {
     const endpoint = isNuevo
-      ? 'https://eatandrun-back-production.up.railway.app/api/daily'
-      : `https://eatandrun-back-production.up.railway.app/api/daily/${plato.id}`;
+      ? `${API_BASE}/daily`
+      : `${API_BASE}/daily/${plato.id}`;
 
     const res = await fetch(endpoint, {
       method: isNuevo ? 'POST' : 'PUT',
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
+      headers: { Authorization: `Bearer ${token}` },
       body: formData
     });
 
@@ -147,7 +136,6 @@ const guardarCambios = async (index) => {
 };
 
 
-
   const eliminarPlato = async (id) => {
     if (!window.confirm('¿Eliminar este plato del día?')) return;
 
@@ -158,7 +146,6 @@ const guardarCambios = async (index) => {
       });
 
       if (!res.ok) throw new Error();
-
       showSnackbar('🗑️ Plato eliminado');
       fetchPlatos();
     } catch {
@@ -166,19 +153,18 @@ const guardarCambios = async (index) => {
     }
   };
 
-const agregarPlato = () => {
-  const nuevo = {
-    id: `temp-${Date.now()}`,
-    name: '',
-    description: '',
-    price: '',
-    date: fechaFiltro || new Date().toISOString().split('T')[0],
-    for_role: rolFiltro || '',
-    image_url: ''
+  const agregarPlato = () => {
+    const nuevo = {
+      id: `temp-${Date.now()}`,
+      name: '',
+      description: '',
+      price: '',
+      date: fechaFiltro || new Date().toISOString().split('T')[0],
+      image_url: '',
+  tipo: 'daily' 
+    };
+    setPlatos((prev) => [...prev, nuevo]);
   };
-  setPlatos((prev) => [...prev, nuevo]);
-};
-
 
   const showSnackbar = (message, severity = 'success') => {
     setSnackbar({ open: true, message, severity });
@@ -189,10 +175,51 @@ const agregarPlato = () => {
   };
 
   const platosFiltrados = platos.filter((plato) => {
-    const coincideFecha = fechaFiltro ? plato.date === fechaFiltro : true;
-    const coincideRol = rolFiltro ? plato.for_role === rolFiltro : true;
-    return coincideFecha && coincideRol;
+    return fechaFiltro ? plato.date === fechaFiltro : true;
   });
+
+const formatDateForInput = (value) => {
+  if (!value) return '';
+  const date = new Date(value);
+  return date.toISOString().split('T')[0]; // 🧼 convierte a YYYY-MM-DD
+};
+
+  const formatearFechaLarga = (fechaStr) => {
+  console.log('🧪 plato.date recibido:', fechaStr);
+
+  if (!fechaStr || typeof fechaStr !== 'string') return '📅 Fecha no disponible';
+
+  let fecha;
+
+  // Formato ISO detectado automáticamente (ya con hora o no)
+  const matchISO = fechaStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (matchISO) {
+    fecha = new Date(`${matchISO[1]}-${matchISO[2]}-${matchISO[3]}T00:00:00`);
+  } else {
+    return '📅 Fecha malformada';
+  }
+
+  if (isNaN(fecha.getTime())) {
+    return '📅 Fecha inválida';
+  }
+
+  const opciones = {
+    weekday: 'long',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  };
+
+  // Capitaliza el primer carácter del día
+  const fechaFormateada = fecha.toLocaleDateString('es-AR', opciones);
+  return fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1);
+};
+
+
+
+
+
+
 
   return (
     <Container sx={{ mt: 4 }}>
@@ -209,12 +236,11 @@ const agregarPlato = () => {
         ✏️ Editar Menú del Día
       </Typography>
 
-      {semanaActiva && !semanaActiva.habilitado && (
-  <Alert severity="warning" sx={{ mb: 2 }}>
-    🚫 La semana actual está bloqueada. No se pueden agregar o editar platos.
-  </Alert>
-)}
-
+      {/* {semanaActiva && !semanaActiva.habilitado && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          🚫 La semana actual está bloqueada. No se pueden agregar o editar platos.
+        </Alert>
+      )} */}
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={12} md={6}>
@@ -227,34 +253,21 @@ const agregarPlato = () => {
             onChange={(e) => setFechaFiltro(e.target.value)}
           />
         </Grid>
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
-            <InputLabel>Filtrar por rol</InputLabel>
-            <Select
-              value={rolFiltro}
-              label="Filtrar por rol"
-              onChange={(e) => setRolFiltro(e.target.value)}
-            >
-              <MenuItem value="">Todos</MenuItem>
-              <MenuItem value="usuario">👤 Usuario</MenuItem>
-              <MenuItem value="empresa">🏢 Empresa</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
       </Grid>
 
-   
+
 <Button
   variant="contained"
   color="primary"
-  startIcon={<AddIcon />}
   fullWidth
   sx={{ mb: 3 }}
-  onClick={() => navigate('/admin/crear-dia')} // 👈 ruta del form de creación
-  disabled={semanaActiva && !semanaActiva.habilitado}
+  onClick={agregarPlato}
 >
   ➕ Crear nuevo plato
 </Button>
+
+
+
 
       {platosFiltrados.length === 0 ? (
         <Typography>No hay platos que coincidan con los filtros.</Typography>
@@ -263,48 +276,49 @@ const agregarPlato = () => {
           <motion.div key={plato.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <Card sx={{ mb: 3 }}>
               <CardContent>
-                <Typography variant="h6" gutterBottom>📅 {plato.date}</Typography>
+  <Typography variant="h6" gutterBottom>
+  📅 {formatearFechaLarga(plato.date)}
+</Typography>
+
                 <Divider sx={{ mb: 2 }} />
 
-<TextField
-  label="Nombre"
-  value={plato.name || ''}
-  onChange={(e) => handleInputChange(index, 'name', e.target.value)}
-  fullWidth
-  sx={{ mb: 2 }}
-/>
+                <TextField
+                  label="Nombre"
+                  value={plato.name || ''}
+                  onChange={(e) => handleInputChange(index, 'name', e.target.value)}
+                  fullWidth
+                  sx={{ mb: 2 }}
+                />
 
 <TextField
-  label="Descripción"
-  value={plato.description || ''}
-  onChange={(e) => handleInputChange(index, 'description', e.target.value)}
+  label="Fecha"
+  type="date"
+  value={formatDateForInput(plato.date)}
+  onChange={(e) => handleInputChange(index, 'date', e.target.value)}
   fullWidth
-  multiline
-  sx={{ mb: 2 }}
-/>
-
-<TextField
-  label="Precio"
-  type="number"
-  value={plato.price || ''}
-  onChange={(e) => handleInputChange(index, 'price', e.target.value)}
-  fullWidth
+  InputLabelProps={{ shrink: true }}
   sx={{ mb: 2 }}
 />
 
 
-                <FormControl fullWidth sx={{ mb: 2 }}>
-                  <InputLabel>Para rol</InputLabel>
-                 <Select
-  value={plato.for_role || ''}
-  label="Para rol"
-  onChange={(e) => handleInputChange(index, 'for_role', e.target.value)}
->
-  <MenuItem value="usuario">👤 Usuario</MenuItem>
-  <MenuItem value="empresa">🏢 Empresa</MenuItem>
-</Select>
 
-                </FormControl>
+                <TextField
+                  label="Descripción"
+                  value={plato.description || ''}
+                  onChange={(e) => handleInputChange(index, 'description', e.target.value)}
+                  fullWidth
+                  multiline
+                  sx={{ mb: 2 }}
+                />
+
+                <TextField
+                  label="Precio"
+                  type="number"
+                  value={plato.price || ''}
+                  onChange={(e) => handleInputChange(index, 'price', e.target.value)}
+                  fullWidth
+                  sx={{ mb: 2 }}
+                />
 
                 {plato.image_url && (
                   <Box sx={{ mb: 2 }}>
@@ -316,7 +330,7 @@ const agregarPlato = () => {
                   </Box>
                 )}
 
-                <Button
+                {/* <Button
                   variant="outlined"
                   component="label"
                   startIcon={subiendo[index] ? <CircularProgress size={16} /> : <UploadIcon />}
@@ -330,7 +344,7 @@ const agregarPlato = () => {
                     accept="image/*"
                     onChange={(e) => handleImagenChange(index, e.target.files[0])}
                   />
-                </Button>
+                </Button> */}
 
                 <Box display="flex" gap={2} mt={2}>
                   <Button
