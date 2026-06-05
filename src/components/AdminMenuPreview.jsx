@@ -56,30 +56,21 @@ const AdminMenuPreview = () => {
     fetchMenus();
   }, []);
 
-  const [fechasSemana, setFechasSemana] = useState({ lunes: '', martes: '', miercoles: '', jueves: '', viernes: '' });
+  const menuEspecialPorDia = { lunes: [], martes: [], miercoles: [], jueves: [], viernes: [] };
+  const fechasSemana = { lunes: '', martes: '', miercoles: '', jueves: '', viernes: '' };
 
-  const agruparPorDia = (platos) => {
-    const agrupado = { lunes: [], martes: [], miercoles: [], jueves: [], viernes: [] };
-    const fechas = { lunes: '', martes: '', miercoles: '', jueves: '', viernes: '' };
-
-    platos.forEach(p => {
-      const fecha = dayjs(p.date).add(1, 'day'); // Fix UTC offset si viene con 'Z'
-      const dia = fecha.day();
-      const map = { 1: 'lunes', 2: 'martes', 3: 'miercoles', 4: 'jueves', 5: 'viernes' };
-      const diaTexto = map[dia];
-      if (diaTexto) {
-        agrupado[diaTexto].push(p);
-        if (!fechas[diaTexto]) {
-          fechas[diaTexto] = fecha.format('D [de] MMMM'); // ej: "21 de Octubre"
-        }
+  menuEspecial.forEach(p => {
+    const fecha = dayjs(p.date).add(1, 'day'); // Fix UTC offset si viene con 'Z'
+    const dia = fecha.day();
+    const map = { 1: 'lunes', 2: 'martes', 3: 'miercoles', 4: 'jueves', 5: 'viernes' };
+    const diaTexto = map[dia];
+    if (diaTexto) {
+      menuEspecialPorDia[diaTexto].push(p);
+      if (!fechasSemana[diaTexto]) {
+        fechasSemana[diaTexto] = fecha.format('D [de] MMMM'); // ej: "21 de Octubre"
       }
-    });
-
-    setFechasSemana(fechas);
-    return agrupado;
-  };
-
-  const menuEspecialPorDia = agruparPorDia(menuEspecial);
+    }
+  });
 
   const tartasUnicas = tartas.filter((t, index, self) => 
     index === self.findIndex((x) => x.nombre === t.nombre)
