@@ -25,6 +25,7 @@ const ProduccionResumen = () => {
   const [observaciones, setObservaciones] = useState({});
   const [totalProduccion, setTotalProduccion] = useState({});
   const [tipoMenu, setTipoMenu] = useState('todos');
+  const [mapaPlatos, setMapaPlatos] = useState({});
   const [filtroTiempo, setFiltroTiempo] = useState("semana");
   const [usarRangoPersonalizado, setUsarRangoPersonalizado] = useState(false);
   const [fechaDesde, setFechaDesde] = useState('');
@@ -94,11 +95,53 @@ const getNombreConEmpresa = (usuario = {}, empresa_nombre = null) => {
   };
 
   useEffect(() => {
-    fetchPedidos();
+    fetchPedidosYDiccionario();
   }, [tipoMenu, filtroTiempo, usarRangoPersonalizado, fechaDesde, fechaHasta]);
-const fetchPedidos = async () => {
+
+const fetchPedidosYDiccionario = async () => {
   try {
     setCargando(true);
+    
+    // 1. Fetch Diccionario de Platos
+    const [resFixed, resTartas, resDaily] = await Promise.all([
+      api.get("/fixed").catch(() => ({ data: [] })),
+      api.get("/tartas").catch(() => ({ data: [] })),
+      api.get("/daily/all").catch(() => ({ data: [] }))
+    ]);
+
+    const dict = {};
+    
+    // Mapeo Menú Fijo (por índice 0, 1, 2... y por ID)
+    if (resFixed.data && Array.isArray(resFixed.data)) {
+      resFixed.data.forEach((plato, index) => {
+        dict[`${index}`] = plato.name; // Soporte para "0", "1", "2"
+        dict[`ID:${plato.id}`] = plato.name;
+        dict[`Plato ${plato.id}`] = plato.name;
+      });
+    }
+
+    // Mapeo Menú del Día
+    if (resDaily.data && Array.isArray(resDaily.data)) {
+      resDaily.data.forEach((plato) => {
+        dict[`ID:${plato.id}`] = plato.name;
+        dict[`Plato ${plato.id}`] = plato.name;
+      });
+    }
+
+    // Mapeo Tartas (por slug/key viejo y por ID)
+    if (resTartas.data && Array.isArray(resTartas.data)) {
+      resTartas.data.forEach(tarta => {
+        const slug = `tarta-${tarta.gusto.toLowerCase().replace(/ /g, '-')}`;
+        dict[slug] = `Tarta de ${tarta.gusto}`;
+        dict[`tarta-${slug}`] = `Tarta de ${tarta.gusto}`;
+        dict[`ID:${tarta.id}`] = `Tarta de ${tarta.gusto}`;
+        dict[`ID:${tarta.gusto}`] = `Tarta de ${tarta.gusto}`;
+      });
+    }
+
+    setMapaPlatos(dict);
+
+    // 2. Fetch Pedidos
     const res = await api.get("/admin/orders");
 
     const { desde, hasta } = getRangoFecha();
@@ -136,7 +179,7 @@ const pedidosFiltrados = res.data
 
     console.log("📦 Pedidos filtrados:", pedidosFiltrados);
     setPedidos(pedidosFiltrados);
-    calcularResumen(pedidosFiltrados);
+    calcularResumen(pedidosFiltrados, dict);
   } catch (err) {
     console.error("❌ Error al obtener pedidos:", err);
   } finally {
@@ -149,7 +192,7 @@ const pedidosFiltrados = res.data
     setFilasLibres(nuevasFilas);
   };
 
- const calcularResumen = (pedidos) => {
+ const calcularResumen = (pedidosParaCalcular, dictPlatos) => {
   const resumenTemp = {};
   const obsTemp = {};
   const totalTemp = {};
@@ -164,7 +207,7 @@ const pedidosFiltrados = res.data
   const normalizeDia = (str) =>
     str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
 
-  pedidos.forEach((p) => {
+  pedidosParaCalcular.forEach((p) => {
     const pedido = p.pedido || {};
     const nombre = getNombreConEmpresa(p.usuario, p.empresa_nombre);
 
@@ -173,9 +216,12 @@ const pedidosFiltrados = res.data
     Object.entries(tartas).forEach(([plato, cantidad]) => {
       const cantidadNum = Number(cantidad);
       if (!isNaN(cantidadNum)) {
+        const nombreReal = dictPlatos[plato] || dictPlatos[`tarta-${plato}`] || plato;
+        const nombreLimpio = nombreReal.replace(/^tarta-tarta-de-/, 'Tarta de ').replace(/^tarta-/, 'Tarta de ').toUpperCase();
+        
         if (!resumenTemp["TARTAS"]) resumenTemp["TARTAS"] = {};
-        resumenTemp["TARTAS"][plato] = (resumenTemp["TARTAS"][plato] || 0) + cantidadNum;
-        totalTemp[plato] = (totalTemp[plato] || 0) + cantidadNum;
+        resumenTemp["TARTAS"][nombreLimpio] = (resumenTemp["TARTAS"][nombreLimpio] || 0) + cantidadNum;
+        totalTemp[nombreLimpio] = (totalTemp[nombreLimpio] || 0) + cantidadNum;
       }
     });
 
@@ -196,12 +242,19 @@ const pedidosFiltrados = res.data
 
         Object.entries(platos).forEach(([plato, cantidad]) => {
           const cantidadNum = Number(cantidad);
-          let nombrePlato = plato;
+          let nombrePlato = dictPlatos[plato] || plato;
 
           if (categoria === 'extras') {
             const idNormalizado = plato.replace(/^ID:/, '');
-            nombrePlato = extraMap[idNormalizado] || `Extra ${idNormalizado}`;
+            nombrePlato = extraMap[idNormalizado] || dictPlatos[plato] || `Extra ${idNormalizado}`;
           }
+
+          // Formateo visual limpio
+          if (nombrePlato.startsWith('ID:')) {
+             nombrePlato = nombrePlato.replace('ID:', '');
+          }
+
+          nombrePlato = nombrePlato.toUpperCase();
 
           resumenTemp[key][nombrePlato] = (resumenTemp[key][nombrePlato] || 0) + cantidadNum;
           totalTemp[nombrePlato] = (totalTemp[nombrePlato] || 0) + cantidadNum;
