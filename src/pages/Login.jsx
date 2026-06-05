@@ -71,67 +71,70 @@ const Login = () => {
   const bgImage = 'https://res.cloudinary.com/dwiga4jg8/image/upload/w_1600,q_auto,f_auto/Fondo_APLICACION_EAR_1_nxvzab.png';
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        width: '100%',
-        backgroundImage: `url(${bgImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        position: 'relative',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0, left: 0, right: 0, bottom: 0,
-          background: 'linear-gradient(135deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 100%)',
-          zIndex: 1
-        }
-      }}
-    >
-      <Container maxWidth="xs" sx={{ position: 'relative', zIndex: 2, m: 2 }}>
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-        >
-          <Box
-            sx={{
-              p: { xs: 4, sm: 5 },
-              backgroundColor: 'rgba(255, 255, 255, 0.9)', // Fondo blanco translúcido
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255, 255, 255, 0.4)',
-              borderRadius: 4,
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
-              textAlign: 'center',
-            }}
-          >
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-            >
-              <Box sx={{ 
-                mb: 2, 
-                display: 'inline-flex', 
-                backgroundColor: '#4CAF50', 
-                p: 2, 
-                borderRadius: '50%',
-                boxShadow: '0 4px 15px rgba(76, 175, 80, 0.4)'
-              }}>
-                <LockOutlinedIcon sx={{ fontSize: 32, color: '#fff' }} />
-              </Box>
-            </motion.div>
+    // Layout mobile-first: columna en mobile, fila en desktop
+    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
 
-            <Typography component="h1" variant="h5" fontWeight="bold" gutterBottom color="text.primary">
+      {/* ── Mitad imagen (arriba en mobile, izquierda en desktop) ── */}
+      <Box
+        sx={{
+          // Mobile: ocupa el 45% superior de la pantalla
+          height: { xs: '45vh', md: '100vh' },
+          width: { xs: '100%', md: '55%' },
+          flexShrink: 0,
+          backgroundImage: `url(${bgImage})`,
+          backgroundSize: 'cover',
+          // Mostramos la parte de la imagen donde está la leyenda (arriba-centro)
+          backgroundPosition: { xs: 'center 20%', md: 'center center' },
+          position: 'relative',
+        }}
+      >
+        {/* Gradiente muy sutil solo en la parte baja de la imagen para transición suave */}
+        <Box sx={{
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          height: { xs: '40%', md: '20%' },
+          background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.8))',
+        }} />
+      </Box>
+
+      {/* ── Mitad formulario (abajo en mobile, derecha en desktop) ── */}
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#ffffff',
+          p: { xs: 3, sm: 4, md: 6 },
+          // En mobile, sube levemente sobre la imagen con un borde redondeado
+          borderRadius: { xs: '24px 24px 0 0', md: 0 },
+          mt: { xs: '-24px', md: 0 },  // Overlap suave sobre la imagen en mobile
+          position: 'relative',
+          zIndex: 2,
+          boxShadow: { xs: '0 -8px 30px rgba(0,0,0,0.1)', md: 'none' },
+        }}
+      >
+        <Box sx={{ width: '100%', maxWidth: 400 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+          >
+            {/* Ícono */}
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <Box sx={{
+                backgroundColor: '#E8F5E9',
+                p: 1.5,
+                borderRadius: '50%',
+              }}>
+                <LockOutlinedIcon sx={{ fontSize: 32, color: '#4CAF50' }} />
+              </Box>
+            </Box>
+
+            <Typography component="h1" variant="h5" fontWeight="bold" textAlign="center" gutterBottom>
               Iniciar Sesión
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-              Ingresa tus credenciales para continuar
+            <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mb: 3 }}>
+              Ingresá tus credenciales para continuar
             </Typography>
 
             <Box component="form" onSubmit={handleSubmit}>
@@ -145,12 +148,7 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 error={email.length > 0 && !email.includes('@')}
                 helperText={email.length > 0 && !email.includes('@') ? 'Email inválido' : ''}
-                sx={{ 
-                  mb: 2.5,
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'rgba(255,255,255,0.7)'
-                  }
-                }}
+                sx={{ mb: 2 }}
               />
 
               <TextField
@@ -161,19 +159,11 @@ const Login = () => {
                 variant="outlined"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                sx={{ 
-                  mb: 4,
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'rgba(255,255,255,0.7)'
-                  }
-                }}
+                sx={{ mb: 3 }}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => setShowPassword(!showPassword)}
-                        edge="end"
-                      >
+                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
                         {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
                     </InputAdornment>
@@ -189,35 +179,43 @@ const Login = () => {
                 disabled={loading}
                 sx={{
                   py: 1.5,
-                  fontSize: '1.05rem',
+                  fontSize: '1rem',
                   fontWeight: 'bold',
                   borderRadius: 2,
                   backgroundColor: '#4CAF50',
-                  color: '#fff',
-                  boxShadow: '0 4px 14px 0 rgba(76, 175, 80, 0.39)',
+                  boxShadow: '0 4px 14px rgba(76, 175, 80, 0.4)',
                   '&:hover': {
                     backgroundColor: '#43A047',
-                    boxShadow: '0 6px 20px rgba(76, 175, 80, 0.23)',
-                    transform: 'translateY(-2px)'
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 6px 20px rgba(76, 175, 80, 0.3)',
                   },
-                  transition: 'all 0.2s'
+                  transition: 'all 0.2s',
                 }}
               >
                 {loading ? 'Ingresando...' : 'Ingresar'}
               </Button>
-              
+
               <Button
                 variant="text"
                 fullWidth
-                sx={{ mt: 2, textTransform: 'none', color: 'text.secondary' }}
+                sx={{ mt: 1.5, textTransform: 'none', color: 'text.secondary', fontSize: '0.9rem' }}
+                onClick={() => navigate('/recuperar-clave')}
+              >
+                ¿Olvidaste tu contraseña?
+              </Button>
+
+              <Button
+                variant="text"
+                fullWidth
+                sx={{ textTransform: 'none', color: '#4CAF50', fontWeight: 600, fontSize: '0.9rem' }}
                 onClick={() => navigate('/registro')}
               >
-                ¿No tienes cuenta? Regístrate
+                ¿No tenés cuenta? Registrate
               </Button>
             </Box>
-          </Box>
-        </motion.div>
-      </Container>
+          </motion.div>
+        </Box>
+      </Box>
     </Box>
   );
 };
