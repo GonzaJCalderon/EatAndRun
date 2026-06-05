@@ -77,23 +77,17 @@ const Login = () => {
       {/* ── Mitad imagen (arriba en mobile, izquierda en desktop) ── */}
       <Box
         sx={{
-          // Mobile: ocupa el 45% superior de la pantalla
-          height: { xs: '45vh', md: '100vh' },
+          // Mobile: ocupa el 35% superior de la pantalla para dejar espacio al form
+          height: { xs: '35vh', md: '100vh' },
           width: { xs: '100%', md: '55%' },
           flexShrink: 0,
           backgroundImage: `url(${bgImage})`,
           backgroundSize: 'cover',
-          // Mostramos la parte de la imagen donde está la leyenda (arriba-centro)
+          // Mostramos la parte de la imagen donde está la leyenda
           backgroundPosition: { xs: 'center 20%', md: 'center center' },
           position: 'relative',
         }}
       >
-        {/* Gradiente muy sutil solo en la parte baja de la imagen para transición suave */}
-        <Box sx={{
-          position: 'absolute', bottom: 0, left: 0, right: 0,
-          height: { xs: '40%', md: '20%' },
-          background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.8))',
-        }} />
       </Box>
 
       {/* ── Mitad formulario (abajo en mobile, derecha en desktop) ── */}
@@ -104,7 +98,7 @@ const Login = () => {
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: '#ffffff',
-          p: { xs: 3, sm: 4, md: 6 },
+          p: { xs: 2.5, sm: 4, md: 6 },
           // En mobile, sube levemente sobre la imagen con un borde redondeado
           borderRadius: { xs: '24px 24px 0 0', md: 0 },
           mt: { xs: '-24px', md: 0 },  // Overlap suave sobre la imagen en mobile
@@ -119,26 +113,22 @@ const Login = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
           >
-            {/* Ícono */}
-            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-              <Box sx={{
-                backgroundColor: '#E8F5E9',
-                p: 1.5,
-                borderRadius: '50%',
-              }}>
-                <LockOutlinedIcon sx={{ fontSize: 32, color: '#4CAF50' }} />
+            {/* Header compacto */}
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, mb: 1.5 }}>
+              <Box sx={{ backgroundColor: '#E8F5E9', p: 1, borderRadius: '50%', display: 'inline-flex' }}>
+                <LockOutlinedIcon sx={{ fontSize: 24, color: '#4CAF50' }} />
               </Box>
+              <Typography component="h1" variant="h6" fontWeight="bold" lineHeight={1.2}>
+                Iniciar Sesión
+              </Typography>
             </Box>
-
-            <Typography component="h1" variant="h5" fontWeight="bold" textAlign="center" gutterBottom>
-              Iniciar Sesión
-            </Typography>
-            <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mb: 3 }}>
+            <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mb: 2 }}>
               Ingresá tus credenciales para continuar
             </Typography>
 
             <Box component="form" onSubmit={handleSubmit}>
               <TextField
+                size="small"
                 label="Correo electrónico"
                 type="email"
                 fullWidth
@@ -152,6 +142,7 @@ const Login = () => {
               />
 
               <TextField
+                size="small"
                 label="Contraseña"
                 type={showPassword ? 'text' : 'password'}
                 fullWidth
@@ -159,12 +150,12 @@ const Login = () => {
                 variant="outlined"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                sx={{ mb: 3 }}
+                sx={{ mb: 2.5 }}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      <IconButton size="small" onClick={() => setShowPassword(!showPassword)} edge="end">
+                        {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
                       </IconButton>
                     </InputAdornment>
                   ),
@@ -178,8 +169,8 @@ const Login = () => {
                 size="large"
                 disabled={loading}
                 sx={{
-                  py: 1.5,
-                  fontSize: '1rem',
+                  py: 1.2,
+                  fontSize: '0.95rem',
                   fontWeight: 'bold',
                   borderRadius: 2,
                   backgroundColor: '#4CAF50',
