@@ -91,33 +91,33 @@ const AdminMenuPreview = () => {
   const menuEspecialPorDia = agruparPorDia(menuEspecial);
   const tartasPorFecha = agruparTartasPorFecha(tartas);
 
-  const renderPlato = (plato) => (
-    <Grid item xs={12} sm={6} md={4} lg={3} key={plato.id || plato.name}>
-      <Card sx={{ 
-        display: 'flex', 
-        height: '100%', 
-        borderRadius: 2, 
-        border: '1px solid #f1f5f9',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-      }}>
-        {plato.image_url && (
-          <CardMedia
-            component="img"
-            sx={{ width: 90, objectFit: 'cover' }}
-            image={plato.image_url}
-            alt={plato.name || plato.nombre}
-          />
-        )}
-        <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 }, flexGrow: 1 }}>
-          <Typography variant="subtitle2" fontWeight="bold" sx={{ lineHeight: 1.2, mb: 0.5 }}>
-            {plato.name || plato.nombre}
-          </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-            {plato.description || plato.descripcion}
-          </Typography>
-        </CardContent>
-      </Card>
-    </Grid>
+  const renderPlatoCompacto = (plato) => (
+    <Card sx={{ 
+      display: 'flex', 
+      alignItems: 'center',
+      mb: 1.5, 
+      p: 1,
+      borderRadius: 2, 
+      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      bgcolor: '#fff'
+    }} key={plato.id || plato.name}>
+      {plato.image_url && (
+        <CardMedia
+          component="img"
+          sx={{ width: 50, height: 50, borderRadius: 1, objectFit: 'cover', mr: 1.5 }}
+          image={plato.image_url}
+          alt={plato.name || plato.nombre}
+        />
+      )}
+      <Box>
+        <Typography variant="subtitle2" fontWeight="bold" sx={{ lineHeight: 1.1 }}>
+          {plato.name || plato.nombre}
+        </Typography>
+        <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 180, display: 'block' }}>
+          {plato.description || plato.descripcion}
+        </Typography>
+      </Box>
+    </Card>
   );
 
   const renderTarta = (tarta, idx) => (
@@ -174,38 +174,63 @@ const AdminMenuPreview = () => {
         </Button>
       </Box>
 
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h4" fontWeight="bold" gutterBottom color="primary.main">
         📋 Vista previa del Menú Semanal
       </Typography>
 
+      {/* Leyenda explicativa para el Admin */}
+      <Card sx={{ bgcolor: '#e0f2fe', p: 2, mb: 4, borderRadius: 2, border: '1px solid #bae6fd' }}>
+        <Typography variant="body1" fontWeight="bold" color="#0369a1">
+          💡 ¿Qué estoy viendo aquí?
+        </Typography>
+        <Typography variant="body2" color="#0c4a6e" sx={{ mt: 0.5 }}>
+          Esta pantalla es únicamente de <strong>Lectura y Control</strong>. Muestra los 20-25 platos fijos que se repiten automáticamente de lunes a viernes. 
+          Aquí el administrador puede verificar rápidamente cómo están distribuidos los platos en la semana sin miedo a romper nada.
+        </Typography>
+      </Card>
+
       {error && <Typography color="error">{error}</Typography>}
 
-      {dias.map((dia) => (
-        <Accordion
-          key={dia}
-          expanded={expanded === dia}
-          onChange={handleAccordionToggle(dia)}
-        >
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="h6" sx={{ textTransform: 'capitalize' }}>
+      {/* Columnas Kanban para los días */}
+      <Box sx={{ 
+        display: 'flex', 
+        gap: 2, 
+        overflowX: 'auto', 
+        pb: 2,
+        '&::-webkit-scrollbar': { height: 8 },
+        '&::-webkit-scrollbar-thumb': { backgroundColor: '#cbd5e1', borderRadius: 4 }
+      }}>
+        {dias.map((dia) => (
+          <Box key={dia} sx={{ 
+            minWidth: 280, 
+            maxWidth: 320, 
+            flex: 1, 
+            bgcolor: '#f1f5f9', 
+            borderRadius: 3, 
+            p: 2,
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <Typography variant="h6" align="center" fontWeight="bold" sx={{ mb: 2, textTransform: 'capitalize', color: '#334155' }}>
               📅 {dia}
             </Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            {/* Fijos (ya no separados) */}
-            <Typography variant="subtitle1" color="primary" sx={{ mb: 1 }}>🍽️ Menú Fijo</Typography>
-            <Grid container spacing={2}>
-              {menuFijo.map(renderPlato)}
-            </Grid>
 
-            {/* Especiales */}
-            <Typography variant="subtitle1" color="secondary" sx={{ mt: 3, mb: 1 }}>⭐ Especiales</Typography>
-            <Grid container spacing={2}>
-              {(menuEspecialPorDia[dia] || []).map(renderPlato)}
-            </Grid>
-          </AccordionDetails>
-        </Accordion>
-      ))}
+            <Typography variant="subtitle2" color="primary" sx={{ mb: 1, fontWeight: 'bold' }}>🍽️ Menú Fijo</Typography>
+            <Box sx={{ mb: 2 }}>
+              {menuFijo.map(renderPlatoCompacto)}
+            </Box>
+
+            {(menuEspecialPorDia[dia] && menuEspecialPorDia[dia].length > 0) && (
+              <>
+                <Typography variant="subtitle2" color="secondary" sx={{ mb: 1, fontWeight: 'bold' }}>⭐ Especiales</Typography>
+                <Box>
+                  {menuEspecialPorDia[dia].map(renderPlatoCompacto)}
+                </Box>
+              </>
+            )}
+          </Box>
+        ))}
+      </Box>
 
       {/* Tartas por fecha */}
       <Box sx={{ mt: 5 }}>
