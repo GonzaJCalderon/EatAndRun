@@ -9,6 +9,7 @@ import ExcelJS from 'exceljs';
 import { useSnackbar } from 'notistack';
 import api from "../api/api";
 import ProduccionEditablePorDia from "../components/ProduccionEditablePorDia";
+import VistaProduccionImpresion from "../components/VistaProduccionImpresion";
 import dayjs from '../utils/day'; 
 import isBetween from 'dayjs/plugin/isBetween';
 dayjs.extend(isBetween);
@@ -556,18 +557,23 @@ const exportarExcelPorEmpresa = async () => {
           </Card>
 
           <Box sx={{ mt: 6 }}>
+            <Typography variant="h5" sx={{ mb: 2 }}>📊 Vista de Producción (Formato Cocina)</Typography>
+            <VistaProduccionImpresion 
+              pedidos={pedidos} 
+              resumen={resumen} 
+              semanaActual={semanaActual} 
+            />
+          </Box>
+
+          <Box sx={{ mt: 6 }} className="no-print">
             <Typography variant="h5" sx={{ mb: 2 }}>📝 Edición por día</Typography>
- <ProduccionEditablePorDia
-  pedidos={pedidos}
-
-  onResumenEditado={handleResumenEditado}
-  onGuardarCambios={handleGuardarCambios}
-  filasLibres={filasLibres}
-  onFilasLibresChange={handleFilaLibreChange}
-/>
-
-
-
+            <ProduccionEditablePorDia
+              pedidos={pedidos}
+              onResumenEditado={handleResumenEditado}
+              onGuardarCambios={handleGuardarCambios}
+              filasLibres={filasLibres}
+              onFilasLibresChange={handleFilaLibreChange}
+            />
           </Box>
         </>
       )}
