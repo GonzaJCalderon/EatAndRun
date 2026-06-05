@@ -297,7 +297,7 @@ const API_BASE = isLocal
                 const index = platos.findIndex(p => p.id === plato.id);
                 return (
                   <Grid item xs={12} md={6} key={plato.id}>
-                    <motion.div initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+                    <motion.div initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} style={{ height: '100%' }}>
                       <Card sx={{ borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.08)', height: '100%', display: 'flex', flexDirection: 'column' }}>
                         <CardContent sx={{ p: 2, pb: '16px !important', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
                           <Box sx={{ display: 'flex', gap: 2, flexGrow: 1 }}>
@@ -306,7 +306,7 @@ const API_BASE = isLocal
                                 label="Nombre"
                                 size="small"
                                 multiline
-                                maxRows={2}
+                                rows={2}
                                 value={plato.name || ''}
                                 onChange={(e) => handleInputChange(index, 'name', e.target.value)}
                                 fullWidth
@@ -327,7 +327,7 @@ const API_BASE = isLocal
                                 onChange={(e) => handleInputChange(index, 'description', e.target.value)}
                                 fullWidth
                                 multiline
-                                maxRows={2}
+                                rows={2}
                               />
                               <TextField
                                 label="Precio"
