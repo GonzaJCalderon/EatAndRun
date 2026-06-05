@@ -215,12 +215,22 @@ const pedidosFiltrados = res.data
     const tartas = pedido.tartas || {};
     Object.entries(tartas).forEach(([plato, cantidad]) => {
       const cantidadNum = Number(cantidad);
-      if (!isNaN(cantidadNum)) {
+      if (!isNaN(cantidadNum) && cantidadNum > 0) {
         const nombreReal = dictPlatos[plato] || dictPlatos[`tarta-${plato}`] || plato;
         const nombreLimpio = nombreReal.replace(/^tarta-tarta-de-/, 'Tarta de ').replace(/^tarta-/, 'Tarta de ').toUpperCase();
         
         if (!resumenTemp["TARTAS"]) resumenTemp["TARTAS"] = {};
-        resumenTemp["TARTAS"][nombreLimpio] = (resumenTemp["TARTAS"][nombreLimpio] || 0) + cantidadNum;
+        if (!resumenTemp["TARTAS"][nombreLimpio]) {
+          resumenTemp["TARTAS"][nombreLimpio] = { cantidad: 0, usuarios: [] };
+        }
+        
+        resumenTemp["TARTAS"][nombreLimpio].cantidad += cantidadNum;
+        resumenTemp["TARTAS"][nombreLimpio].usuarios.push({
+          nombre,
+          cantidad: cantidadNum,
+          observaciones: p.observaciones || ''
+        });
+
         totalTemp[nombreLimpio] = (totalTemp[nombreLimpio] || 0) + cantidadNum;
       }
     });
@@ -242,6 +252,8 @@ const pedidosFiltrados = res.data
 
         Object.entries(platos).forEach(([plato, cantidad]) => {
           const cantidadNum = Number(cantidad);
+          if (isNaN(cantidadNum) || cantidadNum <= 0) return;
+
           let nombrePlato = dictPlatos[plato] || plato;
 
           if (categoria === 'extras') {
@@ -249,14 +261,23 @@ const pedidosFiltrados = res.data
             nombrePlato = extraMap[idNormalizado] || dictPlatos[plato] || `Extra ${idNormalizado}`;
           }
 
-          // Formateo visual limpio
           if (nombrePlato.startsWith('ID:')) {
              nombrePlato = nombrePlato.replace('ID:', '');
           }
 
           nombrePlato = nombrePlato.toUpperCase();
 
-          resumenTemp[key][nombrePlato] = (resumenTemp[key][nombrePlato] || 0) + cantidadNum;
+          if (!resumenTemp[key][nombrePlato]) {
+            resumenTemp[key][nombrePlato] = { cantidad: 0, usuarios: [] };
+          }
+
+          resumenTemp[key][nombrePlato].cantidad += cantidadNum;
+          resumenTemp[key][nombrePlato].usuarios.push({
+            nombre,
+            cantidad: cantidadNum,
+            observaciones: p.observaciones || ''
+          });
+
           totalTemp[nombrePlato] = (totalTemp[nombrePlato] || 0) + cantidadNum;
         });
 
@@ -296,11 +317,10 @@ const exportarExcel = async () => {
     fechasDias[dia] = fecha;
   });
 
-  const getPedidosPorDiaYPlato = (dia, plato) =>
-    pedidos.filter(p => {
-      const platosDia = p.pedido?.diarios?.[dia.toLowerCase()] || {};
-      return platosDia[plato] > 0;
-    });
+    const getPedidosPorDiaYPlato = (dia, plato) => {
+      const key = normalizeDia(dia);
+      return resumen[key]?.[plato]?.usuarios || [];
+    };
 
 for (const dia of diasSemana) {
   const key = normalizeDia(dia); // ahora sí va a ser "MIERCOLES"
@@ -346,15 +366,14 @@ for (const dia of diasSemana) {
         );
 
         const pedidosDePlato = getPedidosPorDiaYPlato(dia, plato);
-        pedidosDePlato.forEach(p => {
-          const nombre = getNombreConEmpresa(p.usuario, p.empresa_nombre);
+        pedidosDePlato.forEach(u => {
           const row = sheet.addRow([]);
-          sheet.getCell(`${colChar}${row.number}`).value = nombre;
+          sheet.getCell(`${colChar}${row.number}`).value = u.cantidad > 1 ? `${u.nombre} (x${u.cantidad})` : u.nombre;
         });
 
         const resumenRow = sheet.addRow([]);
         sheet.getCell(`${colChar}${resumenRow.number}`).value = 'TOTAL';
-        sheet.getCell(`${String.fromCharCode(65 + colInicio + 1)}${resumenRow.number}`).value = dataDia[plato];
+        sheet.getCell(`${String.fromCharCode(65 + colInicio + 1)}${resumenRow.number}`).value = dataDia[plato].cantidad;
       }
     };
 
@@ -365,11 +384,11 @@ for (const dia of diasSemana) {
     sheet.addRow([]);
     sheet.addRow(['PLATO', 'CANTIDAD']).font = { bold: true };
 
-    Object.entries(dataDia).forEach(([plato, cantidad]) => {
-      sheet.addRow([plato, cantidad]);
+    Object.entries(dataDia).forEach(([plato, data]) => {
+      sheet.addRow([plato, data.cantidad]);
     });
 
-    const total = Object.values(dataDia).reduce((acc, n) => acc + n, 0);
+    const total = Object.values(dataDia).reduce((acc, obj) => acc + obj.cantidad, 0);
     const rowTotal = sheet.addRow(['TOTAL', total]);
     rowTotal.font = { bold: true };
   }

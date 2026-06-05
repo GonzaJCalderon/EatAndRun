@@ -20,25 +20,6 @@ const getNombreConEmpresa = (usuario = {}, empresa_nombre = null) => {
 const VistaProduccionImpresion = ({ pedidos, resumen, semanaActual }) => {
   const diasSemana = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES'];
   
-  const getPedidosPorDiaYPlato = (dia, platoBuscado) => {
-    return pedidos.filter(p => {
-      const targetPlato = platoBuscado.toLowerCase().trim();
-      const diarios = p.pedido?.diarios?.[dia.toLowerCase()] || {};
-      const extras = p.pedido?.extras?.[dia.toLowerCase()] || {};
-
-      for (const [nombrePlato, cantidad] of Object.entries(diarios)) {
-        if (nombrePlato.toLowerCase().trim() === targetPlato && cantidad > 0) return true;
-      }
-
-      for (const [idExtra, cantidad] of Object.entries(extras)) {
-        const cleanId = idExtra.replace(/^ID:/, '');
-        const nombreExtra = extraMap[cleanId] || `Extra ${cleanId}`;
-        if (nombreExtra.toLowerCase().trim() === targetPlato && cantidad > 0) return true;
-      }
-      return false;
-    });
-  };
-
   const lunes = dayjs(semanaActual.lunes);
 
   return (
@@ -58,21 +39,22 @@ const VistaProduccionImpresion = ({ pedidos, resumen, semanaActual }) => {
         const renderColumna = (listaPlatos) => (
           <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             {listaPlatos.map(plato => {
-              const usuarios = getPedidosPorDiaYPlato(dia, plato);
+              const usuarios = dataDia[plato]?.usuarios || [];
               return (
                 <Table size="small" key={plato} sx={{ border: '1px solid #ccc' }}>
                   <TableHead>
                     <TableRow sx={{ backgroundColor: '#a5d6a7' }}>
                       <TableCell colSpan={2} sx={{ fontWeight: 'bold', fontSize: '1.1rem', py: 0.5 }}>
-                        {plato.toUpperCase()}
+                        {plato}
                       </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {usuarios.map(p => (
-                      <TableRow key={p.id}>
+                    {usuarios.map((u, i) => (
+                      <TableRow key={i}>
                         <TableCell sx={{ py: 0.5, borderBottom: '1px solid #eee' }}>
-                          {getNombreConEmpresa(p.usuario, p.empresa_nombre)}
+                          {u.cantidad > 1 ? `${u.nombre} (x${u.cantidad})` : u.nombre}
+                          {u.observaciones && <Typography variant="caption" display="block" color="textSecondary">Obs: {u.observaciones}</Typography>}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -102,17 +84,17 @@ const VistaProduccionImpresion = ({ pedidos, resumen, semanaActual }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {Object.entries(dataDia).map(([plato, cantidad]) => (
+                {Object.entries(dataDia).map(([plato, data]) => (
                   <TableRow key={plato}>
                     <TableCell sx={{ py: 0.5 }}>{plato}</TableCell>
-                    <TableCell align="right" sx={{ py: 0.5 }}><strong>{cantidad}</strong></TableCell>
+                    <TableCell align="right" sx={{ py: 0.5 }}><strong>{data.cantidad}</strong></TableCell>
                   </TableRow>
                 ))}
                 <TableRow sx={{ backgroundColor: '#dcedc8' }}>
                   <TableCell sx={{ py: 0.5 }}><strong>TOTAL DEL DÍA</strong></TableCell>
                   <TableCell align="right" sx={{ py: 0.5 }}>
                     <Typography variant="h6" fontWeight="bold" color="error">
-                      {Object.values(dataDia).reduce((acc, n) => acc + n, 0)}
+                      {Object.values(dataDia).reduce((acc, obj) => acc + obj.cantidad, 0)}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -121,6 +103,41 @@ const VistaProduccionImpresion = ({ pedidos, resumen, semanaActual }) => {
           </Paper>
         );
       })}
+
+      {/* TARTAS GLOBALES */}
+      {resumen["TARTAS"] && Object.keys(resumen["TARTAS"]).length > 0 && (
+        <Paper elevation={3} sx={{ p: 3, pageBreakAfter: 'always' }}>
+          <Typography variant="h5" align="center" fontWeight="bold" sx={{ mb: 3, backgroundColor: '#ffcc80', py: 1 }}>
+            🥧 TARTAS (TODA LA SEMANA)
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {Object.keys(resumen["TARTAS"]).map(tarta => {
+              const usuariosTarta = resumen["TARTAS"][tarta]?.usuarios || [];
+              return (
+                <Table size="small" key={tarta} sx={{ border: '1px solid #ccc', mb: 2 }}>
+                  <TableHead>
+                    <TableRow sx={{ backgroundColor: '#ffe0b2' }}>
+                      <TableCell colSpan={2} sx={{ fontWeight: 'bold', fontSize: '1.1rem', py: 0.5 }}>
+                        {tarta}
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {usuariosTarta.map((u, i) => (
+                      <TableRow key={i}>
+                        <TableCell sx={{ py: 0.5, borderBottom: '1px solid #eee' }}>
+                          {u.cantidad > 1 ? `${u.nombre} (x${u.cantidad})` : u.nombre}
+                          {u.observaciones && <Typography variant="caption" display="block" color="textSecondary">Obs: {u.observaciones}</Typography>}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              );
+            })}
+          </Box>
+        </Paper>
+      )}
     </Box>
   );
 };
