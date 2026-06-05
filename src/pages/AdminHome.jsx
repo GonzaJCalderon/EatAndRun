@@ -7,6 +7,8 @@ import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 import PrintIcon from '@mui/icons-material/Print';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import AddBoxIcon from '@mui/icons-material/AddBox';
+import GroupIcon from '@mui/icons-material/Group';
+import DateRangeIcon from '@mui/icons-material/DateRange';
 
 const AdminHome = () => {
   const colorTexto = '#fff';
@@ -54,10 +56,22 @@ const AdminHome = () => {
 
 
     {
-      label: '📈 Ver estadísticas, Gestion de Usuarios y Definir Semana de pedidos',
+      label: 'Estadísticas',
       icon: <DashboardIcon sx={{ fontSize: 40 }} />,
       href: '/admin/dashboard',
-      color: '#7b1fa2'
+      color: '#7b1fa2' // Violeta oscuro original
+    },
+    {
+      label: 'Gestión de Usuarios',
+      icon: <GroupIcon sx={{ fontSize: 40 }} />,
+      href: '/admin/dashboard', // Por ahora apunta al mismo dashboard, podés cambiarlo si tenés ruta propia
+      color: '#ab47bc' // Violeta medio
+    },
+    {
+      label: 'Semanas de pedidos',
+      icon: <DateRangeIcon sx={{ fontSize: 40 }} />,
+      href: '/admin/dashboard', // Por ahora apunta al mismo dashboard
+      color: '#512da8' // Púrpura intenso
     },
     {
       label: '📋 Producción semanal',
