@@ -124,7 +124,7 @@ const AdminSemanas = () => {
           Volver
         </Button>
         <Typography variant="h4" fontWeight="bold">
-          📅 Definir fechas de pedidos
+          📅 Definir semanas de pedidos
         </Typography>
         <Button variant="contained" color="primary" startIcon={<AddCircleOutlineIcon />} onClick={() => setModalCrear(true)}>
           Programar Semana
