@@ -181,17 +181,17 @@ const AdminMenuPreview = () => {
       </Box>
 
       <Typography variant="h4" fontWeight="bold" gutterBottom color="primary.main">
-        📋 Vista previa del Menú Semanal
+        📋 Gestión Integral del Menú
       </Typography>
 
       {/* Leyenda explicativa para el Admin */}
-      <Card sx={{ bgcolor: '#e0f2fe', p: 2, mb: 4, borderRadius: 2, border: '1px solid #bae6fd' }}>
-        <Typography variant="body1" fontWeight="bold" color="#0369a1">
-          💡 ¿Qué estoy viendo aquí?
+      <Card sx={{ bgcolor: '#fef3c7', p: 2, mb: 4, borderRadius: 2, border: '1px solid #fde68a' }}>
+        <Typography variant="body1" fontWeight="bold" color="#92400e">
+          💡 Panel de Control Activo
         </Typography>
-        <Typography variant="body2" color="#0c4a6e" sx={{ mt: 0.5 }}>
-          Esta pantalla es únicamente de <strong>Lectura y Control</strong>. Muestra los 20-25 platos fijos que se repiten automáticamente de lunes a viernes. 
-          Aquí el administrador puede verificar rápidamente cómo están distribuidos los platos en la semana sin miedo a romper nada.
+        <Typography variant="body2" color="#78350f" sx={{ mt: 0.5 }}>
+          Esta pantalla es tu <strong>Centro de Operaciones</strong>. Aquí podés verificar cómo están organizados los platos de la semana.
+          <br /><strong>⚠️ Atención:</strong> Usá los botones de "Editar" para modificar el catálogo. ¡Cualquier cambio que realices desde aquí <strong>impactará inmediatamente</strong> en lo que tus clientes pueden ver y elegir en la app!
         </Typography>
       </Card>
 
