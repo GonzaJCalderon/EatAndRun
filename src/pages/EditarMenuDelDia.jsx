@@ -178,11 +178,25 @@ const API_BASE = isLocal
     return fechaFiltro ? plato.date === fechaFiltro : true;
   });
 
-const formatDateForInput = (value) => {
-  if (!value) return '';
-  const date = new Date(value);
-  return date.toISOString().split('T')[0]; // 🧼 convierte a YYYY-MM-DD
-};
+  const formatDateForInput = (value) => {
+    if (!value) return '';
+    const date = new Date(value);
+    return date.toISOString().split('T')[0]; // 🧼 convierte a YYYY-MM-DD
+  };
+
+  const agruparPorFecha = (platosArray) => {
+    const grupos = {};
+    platosArray.forEach(plato => {
+      const fecha = formatDateForInput(plato.date);
+      if (!grupos[fecha]) grupos[fecha] = [];
+      grupos[fecha].push(plato);
+    });
+    // Ordenar las fechas cronológicamente
+    return Object.keys(grupos).sort().map(key => ({
+      fecha: key,
+      platos: grupos[key]
+    }));
+  };
 
   const formatearFechaLarga = (fechaStr) => {
   console.log('🧪 plato.date recibido:', fechaStr);
@@ -272,97 +286,84 @@ const formatDateForInput = (value) => {
       {platosFiltrados.length === 0 ? (
         <Typography>No hay platos que coincidan con los filtros.</Typography>
       ) : (
-        platosFiltrados.map((plato, index) => (
-          <motion.div key={plato.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <Card sx={{ mb: 3 }}>
-              <CardContent>
-  <Typography variant="h6" gutterBottom>
-  📅 {formatearFechaLarga(plato.date)}
-</Typography>
+        agruparPorFecha(platosFiltrados).map((grupo) => (
+          <Box key={grupo.fecha} sx={{ mb: 5, p: 3, bgcolor: '#f8fafc', borderRadius: 3, border: '1px solid #e2e8f0' }}>
+            <Typography variant="h5" color="primary.main" fontWeight="bold" sx={{ mb: 3, borderBottom: '2px solid #cbd5e1', pb: 1 }}>
+              📅 {formatearFechaLarga(grupo.fecha)}
+            </Typography>
 
-                <Divider sx={{ mb: 2 }} />
+            <Grid container spacing={2}>
+              {grupo.platos.map((plato) => {
+                const index = platos.findIndex(p => p.id === plato.id);
+                return (
+                  <Grid item xs={12} md={6} key={plato.id}>
+                    <motion.div initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+                      <Card sx={{ borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.08)', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                        <CardContent sx={{ p: 2, pb: '16px !important', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                          <Box sx={{ display: 'flex', gap: 2, flexGrow: 1 }}>
+                            <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                              <TextField
+                                label="Nombre"
+                                size="small"
+                                multiline
+                                maxRows={2}
+                                value={plato.name || ''}
+                                onChange={(e) => handleInputChange(index, 'name', e.target.value)}
+                                fullWidth
+                              />
+                              <TextField
+                                label="Fecha"
+                                type="date"
+                                size="small"
+                                value={formatDateForInput(plato.date)}
+                                onChange={(e) => handleInputChange(index, 'date', e.target.value)}
+                                fullWidth
+                                InputLabelProps={{ shrink: true }}
+                              />
+                              <TextField
+                                label="Descripción"
+                                size="small"
+                                value={plato.description || ''}
+                                onChange={(e) => handleInputChange(index, 'description', e.target.value)}
+                                fullWidth
+                                multiline
+                                maxRows={2}
+                              />
+                              <TextField
+                                label="Precio"
+                                type="number"
+                                size="small"
+                                value={plato.price || ''}
+                                onChange={(e) => handleInputChange(index, 'price', e.target.value)}
+                                fullWidth
+                              />
+                            </Box>
+                          </Box>
 
-                <TextField
-                  label="Nombre"
-                  value={plato.name || ''}
-                  onChange={(e) => handleInputChange(index, 'name', e.target.value)}
-                  fullWidth
-                  sx={{ mb: 2 }}
-                />
-
-<TextField
-  label="Fecha"
-  type="date"
-  value={formatDateForInput(plato.date)}
-  onChange={(e) => handleInputChange(index, 'date', e.target.value)}
-  fullWidth
-  InputLabelProps={{ shrink: true }}
-  sx={{ mb: 2 }}
-/>
-
-
-
-                <TextField
-                  label="Descripción"
-                  value={plato.description || ''}
-                  onChange={(e) => handleInputChange(index, 'description', e.target.value)}
-                  fullWidth
-                  multiline
-                  sx={{ mb: 2 }}
-                />
-
-                <TextField
-                  label="Precio"
-                  type="number"
-                  value={plato.price || ''}
-                  onChange={(e) => handleInputChange(index, 'price', e.target.value)}
-                  fullWidth
-                  sx={{ mb: 2 }}
-                />
-
-                {plato.image_url && (
-                  <Box sx={{ mb: 2 }}>
-                    <img
-                      src={plato.image_url}
-                      alt="plato"
-                      style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8 }}
-                    />
-                  </Box>
-                )}
-
-                {/* <Button
-                  variant="outlined"
-                  component="label"
-                  startIcon={subiendo[index] ? <CircularProgress size={16} /> : <UploadIcon />}
-                  disabled={subiendo[index]}
-                  sx={{ mb: 2 }}
-                >
-                  {subiendo[index] ? 'Subiendo...' : 'Subir imagen'}
-                  <input
-                    type="file"
-                    hidden
-                    accept="image/*"
-                    onChange={(e) => handleImagenChange(index, e.target.files[0])}
-                  />
-                </Button> */}
-
-                <Box display="flex" gap={2} mt={2}>
-                  <Button
-                    variant="contained"
-                    onClick={() => guardarCambios(index)}
-                    disabled={cargando}
-                  >
-                    💾 Guardar
-                  </Button>
-                  {plato.id && !`${plato.id}`.startsWith('temp-') && (
-                    <IconButton color="error" onClick={() => eliminarPlato(plato.id)}>
-                      <DeleteIcon />
-                    </IconButton>
-                  )}
-                </Box>
-              </CardContent>
-            </Card>
-          </motion.div>
+                          <Box display="flex" justifyContent="space-between" alignItems="center" mt={2} pt={1} borderTop="1px solid #e2e8f0">
+                            <Button
+                              variant="contained"
+                              color="success"
+                              size="small"
+                              onClick={() => guardarCambios(index)}
+                              disabled={cargando}
+                            >
+                              Guardar
+                            </Button>
+                            {plato.id && !`${plato.id}`.startsWith('temp-') && (
+                              <IconButton color="error" size="small" onClick={() => eliminarPlato(plato.id)}>
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            )}
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          </Box>
         ))
       )}
 
