@@ -62,8 +62,37 @@ const diaMap = {
   lunes: 1, martes: 2, miercoles: 3, miércoles: 3, jueves: 4, viernes: 5
 };
 
+const combinarItems = (arr1, arr2) => {
+  const map = {};
+  [...arr1, ...arr2].forEach(item => {
+    map[item.nombre] = (map[item.nombre] || 0) + item.cantidad;
+  });
+  return Object.entries(map).map(([nombre, cantidad]) => ({ nombre, cantidad }));
+};
+
 const agruparPedidosPorFechaConDetalle = (pedidos) => {
   const resultado = {};
+
+  const addOrMergeDetalle = (fechaReal, detalleObj) => {
+    if (!resultado[fechaReal]) resultado[fechaReal] = [];
+    
+    // Buscar si ya existe este cliente (por email o nombre+telefono) en este día
+    const existente = resultado[fechaReal].find(d => 
+      (d.email && d.email === detalleObj.email) || 
+      (d.nombreCompleto === detalleObj.nombreCompleto && d.telefono === detalleObj.telefono)
+    );
+
+    if (existente) {
+      if (!existente.ids.includes(detalleObj.id)) existente.ids.push(detalleObj.id);
+      if (detalleObj.comprobanteUrl && !existente.comprobanteUrl) existente.comprobanteUrl = detalleObj.comprobanteUrl;
+      existente.platos = combinarItems(existente.platos, detalleObj.platos);
+      existente.extras = combinarItems(existente.extras, detalleObj.extras);
+      existente.tartas = combinarItems(existente.tartas, detalleObj.tartas);
+    } else {
+      detalleObj.ids = [detalleObj.id];
+      resultado[fechaReal].push(detalleObj);
+    }
+  };
 
   pedidos.forEach(p => {
     const { usuario, pedido: pedidoObj, estado, tipo_menu, id, fecha, empresa_nombre } = p;
@@ -88,9 +117,7 @@ const agruparPedidosPorFechaConDetalle = (pedidos) => {
       if (!fechaReal || fechaReal === 'Invalid Date') continue;
       const detalle = { ...baseDetalle, platos: [], extras: [], tartas: [] };
       for (const [plato, cantidad] of Object.entries(items)) detalle.platos.push({ nombre: plato, cantidad });
-      
-      if (!resultado[fechaReal]) resultado[fechaReal] = [];
-      resultado[fechaReal].push(detalle);
+      addOrMergeDetalle(fechaReal, detalle);
     }
 
     for (const [dia, items] of Object.entries(pedidoObj?.extras || {})) {
@@ -98,9 +125,7 @@ const agruparPedidosPorFechaConDetalle = (pedidos) => {
       if (!fechaReal || fechaReal === 'Invalid Date') continue;
       const detalle = { ...baseDetalle, platos: [], extras: [], tartas: [] };
       for (const [extra, cantidad] of Object.entries(items)) detalle.extras.push({ nombre: extra, cantidad });
-
-      if (!resultado[fechaReal]) resultado[fechaReal] = [];
-      resultado[fechaReal].push(detalle);
+      addOrMergeDetalle(fechaReal, detalle);
     }
 
     if (Object.keys(pedidoObj?.tartas || {}).length > 0) {
@@ -110,9 +135,7 @@ const agruparPedidosPorFechaConDetalle = (pedidos) => {
       } catch (e) { }
       const detalle = { ...baseDetalle, platos: [], extras: [], tartas: [] };
       for (const [tarta, cantidad] of Object.entries(pedidoObj.tartas)) detalle.tartas.push({ nombre: tarta, cantidad });
-
-      if (!resultado[fechaKey]) resultado[fechaKey] = [];
-      resultado[fechaKey].push(detalle);
+      addOrMergeDetalle(fechaKey, detalle);
     }
   });
 
@@ -219,18 +242,21 @@ const AdminPedidos = () => {
   const fechasDisponibles = Object.keys(resumenDetallado);
   const historialCompletoAgrupado = agruparPedidosPorFechaConDetalle(pedidos);
 
-  const cambiarEstadoPedido = (id, estado) => {
-    api.put(`/orders/${id}`, { status: estado }).then(() => {
-      const updated = pedidos.map(p => p.id === id ? { ...p, estado } : p);
-      setPedidos(updated);
-    });
+  const cambiarEstadoPedido = (ids, estado) => {
+    const idsArray = Array.isArray(ids) ? ids : [ids];
+    Promise.all(idsArray.map(orderId => api.put(`/orders/${orderId}`, { status: estado })))
+      .then(() => {
+        const updated = pedidos.map(p => idsArray.includes(p.id) ? { ...p, estado } : p);
+        setPedidos(updated);
+      });
   };
 
-  const asignarDelivery = async (id, delivery) => {
+  const asignarDelivery = async (ids, delivery) => {
+    const idsArray = Array.isArray(ids) ? ids : [ids];
     try {
       if (!delivery?.id) return;
-      await api.put(`/orders/${id}/assign`, { delivery_id: delivery.id });
-      const actualizado = pedidos.map(p => p.id === id ? { ...p, delivery } : p);
+      await Promise.all(idsArray.map(orderId => api.put(`/orders/${orderId}/assign`, { delivery_id: delivery.id })));
+      const actualizado = pedidos.map(p => idsArray.includes(p.id) ? { ...p, delivery } : p);
       setPedidos(actualizado);
     } catch (error) { }
   };
@@ -349,7 +375,7 @@ const AdminPedidos = () => {
                         <Box>
                           <Typography variant="body2" fontWeight="bold">{pedido.delivery.nombre}</Typography>
                           <Typography variant="caption" color="text.secondary">{pedido.delivery.telefono}</Typography>
-                          <Button size="small" sx={{ fontSize: '0.65rem', minWidth: 'auto', p: 0, mt: 0.5 }} onClick={() => asignarDelivery(pedido.id, { id: null, nombre: '', telefono: '' })}>
+                          <Button size="small" sx={{ fontSize: '0.65rem', minWidth: 'auto', p: 0, mt: 0.5 }} onClick={() => asignarDelivery(pedido.ids, { id: null, nombre: '', telefono: '' })}>
                             Cambiar
                           </Button>
                         </Box>
@@ -358,10 +384,10 @@ const AdminPedidos = () => {
                           freeSolo size="small"
                           onInputChange={async (e, value) => {
                             const res = await api.get('/deliveries/search?q=' + value);
-                            setOpcionesDelivery(prev => ({ ...prev, [pedido.id]: res.data }));
+                            setOpcionesDelivery(prev => ({ ...prev, [pedido.ids[0]]: res.data }));
                           }}
-                          onChange={(e, selected) => { if (selected) asignarDelivery(pedido.id, selected); }}
-                          options={opcionesDelivery[pedido.id] || []}
+                          onChange={(e, selected) => { if (selected) asignarDelivery(pedido.ids, selected); }}
+                          options={opcionesDelivery[pedido.ids[0]] || []}
                           getOptionLabel={(option) => typeof option === 'string' ? option : `${option.name}`}
                           renderInput={(params) => <TextField {...params} label="Asignar..." variant="standard" />}
                         />
@@ -372,7 +398,7 @@ const AdminPedidos = () => {
                       <FormControl fullWidth size="small" variant="standard">
                         <Select
                           value={pedido.estado}
-                          onChange={e => cambiarEstadoPedido(pedido.id, e.target.value)}
+                          onChange={e => cambiarEstadoPedido(pedido.ids, e.target.value)}
                           disableUnderline
                           sx={{
                             bgcolor: getEstadoColor(pedido.estado),
