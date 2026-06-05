@@ -256,7 +256,15 @@ const fechaReal = pedidoObj.fecha_dia_por_dia?.[dia.toLowerCase()]
 
     // 🥧 Tartas → no tienen día, se agrupan por fecha original del pedido
     if (Object.keys(pedidoObj.tartas || {}).length > 0) {
-      const fechaKey = new Date(fecha).toISOString().slice(0, 10);
+      let fechaKey = 'Fecha desconocida';
+      try {
+        if (fecha) {
+          fechaKey = new Date(fecha).toISOString().slice(0, 10);
+        }
+      } catch (e) {
+        console.warn('Fecha inválida para tarta:', fecha);
+      }
+      
       const detalle = { ...baseDetalle, platos: [], extras: [], tartas: [] };
 
       for (const [tarta, cantidad] of Object.entries(pedidoObj.tartas)) {
@@ -276,12 +284,18 @@ const fechaReal = pedidoObj.fecha_dia_por_dia?.[dia.toLowerCase()]
 
 
 const formatearFechaBonita = (isoDate) => {
-  const fecha = new Date(isoDate);
-  return new Intl.DateTimeFormat('es-AR', {
-    weekday: 'long',
-    day: '2-digit',
-    month: '2-digit'
-  }).format(fecha);
+  if (!isoDate || isoDate === 'Fecha desconocida' || isoDate === 'Invalid Date') return isoDate;
+  try {
+    const fecha = new Date(isoDate);
+    if (isNaN(fecha.getTime())) return isoDate;
+    return new Intl.DateTimeFormat('es-AR', {
+      weekday: 'long',
+      day: '2-digit',
+      month: '2-digit'
+    }).format(fecha);
+  } catch (e) {
+    return isoDate;
+  }
 };
 
 const AdminPedidos = () => {
@@ -324,18 +338,6 @@ useEffect(() => {
   }
   return p;
 });
-
-
-
-
-    console.log('📦 Pedidos con fecha:', pedidosNormalizados.map(p => ({
-      id: p.id,
-      fechaCruda: p.fecha,
-      formateada: dayjs(p.fecha).format('YYYY-MM-DD'),
-      dentroDeSemana:
-        dayjs(p.fecha).startOf('day').isSameOrAfter(dayjs(semanaActiva.semana_inicio).startOf('day')) &&
-        dayjs(p.fecha).startOf('day').isSameOrBefore(dayjs(semanaActiva.semana_fin).startOf('day'))
-    })));
 
     setPedidos(pedidosNormalizados);
   });
