@@ -41,7 +41,7 @@ const App = () => (
   <Routes>
 
     {/* 🌐 Página pública */}
-    <Route path="/" element={<LandingAuth />} />
+    <Route path="/" element={<Login />} />
     <Route path="/quienes-somos" element={<QuienesSomos />} />
 
     {/* 🔐 Login y registro */}
