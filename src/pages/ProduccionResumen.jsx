@@ -179,7 +179,9 @@ const pedidosFiltrados = res.data
       return false;
     }
 
-    const fecha = dayjs(raw).startOf('day'); // 🟢 importantísimo
+    // 🟢 Evitar que el Timezone del navegador atrase el día (ej. 03:00Z -> 23:00 Local del día anterior)
+    const fechaLimpia = typeof raw === 'string' ? raw.split('T')[0] : raw;
+    const fecha = dayjs(fechaLimpia).startOf('day');
 
     const inicioOp = dayjs(inicio).startOf('day');
     const finOp = dayjs(fin).endOf('day'); // 🟢 fin extendido
