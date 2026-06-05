@@ -69,27 +69,9 @@ const AdminMenuPreview = () => {
     return agrupado;
   };
 
-  const agruparTartasPorFecha = (lista) => {
-    const agrupado = {};
-    if (!Array.isArray(lista)) return agrupado;
-
-    lista.forEach(t => {
-      const fecha = dayjs(t.fecha);
-      if (!fecha.isValid()) {
-        console.warn('❌ Fecha inválida en tarta:', t);
-        return;
-      }
-
-      const fechaStr = fecha.format('dddd D [de] MMMM');
-      if (!agrupado[fechaStr]) agrupado[fechaStr] = [];
-      agrupado[fechaStr].push(t);
-    });
-
-    return agrupado;
-  };
-
-  const menuEspecialPorDia = agruparPorDia(menuEspecial);
-  const tartasPorFecha = agruparTartasPorFecha(tartas);
+  const tartasUnicas = tartas.filter((t, index, self) => 
+    index === self.findIndex((x) => x.nombre === t.nombre)
+  );
 
   const renderPlatoCompacto = (plato) => (
     <Card sx={{ 
@@ -99,12 +81,13 @@ const AdminMenuPreview = () => {
       p: 1,
       borderRadius: 2, 
       boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-      bgcolor: '#fff'
+      bgcolor: '#fff',
+      minWidth: 260
     }} key={plato.id || plato.name}>
       {plato.image_url && (
         <CardMedia
           component="img"
-          sx={{ width: 50, height: 50, borderRadius: 1, objectFit: 'cover', mr: 1.5 }}
+          sx={{ width: 60, height: 60, borderRadius: 1, objectFit: 'cover', mr: 1.5 }}
           image={plato.image_url}
           alt={plato.name || plato.nombre}
         />
@@ -121,33 +104,36 @@ const AdminMenuPreview = () => {
   );
 
   const renderTarta = (tarta, idx) => (
-    <Grid item xs={12} sm={6} md={4} lg={3} key={idx}>
-      <Card sx={{ 
-        display: 'flex', 
-        height: '100%', 
-        borderRadius: 2, 
-        border: '1px solid #f1f5f9',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-      }}>
-        {tarta.img && (
-          <CardMedia
-            component="img"
-            sx={{ width: 90, objectFit: 'cover' }}
-            image={tarta.img}
-            alt={tarta.nombre}
-          />
-        )}
-        <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 }, flexGrow: 1 }}>
-          <Typography variant="subtitle2" fontWeight="bold" sx={{ lineHeight: 1.2, mb: 0.5 }}>
-            {tarta.nombre}
-          </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-            {tarta.descripcion || '—'}
-          </Typography>
-        </CardContent>
-      </Card>
-    </Grid>
+    <Card sx={{ 
+      display: 'flex', 
+      alignItems: 'center',
+      mb: 1.5, 
+      p: 1,
+      borderRadius: 2, 
+      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      bgcolor: '#fff',
+      minWidth: 260
+    }} key={idx}>
+      {tarta.img && (
+        <CardMedia
+          component="img"
+          sx={{ width: 60, height: 60, borderRadius: 1, objectFit: 'cover', mr: 1.5 }}
+          image={tarta.img}
+          alt={tarta.nombre}
+        />
+      )}
+      <Box>
+        <Typography variant="subtitle2" fontWeight="bold" sx={{ lineHeight: 1.1 }}>
+          {tarta.nombre}
+        </Typography>
+        <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 180, display: 'block' }}>
+          {tarta.descripcion || '—'}
+        </Typography>
+      </Box>
+    </Card>
   );
+
+
 
 
   const volver = () => {
@@ -191,7 +177,20 @@ const AdminMenuPreview = () => {
 
       {error && <Typography color="error">{error}</Typography>}
 
-      {/* Columnas Kanban para los días */}
+      {/* Menú Fijo Global */}
+      <Box sx={{ mb: 5, p: 3, bgcolor: '#f8fafc', borderRadius: 3 }}>
+        <Typography variant="h5" color="primary.main" fontWeight="bold" sx={{ mb: 2 }}>
+          🍽️ Menú Fijo (Disponible de Lunes a Viernes)
+        </Typography>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+          {menuFijo.map(renderPlatoCompacto)}
+        </Box>
+      </Box>
+
+      {/* Menú Especial por Días */}
+      <Typography variant="h5" color="secondary.main" fontWeight="bold" sx={{ mb: 2 }}>
+        ⭐ Especiales por Día
+      </Typography>
       <Box sx={{ 
         display: 'flex', 
         gap: 2, 
@@ -205,44 +204,38 @@ const AdminMenuPreview = () => {
             minWidth: 280, 
             maxWidth: 320, 
             flex: 1, 
-            bgcolor: '#f1f5f9', 
+            bgcolor: '#fef3c7', 
             borderRadius: 3, 
             p: 2,
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            border: '1px solid #fde68a'
           }}>
-            <Typography variant="h6" align="center" fontWeight="bold" sx={{ mb: 2, textTransform: 'capitalize', color: '#334155' }}>
+            <Typography variant="h6" align="center" fontWeight="bold" sx={{ mb: 2, textTransform: 'capitalize', color: '#b45309' }}>
               📅 {dia}
             </Typography>
 
-            <Typography variant="subtitle2" color="primary" sx={{ mb: 1, fontWeight: 'bold' }}>🍽️ Menú Fijo</Typography>
-            <Box sx={{ mb: 2 }}>
-              {menuFijo.map(renderPlatoCompacto)}
+            <Box>
+              {(menuEspecialPorDia[dia] && menuEspecialPorDia[dia].length > 0) ? (
+                menuEspecialPorDia[dia].map(renderPlatoCompacto)
+              ) : (
+                <Typography variant="body2" color="text.secondary" align="center">
+                  No hay especiales para este día
+                </Typography>
+              )}
             </Box>
-
-            {(menuEspecialPorDia[dia] && menuEspecialPorDia[dia].length > 0) && (
-              <>
-                <Typography variant="subtitle2" color="secondary" sx={{ mb: 1, fontWeight: 'bold' }}>⭐ Especiales</Typography>
-                <Box>
-                  {menuEspecialPorDia[dia].map(renderPlatoCompacto)}
-                </Box>
-              </>
-            )}
           </Box>
         ))}
       </Box>
 
-      {/* Tartas por fecha */}
-      <Box sx={{ mt: 5 }}>
-        <Typography variant="h5" gutterBottom>🥧 Tartas por Fecha</Typography>
-        {Object.entries(tartasPorFecha).map(([fecha, lista]) => (
-          <Box key={fecha} sx={{ mt: 2, mb: 3 }}>
-            <Typography variant="subtitle1" fontWeight="bold">{fecha}</Typography>
-            <Grid container spacing={2}>
-              {lista.map(renderTarta)}
-            </Grid>
-          </Box>
-        ))}
+      {/* Tartas Globales */}
+      <Box sx={{ mt: 5, p: 3, bgcolor: '#fff1f2', borderRadius: 3, border: '1px solid #ffe4e6' }}>
+        <Typography variant="h5" fontWeight="bold" color="#be123c" sx={{ mb: 2 }}>
+          🥧 Tartas (Disponibles todos los días)
+        </Typography>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+          {tartasUnicas.map(renderTarta)}
+        </Box>
       </Box>
     </Box>
   );
