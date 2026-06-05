@@ -83,10 +83,27 @@ const getNombreConEmpresa = (usuario = {}, empresa_nombre = null) => {
         inicio.setMonth(0, 1);
         fin.setMonth(11, 31);
         break;
+      case "proxima_semana": {
+        const dia = hoy.getDay();
+        const lunes = new Date(hoy);
+        lunes.setDate(hoy.getDate() - ((dia + 6) % 7) + 7); // Lunes de la semana que viene
+        const viernes = new Date(lunes);
+        viernes.setDate(lunes.getDate() + 4);
+        return { desde: lunes, hasta: viernes };
+      }
+      case "semana_actual":
       default: {
         const dia = hoy.getDay();
         const lunes = new Date(hoy);
-        lunes.setDate(hoy.getDate() - ((dia + 6) % 7));
+        // Si es sábado o domingo, automáticamente mostramos la próxima semana por defecto
+        if (dia === 0) {
+           lunes.setDate(hoy.getDate() + 1);
+        } else if (dia === 6) {
+           lunes.setDate(hoy.getDate() + 2);
+        } else {
+           lunes.setDate(hoy.getDate() - ((dia + 6) % 7));
+        }
+        
         const viernes = new Date(lunes);
         viernes.setDate(lunes.getDate() + 4);
         return { desde: lunes, hasta: viernes };
@@ -563,7 +580,8 @@ const exportarExcelPorEmpresa = async () => {
                 label="Periodo"
                 disabled={usarRangoPersonalizado}
               >
-                <MenuItem value="semana">Semana</MenuItem>
+                <MenuItem value="semana">Semana Actual</MenuItem>
+                <MenuItem value="proxima_semana">Próxima Semana</MenuItem>
                 <MenuItem value="mes">Mes</MenuItem>
                 <MenuItem value="año">Año</MenuItem>
               </Select>
