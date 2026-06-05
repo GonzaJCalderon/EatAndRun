@@ -693,6 +693,7 @@ const exportarExcelPorEmpresa = async () => {
             <ProduccionEditablePorDia
               pedidos={pedidos}
               mapaPlatos={mapaPlatos}
+              semanaActual={semanaActual}
               onResumenEditado={handleResumenEditado}
               onGuardarCambios={handleGuardarCambios}
               filasLibres={filasLibres}

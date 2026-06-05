@@ -17,7 +17,7 @@ const extraMap = {
   "3": "💪 Proteína"
 };
 
-const ProduccionEditablePorDia = ({ pedidos, mapaPlatos = {}, onGuardarCambios }) => {
+const ProduccionEditablePorDia = ({ pedidos, mapaPlatos = {}, semanaActual, onGuardarCambios }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null);
 
@@ -47,8 +47,16 @@ pedidos.forEach(p => {
   const diasConPedidos = new Set([...Object.keys(diarios), ...Object.keys(extras)]);
 
   diasConPedidos.forEach(dia => {
-    const fechaStr = fechaPorDia?.[dia] || null;
+    let fechaStr = fechaPorDia?.[dia] || null;
     let clave = dia;
+
+    // Si no hay fechaStr en la base de datos, la calculamos usando semanaActual
+    if (!fechaStr && semanaActual?.lunes) {
+      const idx = diasOrdenados.indexOf(dia.toLowerCase());
+      if (idx !== -1) {
+        fechaStr = dayjs(semanaActual.lunes).add(idx, 'day').toISOString();
+      }
+    }
 
     if (fechaStr) {
       const fecha = dayjs(typeof fechaStr === 'string' ? fechaStr.split('T')[0] : fechaStr);
@@ -179,24 +187,35 @@ pedidos.forEach(p => {
     );
   };
 
+  const clavesOrdenadas = Object.keys(pedidosPorDia).sort((a, b) => {
+    const normalize = str => str.toLowerCase().split(' ')[0].normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const diasNorm = diasOrdenados.map(normalize);
+    const indexA = diasNorm.indexOf(normalize(a));
+    const indexB = diasNorm.indexOf(normalize(b));
+    return indexA - indexB;
+  });
+
   return (
     <Box>
-      {Object.entries(pedidosPorDia).map(([claveDia, listaPedidos]) => (
-  <Accordion key={claveDia} defaultExpanded>
-    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-      <Typography sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>
-        📅 {claveDia.toUpperCase()}
-      </Typography>
-    </AccordionSummary>
-    <AccordionDetails>
-      {listaPedidos.length > 0 ? (
-        <Paper elevation={1}>{renderTablaPorDia(claveDia, listaPedidos)}</Paper>
-      ) : (
-        <Typography sx={{ p: 2 }}>Sin pedidos para {claveDia}</Typography>
-      )}
-    </AccordionDetails>
-  </Accordion>
-))}
+      {clavesOrdenadas.map((claveDia) => {
+        const listaPedidos = pedidosPorDia[claveDia];
+        return (
+          <Accordion key={claveDia} defaultExpanded>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>
+                📅 {claveDia.toUpperCase()}
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              {listaPedidos.length > 0 ? (
+                <Paper elevation={1}>{renderTablaPorDia(claveDia, listaPedidos)}</Paper>
+              ) : (
+                <Typography sx={{ p: 2 }}>Sin pedidos para {claveDia}</Typography>
+              )}
+            </AccordionDetails>
+          </Accordion>
+        );
+      })}
 
 
       {renderTartas()}
