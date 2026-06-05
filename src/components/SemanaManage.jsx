@@ -5,7 +5,7 @@ import {
 
 const diasSemana = ["lunes", "martes", "miercoles", "jueves", "viernes"];
 
-const SemanaManage = ({ semana, onGuardar, onToggle, onGuardarDias, onEliminar }) => {
+const SemanaManage = ({ semana, onGuardar, onToggle, onGuardarDias, onEliminar, isActive = false }) => {
   const [inicio, setInicio] = useState(semana.semana_inicio?.split("T")[0]);
   const [fin, setFin] = useState(semana.semana_fin?.split("T")[0]);
   const [cierre, setCierre] = useState(semana.cierre?.split("T")[0]);
@@ -34,10 +34,20 @@ const SemanaManage = ({ semana, onGuardar, onToggle, onGuardarDias, onEliminar }
   };
 
   return (
-    <Card sx={{ p: 3, mb: 4 }}>
+    <Card sx={{ 
+      p: 3, 
+      mb: 4, 
+      borderLeft: isActive ? '6px solid #4caf50' : 'none',
+      boxShadow: isActive ? '0 4px 20px rgba(76, 175, 80, 0.15)' : undefined
+    }}>
       <Typography variant="h6">📅 Semana del {inicio} al {fin}</Typography>
       <Typography>🕒 Cierre: <strong>{cierre}</strong></Typography>
       <Typography>Estado: <strong>{semana.habilitado ? "✅ Habilitada" : "❌ Bloqueada"}</strong></Typography>
+      {isActive && (
+        <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
+          <Typography fontWeight="bold" color="success.main">🟢 Tomando pedidos actualmente</Typography>
+        </Box>
+      )}
 
       <Box sx={{ mt: 2, display: "flex", flexWrap: "wrap", gap: 2 }}>
         <TextField

@@ -99,7 +99,7 @@ const AdminSemanas = () => {
 
   const guardarDiasSemana = async (semanaId, dias) => {
     try {
-      await api.put("/semana/dias", { dias_habilitados: dias });
+      await api.put("/semana/dias", { id: semanaId, dias_habilitados: dias });
       loadData();
       setSnackbar({ open: true, message: "✅ Días actualizados", severity: "success" });
     } catch (err) {
@@ -138,22 +138,17 @@ const AdminSemanas = () => {
         🟢 Semana Activa (Visible para clientes)
       </Typography>
       {semanaActiva && semanaActiva.habilitado ? (
-        <Card sx={{ p: 3, mb: 5, borderLeft: '6px solid #4caf50', boxShadow: '0 4px 20px rgba(76, 175, 80, 0.15)' }}>
-          <Grid container spacing={3} alignItems="center">
-            <Grid item xs={12} md={8}>
-              <Typography variant="h6">Semana del <strong>{semanaActiva.semana_inicio?.split('T')[0]}</strong> al <strong>{semanaActiva.semana_fin?.split('T')[0]}</strong></Typography>
-              <Typography color="text.secondary">Fecha de cierre: {semanaActiva.cierre?.split('T')[0]}</Typography>
-              <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-                <CheckCircleOutlineIcon color="success" /> <Typography fontWeight="bold" color="success.main">Tomando pedidos actualmente</Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={4} sx={{ textAlign: 'right' }}>
-               <Button variant="outlined" color="error" onClick={() => toggleEstadoSemana(semanaActiva.id, false)} startIcon={<BlockIcon />}>
-                 Bloquear Semana
-               </Button>
-            </Grid>
-          </Grid>
-        </Card>
+        <Box sx={{ mb: 5 }}>
+          <SemanaManage
+            key={`activa-${semanaActiva.id}`}
+            semana={semanaActiva}
+            onGuardar={guardarSemana}
+            onGuardarDias={guardarDiasSemana}
+            onToggle={toggleEstadoSemana}
+            onEliminar={eliminarSemana}
+            isActive={true}
+          />
+        </Box>
       ) : (
         <Card sx={{ p: 4, mb: 5, textAlign: 'center', backgroundColor: '#fff3e0', border: '1px solid #ffcc80' }}>
           <Typography variant="h6" color="warning.dark">⚠️ No hay ninguna semana activa en este momento</Typography>
