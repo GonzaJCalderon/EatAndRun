@@ -25,7 +25,7 @@ const AdminSemanas = () => {
 
   const fetchSemanasDisponibles = async () => {
     try {
-      const res = await api.get("/semana/disponibles");
+      const res = await api.get("/semana/todas");
       setSemanasDisponibles(res.data.semanas || []);
     } catch (err) {
       console.error("❌ Error al obtener semanas disponibles:", err);
