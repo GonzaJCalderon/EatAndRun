@@ -7,9 +7,9 @@ import {
   Button,
   TextField,
   Typography,
-  Paper,
   InputAdornment,
   IconButton,
+  Container,
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useSnackbar } from 'notistack';
@@ -17,6 +17,7 @@ import api from '../api/api';
 
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -41,7 +42,7 @@ const Login = () => {
 
       localStorage.setItem('authToken', token);
       dispatch(setUser({ user, token }));
-      enqueueSnackbar(`Bienvenido ${user.name}!`, { variant: 'success' });
+      enqueueSnackbar(`¡Bienvenido ${user.name}!`, { variant: 'success' });
 
       switch (user.role) {
         case 'admin':
@@ -67,91 +68,156 @@ const Login = () => {
     }
   };
 
+  const bgImage = 'https://res.cloudinary.com/dwiga4jg8/image/upload/w_1600,q_auto,f_auto/Fondo_APLICACION_EAR_1_nxvzab.png';
+
   return (
     <Box
       sx={{
         minHeight: '100vh',
-        backgroundImage: `url(https://res.cloudinary.com/dwiga4jg8/image/upload/v1752840768/Fondo_APLICACION_EAR_1_nxvzab.png)`,
+        width: '100%',
+        backgroundImage: `url(${bgImage})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        p: 2,
+        position: 'relative',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'linear-gradient(135deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 100%)',
+          zIndex: 1
+        }
       }}
     >
-      <Paper
-        elevation={6}
-        sx={{
-          p: { xs: 3, sm: 5 },
-          width: '100%',
-          maxWidth: 400,
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          borderRadius: 3,
-          textAlign: 'center',
-        }}
-      >
+      <Container maxWidth="xs" sx={{ position: 'relative', zIndex: 2, m: 2 }}>
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <Typography component="h1" variant="h4" fontWeight="bold" gutterBottom>
-            Iniciar sesión
-          </Typography>
-        </motion.div>
-
-        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
-          <TextField
-            label="Correo electrónico"
-            type="email"
-            fullWidth
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            error={email.length > 0 && !email.includes('@')}
-            helperText={email.length > 0 && !email.includes('@') ? 'Email inválido' : ''}
-            sx={{ mb: 2 }}
-          />
-
-          <TextField
-            label="Contraseña"
-            type={showPassword ? 'text' : 'password'}
-            fullWidth
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            sx={{ mb: 3 }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={() => setShowPassword(!showPassword)}
-                    edge="end"
-                    aria-label="toggle password visibility"
-                  >
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
-
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            disabled={loading}
+          <Box
             sx={{
-              backgroundColor: '#68955C',
-              '&:hover': { backgroundColor: '#557d4c' },
+              p: { xs: 4, sm: 5 },
+              backgroundColor: 'rgba(255, 255, 255, 0.9)', // Fondo blanco translúcido
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.4)',
+              borderRadius: 4,
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+              textAlign: 'center',
             }}
           >
-            {loading ? 'Ingresando...' : 'Ingresar'}
-          </Button>
-        </Box>
-      </Paper>
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            >
+              <Box sx={{ 
+                mb: 2, 
+                display: 'inline-flex', 
+                backgroundColor: '#4CAF50', 
+                p: 2, 
+                borderRadius: '50%',
+                boxShadow: '0 4px 15px rgba(76, 175, 80, 0.4)'
+              }}>
+                <LockOutlinedIcon sx={{ fontSize: 32, color: '#fff' }} />
+              </Box>
+            </motion.div>
+
+            <Typography component="h1" variant="h5" fontWeight="bold" gutterBottom color="text.primary">
+              Iniciar Sesión
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
+              Ingresa tus credenciales para continuar
+            </Typography>
+
+            <Box component="form" onSubmit={handleSubmit}>
+              <TextField
+                label="Correo electrónico"
+                type="email"
+                fullWidth
+                required
+                variant="outlined"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                error={email.length > 0 && !email.includes('@')}
+                helperText={email.length > 0 && !email.includes('@') ? 'Email inválido' : ''}
+                sx={{ 
+                  mb: 2.5,
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'rgba(255,255,255,0.7)'
+                  }
+                }}
+              />
+
+              <TextField
+                label="Contraseña"
+                type={showPassword ? 'text' : 'password'}
+                fullWidth
+                required
+                variant="outlined"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                sx={{ 
+                  mb: 4,
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'rgba(255,255,255,0.7)'
+                  }
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                size="large"
+                disabled={loading}
+                sx={{
+                  py: 1.5,
+                  fontSize: '1.05rem',
+                  fontWeight: 'bold',
+                  borderRadius: 2,
+                  backgroundColor: '#4CAF50',
+                  color: '#fff',
+                  boxShadow: '0 4px 14px 0 rgba(76, 175, 80, 0.39)',
+                  '&:hover': {
+                    backgroundColor: '#43A047',
+                    boxShadow: '0 6px 20px rgba(76, 175, 80, 0.23)',
+                    transform: 'translateY(-2px)'
+                  },
+                  transition: 'all 0.2s'
+                }}
+              >
+                {loading ? 'Ingresando...' : 'Ingresar'}
+              </Button>
+              
+              <Button
+                variant="text"
+                fullWidth
+                sx={{ mt: 2, textTransform: 'none', color: 'text.secondary' }}
+                onClick={() => navigate('/registro')}
+              >
+                ¿No tienes cuenta? Regístrate
+              </Button>
+            </Box>
+          </Box>
+        </motion.div>
+      </Container>
     </Box>
   );
 };

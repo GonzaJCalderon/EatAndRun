@@ -9,11 +9,13 @@ import {
   Paper,
   TextField,
   Typography,
-  Alert
+  Alert,
+  Divider
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import API from '../api/api';
 import registerImage from '../assets/imgs/register-ilustration.png';
+import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
 
 const Registro = ({ onRegister }) => {
   const [searchParams] = useSearchParams();
@@ -119,78 +121,148 @@ const Registro = ({ onRegister }) => {
   }, [codigoEmpresa]);
 
   return (
-    <Grid container component="main" sx={{ height: '100vh' }}>
-      <Grid item xs={false} sm={6} md={7}>
+    <Grid container component="main" sx={{ height: '100vh', backgroundColor: '#f9fafb' }}>
+      <Grid item xs={false} sm={5} md={6}>
         <Box
           sx={{
             height: '100%',
             backgroundImage: `url(${registerImage})`,
             backgroundSize: 'cover',
-            backgroundPosition: 'center'
+            backgroundPosition: 'center',
+            position: 'relative',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              top: 0, left: 0, right: 0, bottom: 0,
+              background: 'linear-gradient(to right, rgba(0,0,0,0.1), rgba(249,250,251,1))' // Transición suave hacia el form
+            }
           }}
         />
       </Grid>
 
-      <Grid item xs={12} sm={6} md={5} component={Paper} elevation={6} square>
+      <Grid item xs={12} sm={7} md={6} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', p: 3 }}>
         <Box
+          component={Paper}
+          elevation={0}
           sx={{
-            my: 8,
-            mx: 4,
+            p: { xs: 3, sm: 5 },
+            width: '100%',
+            maxWidth: 550,
+            backgroundColor: '#ffffff',
+            borderRadius: 4,
+            boxShadow: '0 10px 40px rgba(0,0,0,0.08)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center'
           }}
         >
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
+            style={{ width: '100%', textAlign: 'center' }}
           >
-            <Typography component="h1" variant="h4" fontWeight="bold" gutterBottom>
+            <Box sx={{ mb: 2, display: 'inline-flex', backgroundColor: '#E8F5E9', p: 1.5, borderRadius: '50%' }}>
+              <PersonAddAlt1Icon sx={{ fontSize: 36, color: '#4CAF50' }} />
+            </Box>
+
+            <Typography component="h1" variant="h4" fontWeight="bold" gutterBottom color="text.primary">
               Crear cuenta
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Únete a Eat & Run y comienza a comer saludable.
             </Typography>
 
             {empresaAsignada && (
-              <Alert severity="info" sx={{ mt: 1, mb: 2 }}>
-                Te estás registrando como <strong>empleado de {empresaAsignada}</strong>
+              <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
+                Te estás registrando como empleado de <strong>{empresaAsignada}</strong>
               </Alert>
             )}
           </motion.div>
 
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
-            <TextField label="Nombre" name="nombre" fullWidth required value={form.nombre} onChange={handleChange} sx={{ mb: 2 }} />
-            <TextField label="Apellido" name="apellido" fullWidth required value={form.apellido} onChange={handleChange} sx={{ mb: 2 }} />
-            <TextField label="Email" name="email" type="email" fullWidth required value={form.email} onChange={handleChange} sx={{ mb: 2 }} />
-            <TextField label="Contraseña" name="password" type="password" fullWidth required value={form.password} onChange={handleChange} sx={{ mb: 2 }} />
-            <TextField label="Teléfono" name="telefono" fullWidth required value={form.telefono} onChange={handleChange} sx={{ mb: 2 }} />
-            <TextField label="Dirección principal" name="direccion" fullWidth required value={form.direccion} onChange={handleChange} sx={{ mb: 2 }} />
-            <TextField label="Dirección alternativa (opcional)" name="direccionAlt" fullWidth value={form.direccionAlt} onChange={handleChange} sx={{ mb: 2 }} />
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField label="Nombre" name="nombre" fullWidth required value={form.nombre} onChange={handleChange} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField label="Apellido" name="apellido" fullWidth required value={form.apellido} onChange={handleChange} />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField label="Email" name="email" type="email" fullWidth required value={form.email} onChange={handleChange} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField label="Contraseña" name="password" type="password" fullWidth required value={form.password} onChange={handleChange} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField label="Teléfono" name="telefono" fullWidth required value={form.telefono} onChange={handleChange} />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField label="Dirección principal" name="direccion" fullWidth required value={form.direccion} onChange={handleChange} />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField label="Dirección alternativa (opcional)" name="direccionAlt" fullWidth value={form.direccionAlt} onChange={handleChange} />
+              </Grid>
 
-            {!codigoEmpresa && (
-              <TextField select label="Tipo de usuario" name="role" value={form.role} onChange={handleChange} fullWidth sx={{ mb: 3 }}>
-                {roles.map((r) => (
-                  <MenuItem key={r.value} value={r.value}>
-                    {r.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-            )}
+              {!codigoEmpresa && (
+                <Grid item xs={12}>
+                  <TextField select label="Tipo de usuario" name="role" value={form.role} onChange={handleChange} fullWidth>
+                    {roles.map((r) => (
+                      <MenuItem key={r.value} value={r.value}>
+                        {r.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+              )}
 
-            {form.role === 'empresa' && (
-              <>
-                <TextField label="Razón Social" name="razonSocial" fullWidth required value={form.razonSocial} onChange={handleChange} sx={{ mb: 2 }} />
-                <TextField label="CUIT" name="cuit" fullWidth required value={form.cuit} onChange={handleChange} sx={{ mb: 2 }} />
-              </>
-            )}
+              {form.role === 'empresa' && (
+                <>
+                  <Grid item xs={12} sm={6}>
+                    <TextField label="Razón Social" name="razonSocial" fullWidth required value={form.razonSocial} onChange={handleChange} />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField label="CUIT" name="cuit" fullWidth required value={form.cuit} onChange={handleChange} />
+                  </Grid>
+                </>
+              )}
+            </Grid>
 
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              sx={{ mt: 1, backgroundColor: '#68955C', '&:hover': { backgroundColor: '#557d4c' } }}
+              size="large"
+              sx={{ 
+                mt: 4, 
+                py: 1.5,
+                fontSize: '1.05rem',
+                fontWeight: 'bold',
+                borderRadius: 2,
+                backgroundColor: '#4CAF50', 
+                color: '#fff',
+                boxShadow: '0 4px 14px 0 rgba(76, 175, 80, 0.39)',
+                '&:hover': { 
+                  backgroundColor: '#43A047',
+                  boxShadow: '0 6px 20px rgba(76, 175, 80, 0.23)',
+                  transform: 'translateY(-2px)'
+                },
+                transition: 'all 0.2s'
+              }}
               disabled={loading}
             >
               {loading ? 'Registrando...' : 'Registrarse'}
+            </Button>
+            
+            <Divider sx={{ my: 3 }} />
+            
+            <Button
+              variant="text"
+              fullWidth
+              sx={{ textTransform: 'none', color: 'text.secondary' }}
+              onClick={() => navigate('/login')}
+            >
+              ¿Ya tienes una cuenta? Inicia sesión
             </Button>
           </Box>
         </Box>
