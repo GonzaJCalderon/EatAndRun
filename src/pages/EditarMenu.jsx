@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import {
   Container, Typography, TextField, IconButton, Button,
-  Card, CardContent, Box, Stack,
-  Snackbar, Alert, CircularProgress
+  Card, CardContent, Box, Stack, Grid,
+  Snackbar, Alert, CircularProgress, Tooltip
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -234,91 +234,107 @@ const endpointBase = isProd
         <>
           <Button
             variant="outlined"
-
             onClick={agregarPlato}
             fullWidth
-            sx={{ mb: 2 }}
+            sx={{ mb: 3 }}
           >
-            ➕ Agregar plato
+            ➕ Agregar plato nuevo
           </Button>
-          {platosMenu.map((plato, index) => (
-            <motion.div
-              key={plato.id || `nuevo-${index}`}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-            >
-              <Card sx={{ mb: 3, borderRadius: 3, boxShadow: 3 }}>
-                <CardContent>
-                  <Stack spacing={2}>
-                    <TextField
-                      label="Nombre del plato"
-                      value={plato.name}
-                      onChange={(e) => handleInputChange(index, 'name', e.target.value)}
-                      fullWidth
-                    />
-                    <TextField
-                      label="Descripción"
-                      value={plato.description || ''}
-                      onChange={(e) => handleInputChange(index, 'description', e.target.value)}
-                      fullWidth
-                    />
-                    <TextField
-                      label="Precio"
-                      type="number"
-                      value={plato.price}
-                      onChange={(e) => handleInputChange(index, 'price', e.target.value)}
-                      fullWidth
-                    />
-
-                    {plato.image_url && (
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <img
-                          src={plato.image_url}
-                          alt="plato"
-                          style={{ width: 120, height: 120, borderRadius: 8 }}
+          
+          <Grid container spacing={2}>
+            {platosMenu.map((plato, index) => (
+              <Grid item xs={12} sm={6} md={4} lg={3} key={plato.id || `nuevo-${index}`}>
+                <motion.div
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Card sx={{ borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.08)', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    <CardContent sx={{ p: 2, pb: '16px !important', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                      <Stack spacing={1.5} sx={{ flexGrow: 1 }}>
+                        <TextField
+                          label="Nombre del plato"
+                          size="small"
+                          value={plato.name}
+                          onChange={(e) => handleInputChange(index, 'name', e.target.value)}
+                          fullWidth
                         />
-                        <Button
-                          variant="outlined"
-                          color="error"
-                          onClick={() => handleQuitarImagen(index)}
-                        >
-                          ❌ Quitar imagen
-                        </Button>
-                      </Box>
-                    )}
+                        <TextField
+                          label="Descripción"
+                          size="small"
+                          multiline
+                          maxRows={2}
+                          value={plato.description || ''}
+                          onChange={(e) => handleInputChange(index, 'description', e.target.value)}
+                          fullWidth
+                        />
+                        <TextField
+                          label="Precio"
+                          type="number"
+                          size="small"
+                          value={plato.price}
+                          onChange={(e) => handleInputChange(index, 'price', e.target.value)}
+                          fullWidth
+                        />
 
-                    <Button
-                      variant="outlined"
-                      component="label"
-                      startIcon={loadingImagenes[index] ? <CircularProgress size={20} /> : <UploadIcon />}
-                      disabled={loadingImagenes[index]}
-                    >
-                      {loadingImagenes[index] ? 'Subiendo...' : 'Subir Imagen'}
-                      <FileInputResetable
-                        ref={el => (fileInputRefs.current[index] = el)}
-                        onChange={e => handleImagenChange(index, e.target.files[0])}
-                        disabled={loadingImagenes[index]}
-                      />
-                    </Button>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1, mb: 1 }}>
+                          {plato.image_url ? (
+                            <>
+                              <img
+                                src={plato.image_url}
+                                alt="plato"
+                                style={{ width: 60, height: 60, borderRadius: 6, objectFit: 'cover' }}
+                              />
+                              <Tooltip title="Quitar imagen">
+                                <IconButton size="small" color="error" onClick={() => handleQuitarImagen(index)}>
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </>
+                          ) : (
+                            <Box sx={{ width: 60, height: 60, bgcolor: '#f1f5f9', borderRadius: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <Typography variant="caption" color="text.disabled">Sin foto</Typography>
+                            </Box>
+                          )}
+                          <Button
+                            variant="outlined"
+                            component="label"
+                            size="small"
+                            sx={{ flexGrow: 1, height: 36, textTransform: 'none' }}
+                            startIcon={loadingImagenes[index] ? <CircularProgress size={16} /> : <UploadIcon fontSize="small" />}
+                            disabled={loadingImagenes[index]}
+                          >
+                            {loadingImagenes[index] ? '...' : 'Subir'}
+                            <FileInputResetable
+                              ref={el => (fileInputRefs.current[index] = el)}
+                              onChange={e => handleImagenChange(index, e.target.files[0])}
+                              disabled={loadingImagenes[index]}
+                            />
+                          </Button>
+                        </Box>
 
-                    <Box display="flex" justifyContent="space-between">
-                      <Button
-                        variant="contained"
-                        color="success"
-                        onClick={() => guardarPlato(index)}
-                      >
-                        💾 Guardar
-                      </Button>
-                      <IconButton onClick={() => eliminarPlato(index)} color="error">
-                        <DeleteIcon />
-                      </IconButton>
-                    </Box>
-                  </Stack>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
+                        <Box display="flex" justifyContent="space-between" alignItems="center" mt="auto" pt={1}>
+                          <Button
+                            variant="contained"
+                            color="success"
+                            size="small"
+                            onClick={() => guardarPlato(index)}
+                          >
+                            Guardar
+                          </Button>
+                          <Tooltip title="Eliminar plato">
+                            <IconButton onClick={() => eliminarPlato(index)} color="error" size="small">
+                              <DeleteIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </Grid>
+            ))}
+          </Grid>
         </>
       )}
 
