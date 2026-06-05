@@ -17,7 +17,7 @@ const extraMap = {
   "3": "💪 Proteína"
 };
 
-const ProduccionEditablePorDia = ({ pedidos, mapaPlatos = {}, semanaActual, onGuardarCambios }) => {
+const ProduccionEditablePorDia = ({ pedidos, mapaPlatos = {}, platosDelDia = [], semanaActual, onGuardarCambios }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null);
 
@@ -225,6 +225,8 @@ pedidos.forEach(p => {
         onClose={handleCloseModal}
         pedido={pedidoSeleccionado}
         mapaPlatos={mapaPlatos}
+        platosDelDia={platosDelDia}
+        semanaActual={semanaActual}
         onSave={handleGuardarDesdeModal}
       />
     </Box>

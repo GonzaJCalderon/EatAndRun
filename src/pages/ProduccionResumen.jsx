@@ -35,6 +35,7 @@ const ProduccionResumen = () => {
   const [cargando, setCargando] = useState(true);
   const [filasLibres, setFilasLibres] = useState({});
   const [semanaActual, setSemanaActual] = useState({ lunes: null, viernes: null });
+  const [platosDelDia, setPlatosDelDia] = useState([]);
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -161,6 +162,7 @@ const fetchPedidosYDiccionario = async () => {
     }
 
     setMapaPlatos(dict);
+    setPlatosDelDia(resDaily.data || []);
 
     // 2. Fetch Pedidos
     const res = await api.get("/admin/orders");
@@ -693,6 +695,7 @@ const exportarExcelPorEmpresa = async () => {
             <ProduccionEditablePorDia
               pedidos={pedidos}
               mapaPlatos={mapaPlatos}
+              platosDelDia={platosDelDia}
               semanaActual={semanaActual}
               onResumenEditado={handleResumenEditado}
               onGuardarCambios={handleGuardarCambios}

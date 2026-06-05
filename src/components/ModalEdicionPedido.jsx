@@ -6,10 +6,11 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
+import dayjs from '../utils/day';
 
 const DIAS_SEMANA = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
 
-const ModalEdicionPedido = ({ open, onClose, pedido, mapaPlatos, onSave }) => {
+const ModalEdicionPedido = ({ open, onClose, pedido, mapaPlatos, platosDelDia = [], semanaActual, onSave }) => {
   const [items, setItems] = useState([]);
   const [notaAdmin, setNotaAdmin] = useState('');
 
@@ -88,6 +89,33 @@ const ModalEdicionPedido = ({ open, onClose, pedido, mapaPlatos, onSave }) => {
     onSave(pedido.id || pedido._id, backendItems, notaAdmin);
   };
 
+  const getDiaLabel = (d) => {
+    if (d === 'tartas') return 'TARTA SEMANAL';
+    if (!semanaActual?.lunes) return d.toUpperCase();
+    const normalize = str => str.toLowerCase().split(' ')[0].normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const diasNorm = DIAS_SEMANA.map(normalize);
+    const idx = diasNorm.indexOf(normalize(d));
+    if (idx !== -1) {
+      const date = dayjs(semanaActual.lunes).add(idx, 'day').format('DD/MM');
+      return `${d.toUpperCase()} ${date}`;
+    }
+    return d.toUpperCase();
+  };
+
+  const getDailyDishesForDay = (dia) => {
+    if (!semanaActual?.lunes || dia === 'tartas') return platosDelDia;
+    const normalize = str => str.toLowerCase().split(' ')[0].normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const diasNorm = DIAS_SEMANA.map(normalize);
+    const idx = diasNorm.indexOf(normalize(dia));
+    if (idx === -1) return platosDelDia;
+    
+    const targetDate = dayjs(semanaActual.lunes).add(idx, 'day').format('YYYY-MM-DD');
+    return platosDelDia.filter(p => {
+      const pDate = typeof p.date === 'string' ? p.date.split('T')[0] : dayjs(p.date).format('YYYY-MM-DD');
+      return pDate === targetDate;
+    });
+  };
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>Editar Pedido de {pedido?.usuario?.nombre} {pedido?.usuario?.apellido}</DialogTitle>
@@ -103,7 +131,7 @@ const ModalEdicionPedido = ({ open, onClose, pedido, mapaPlatos, onSave }) => {
                     onChange={(e) => handleItemChange(index, 'dia', e.target.value)}
                     label="Día/Tipo"
                   >
-                    {DIAS_SEMANA.map(d => <MenuItem key={d} value={d}>{d.toUpperCase()}</MenuItem>)}
+                    {DIAS_SEMANA.map(d => <MenuItem key={d} value={d}>{getDiaLabel(d)}</MenuItem>)}
                     <MenuItem value="tartas">TARTA SEMANAL</MenuItem>
                   </Select>
                 </FormControl>
@@ -144,16 +172,34 @@ const ModalEdicionPedido = ({ open, onClose, pedido, mapaPlatos, onSave }) => {
                     value={item.item_id}
                     onChange={(e) => handleItemChange(index, 'item_id', e.target.value)}
                   />
-                ) : (
+                ) : item.type === 'daily' ? (
                   <FormControl fullWidth size="small">
-                    <InputLabel>Plato</InputLabel>
+                    <InputLabel>Plato del Día ({getDiaLabel(item.dia)})</InputLabel>
                     <Select
                       value={`ID:${item.item_id}`}
                       onChange={(e) => handleItemChange(index, 'item_id', e.target.value.replace('ID:', ''))}
-                      label="Plato"
+                      label={`Plato del Día (${getDiaLabel(item.dia)})`}
+                    >
+                      {getDailyDishesForDay(item.dia).length === 0 && (
+                         <MenuItem disabled value=""><em>No hay platos cargados</em></MenuItem>
+                      )}
+                      {getDailyDishesForDay(item.dia).map((p) => (
+                        <MenuItem key={`ID:${p.id}`} value={`ID:${p.id}`}>{p.name}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                ) : (
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Plato Fijo</InputLabel>
+                    <Select
+                      value={`ID:${item.item_id}`}
+                      onChange={(e) => handleItemChange(index, 'item_id', e.target.value.replace('ID:', ''))}
+                      label="Plato Fijo"
                     >
                       {Object.entries(mapaPlatos).map(([idKey, name]) => {
                         if (!idKey.startsWith('ID:')) return null;
+                        // Exclude daily dishes from fixed list if possible, but map contains all.
+                        // We'll just show all in 'fijo' for flexibility.
                         return <MenuItem key={idKey} value={idKey}>{name}</MenuItem>;
                       })}
                     </Select>
