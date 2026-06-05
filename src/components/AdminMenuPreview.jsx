@@ -59,6 +59,14 @@ const AdminMenuPreview = () => {
   const menuEspecialPorDia = { lunes: [], martes: [], miercoles: [], jueves: [], viernes: [] };
   const fechasSemana = { lunes: '', martes: '', miercoles: '', jueves: '', viernes: '' };
 
+  const distribuirEnColumnas = (lista, numColumnas) => {
+    const columnas = Array.from({ length: numColumnas }, () => []);
+    lista.forEach((item, index) => {
+      columnas[index % numColumnas].push(item);
+    });
+    return columnas;
+  };
+
   menuEspecial.forEach(p => {
     const fecha = dayjs(p.date).add(1, 'day'); // Fix UTC offset si viene con 'Z'
     const dia = fecha.day();
@@ -77,25 +85,27 @@ const AdminMenuPreview = () => {
   );
 
   const renderPlatoFijo = (plato) => (
-    <Grid item xs={12} sm={6} md={4} lg={3} key={plato.id || plato.name}>
-      <ListItem sx={{ 
-        bgcolor: '#fff', 
-        borderRadius: 2, 
-        border: '1px solid #e2e8f0',
-        p: 1
-      }}>
-        <ListItemAvatar sx={{ minWidth: 50 }}>
-          <Avatar src={plato.image_url} variant="rounded" sx={{ width: 40, height: 40 }} />
-        </ListItemAvatar>
-        <ListItemText 
-          primary={plato.name || plato.nombre} 
-          primaryTypographyProps={{ variant: 'subtitle2', fontWeight: 'bold', lineHeight: 1.1 }}
-          secondary={plato.description || plato.descripcion}
-          secondaryTypographyProps={{ variant: 'caption', noWrap: true }}
-          sx={{ my: 0 }}
-        />
-      </ListItem>
-    </Grid>
+    <ListItem key={plato.id || plato.name} sx={{ 
+      bgcolor: '#fff', 
+      borderRadius: 2, 
+      border: '1px solid #e2e8f0',
+      p: 1,
+      mb: 1.5,
+      display: 'flex',
+      alignItems: 'center',
+      boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+    }}>
+      <ListItemAvatar sx={{ minWidth: 50 }}>
+        <Avatar src={plato.image_url} variant="rounded" sx={{ width: 40, height: 40 }} />
+      </ListItemAvatar>
+      <ListItemText 
+        primary={plato.name || plato.nombre} 
+        primaryTypographyProps={{ variant: 'subtitle2', fontWeight: 'bold', lineHeight: 1.1 }}
+        secondary={plato.description || plato.descripcion}
+        secondaryTypographyProps={{ variant: 'caption', noWrap: true }}
+        sx={{ my: 0 }}
+      />
+    </ListItem>
   );
 
   const renderEspecialColumna = (plato) => (
@@ -120,25 +130,27 @@ const AdminMenuPreview = () => {
   );
 
   const renderTartaFija = (tarta, idx) => (
-    <Grid item xs={12} sm={6} md={4} lg={3} key={idx}>
-      <ListItem sx={{ 
-        bgcolor: '#fff', 
-        borderRadius: 2, 
-        border: '1px solid #fecdd3',
-        p: 1
-      }}>
-        <ListItemAvatar sx={{ minWidth: 50 }}>
-          <Avatar src={tarta.img} variant="rounded" sx={{ width: 40, height: 40 }} />
-        </ListItemAvatar>
-        <ListItemText 
-          primary={tarta.nombre} 
-          primaryTypographyProps={{ variant: 'subtitle2', fontWeight: 'bold', lineHeight: 1.1 }}
-          secondary={tarta.descripcion || '—'}
-          secondaryTypographyProps={{ variant: 'caption', noWrap: true }}
-          sx={{ my: 0 }}
-        />
-      </ListItem>
-    </Grid>
+    <ListItem key={idx} sx={{ 
+      bgcolor: '#fff', 
+      borderRadius: 2, 
+      border: '1px solid #fecdd3',
+      p: 1,
+      mb: 1.5,
+      display: 'flex',
+      alignItems: 'center',
+      boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+    }}>
+      <ListItemAvatar sx={{ minWidth: 50 }}>
+        <Avatar src={tarta.img} variant="rounded" sx={{ width: 40, height: 40 }} />
+      </ListItemAvatar>
+      <ListItemText 
+        primary={tarta.nombre} 
+        primaryTypographyProps={{ variant: 'subtitle2', fontWeight: 'bold', lineHeight: 1.1 }}
+        secondary={tarta.descripcion || '—'}
+        secondaryTypographyProps={{ variant: 'caption', noWrap: true }}
+        sx={{ my: 0 }}
+      />
+    </ListItem>
   );
 
 
@@ -195,9 +207,15 @@ const AdminMenuPreview = () => {
             Editar Menú Fijo
           </Button>
         </Box>
-        <Grid container spacing={1.5}>
-          {menuFijo.map(renderPlatoFijo)}
-        </Grid>
+        <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto', pb: 1 }}>
+          {distribuirEnColumnas(menuFijo, 5).map((columna, colIdx) => (
+            <Box key={colIdx} sx={{ flex: 1, minWidth: 260 }}>
+              <List sx={{ p: 0 }}>
+                {columna.map(renderPlatoFijo)}
+              </List>
+            </Box>
+          ))}
+        </Box>
       </Box>
 
       {/* Menú Especial por Días */}
@@ -260,9 +278,15 @@ const AdminMenuPreview = () => {
             Editar Tartas
           </Button>
         </Box>
-        <Grid container spacing={1.5}>
-          {tartasUnicas.map(renderTartaFija)}
-        </Grid>
+        <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto', pb: 1 }}>
+          {distribuirEnColumnas(tartasUnicas, 4).map((columna, colIdx) => (
+            <Box key={colIdx} sx={{ flex: 1, minWidth: 260 }}>
+              <List sx={{ p: 0 }}>
+                {columna.map(renderTartaFija)}
+              </List>
+            </Box>
+          ))}
+        </Box>
       </Box>
     </Box>
   );
