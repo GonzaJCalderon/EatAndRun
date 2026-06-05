@@ -28,11 +28,11 @@ const AdminHome = () => {
       titulo: '⚙️ Gestión y Producción',
       opciones: [
         { label: '📋 Producción semanal', icon: <PrintIcon sx={{ fontSize: 40 }} />, href: '/admin/produccion', color: '#2e7d32' },
-        { label: 'Definir fechas de pedidos', icon: <DateRangeIcon sx={{ fontSize: 40 }} />, href: '/admin/dashboard', color: '#512da8' }, // Renombrado como pediste
+        { label: 'Definir fechas de pedidos', icon: <DateRangeIcon sx={{ fontSize: 40 }} />, href: '/admin/semanas', color: '#512da8' }, // Ruta nueva
         { label: 'Editar precios', icon: <MonetizationOnIcon sx={{ fontSize: 40 }} />, href: '/admin/editar-precios', color: '#ed6c02' },
         { label: '🏢 Gestionar Empresas', icon: <DashboardIcon sx={{ fontSize: 40 }} />, href: '/admin/empresas', color: '#3949ab' },
         { label: 'Estadísticas', icon: <DashboardIcon sx={{ fontSize: 40 }} />, href: '/admin/dashboard', color: '#7b1fa2' },
-        { label: 'Gestión de Usuarios', icon: <GroupIcon sx={{ fontSize: 40 }} />, href: '/admin/dashboard', color: '#ab47bc' },
+        { label: 'Gestión de Usuarios', icon: <GroupIcon sx={{ fontSize: 40 }} />, href: '/admin/usuarios', color: '#ab47bc' }, // Ruta nueva
       ]
     },
     {

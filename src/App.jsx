@@ -13,6 +13,8 @@ import AdminHome from './pages/AdminHome';
 import AdminPedidos from './pages/AdminPedidos';
 import EditarMenu from './pages/EditarMenu';
 import DashboardAdmin from './pages/DashboardAdmin';
+import AdminSemanas from './pages/AdminSemanas';
+import AdminUsuarios from './pages/AdminUsuarios';
 import HistorialAdmin from './pages/HistorialAdmin';
 import ProduccionResumen from './pages/ProduccionResumen';
 import EditarPrecios from './pages/EditarPrecios';
@@ -59,6 +61,8 @@ const App = () => (
     {/* 🛠️ Panel Admin */}
     <Route path="/admin" element={<AdminHome />} />
     <Route path="/admin/dashboard" element={<DashboardAdmin />} />
+    <Route path="/admin/semanas" element={<AdminSemanas />} />
+    <Route path="/admin/usuarios" element={<AdminUsuarios />} />
     <Route path="/admin/ver-pedidos" element={<AdminPedidos />} />
     <Route path="/admin/editar-menu" element={<EditarMenu />} />
     <Route path="/admin/historial" element={<HistorialAdmin />} />
