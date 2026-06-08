@@ -31,15 +31,11 @@ const TabsMenuContainer = ({ menuData, selecciones, onSelect, onFinalizarDias, s
 
   const avanzarAlSiguienteDia = () => {
     if (tabIndex < diasDisponibles.length - 1) {
-      setTimeout(() => {
-        setTabIndex(tabIndex + 1);
-      }, 300);
+      setTabIndex((prev) => prev + 1);
     } else {
       // 👇 Cuando ya estamos en el último día y hay selección
       if (typeof onFinalizarDias === 'function') {
-        setTimeout(() => {
-          onFinalizarDias();
-        }, 400);
+        onFinalizarDias();
       }
     }
   };

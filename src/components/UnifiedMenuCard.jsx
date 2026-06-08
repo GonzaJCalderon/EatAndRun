@@ -90,10 +90,6 @@ const UnifiedMenuCard = ({ plato, cantidad = 0, onChange }) => {
             lineHeight: '1.2em',
             color: '#1e293b',
             mb: 0.5,
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
           }}
         >
           {plato?.nombre || 'Sin nombre'}
@@ -103,11 +99,6 @@ const UnifiedMenuCard = ({ plato, cantidad = 0, onChange }) => {
           variant="caption"
           color="text.secondary"
           sx={{
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
             mb: 1,
             flexGrow: 1
           }}
