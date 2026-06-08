@@ -134,9 +134,37 @@ precios,
 
       {metodoPago === 'transferencia' && (
         <>
-          <Box sx={{ mt: 3 }}>
-            <InputLabel sx={{ mb: 1, fontWeight: 'bold' }}>📎 Subí el comprobante de pago</InputLabel>
-            <Button component="label" variant="outlined" color="success" fullWidth sx={{ mb: 1 }}>
+          <Box
+            sx={{
+              backgroundColor: '#f4f6f8',
+              mt: 3,
+              mb: 3,
+              p: 2,
+              border: '1px dashed #999',
+              borderRadius: 2
+            }}
+          >
+            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+              🏦 Datos para Transferencia
+            </Typography>
+            <Typography variant="body2">Banco: <strong>Santander</strong></Typography>
+            <Typography variant="body2">Tipo de cuenta: <strong>Caja de Ahorro en Pesos</strong></Typography>
+            <Typography variant="body2">Titular: <strong>Molina Guerra Matias Mauricio</strong></Typography>
+            <Typography variant="body2">DNI: <strong>32224452</strong></Typography>
+
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <strong>CBU:</strong> 0720068788000038359572 <CopyText text="0720068788000038359572" />
+              </Typography>
+              <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <strong>Alias:</strong> MOLINAGUERRA <CopyText text="MOLINAGUERRA" />
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box sx={{ mt: 3, p: 2, backgroundColor: '#f0fdf4', borderRadius: 2, border: '1px solid #bbf7d0' }}>
+            <InputLabel sx={{ mb: 1, fontWeight: 'bold', color: '#166534' }}>📎 Ya transferí, subo mi comprobante:</InputLabel>
+            <Button component="label" variant="contained" color="success" fullWidth sx={{ mb: 1 }}>
               Seleccionar archivo
               <input
                 type="file"
@@ -155,35 +183,10 @@ precios,
             </Button>
 
             {comprobante && (
-              <Typography variant="body2" sx={{ mt: 1 }}>
-                Archivo cargado: <strong>{comprobante.name}</strong>
+              <Typography variant="body2" sx={{ mt: 1, color: '#15803d', fontWeight: 'bold' }}>
+                ✅ Archivo cargado: {comprobante.name}
               </Typography>
             )}
-          </Box>
-
-          <Box
-            sx={{
-              backgroundColor: '#f4f6f8',
-              mt: 3,
-              p: 2,
-              border: '1px dashed #999',
-              borderRadius: 2
-            }}
-          >
-            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-              🏦 Datos para Transferencia
-            </Typography>
-            <Typography variant="body2">Banco: <strong>Santander</strong></Typography>
-            <Typography variant="body2">Tipo de cuenta: <strong>Caja de Ahorro en Pesos</strong></Typography>
-            <Typography variant="body2">Titular: <strong>Molina Guerra Matias Mauricio</strong></Typography>
-            <Typography variant="body2">DNI: <strong>32224452</strong></Typography>
-
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="body2">
-                <strong>CBU:</strong> 0720068788000038359572 <CopyText text="0720068788000038359572" />
-              </Typography>
-              <Typography variant="body2"><strong>Alias:</strong> MOLINAGUERRA</Typography>
-            </Box>
           </Box>
         </>
       )}

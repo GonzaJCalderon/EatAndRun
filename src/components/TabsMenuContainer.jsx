@@ -1,6 +1,6 @@
 // src/components/TabsMenuContainer.jsx
 import React, { useState, useEffect } from 'react';
-import { Tabs, Tab, Box, Typography } from '@mui/material';
+import { Tabs, Tab, Box, Typography, Button } from '@mui/material';
 import { motion } from 'framer-motion';
 import UnifiedDayMenuGallery from './UnifiedDayMenuGallery';
 import ExtrasSection from './ExtrasSection';
@@ -51,14 +51,6 @@ const TabsMenuContainer = ({ menuData, selecciones, onSelect, onFinalizarDias, s
         [diaActual]: nuevaSeleccion
       };
       onSelect(nuevoEstadoCompleto);
-
-      const items = Object.values(nuevaSeleccion || {});
-      const eligioPlatos = items.some(p => (p?.cantidad || 0) > 0);
-      const deseaOmitir = items.some(p => p?.tipo === 'skip');
-
-      if (eligioPlatos || deseaOmitir) {
-        avanzarAlSiguienteDia(); // ✅ usar nueva lógica
-      }
     }
   };
 
@@ -114,6 +106,17 @@ const TabsMenuContainer = ({ menuData, selecciones, onSelect, onFinalizarDias, s
             disabled={semanaCerrada}
             semanaCerrada={semanaCerrada}
           />
+
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 2 }}>
+            <Button 
+              variant="contained" 
+              color="primary" 
+              onClick={avanzarAlSiguienteDia}
+              sx={{ px: 4, py: 1.5, borderRadius: 8, textTransform: 'none', fontWeight: 'bold' }}
+            >
+              {tabIndex < diasDisponibles.length - 1 ? 'Siguiente Día ➔' : 'Ir a Confirmar Pedido ✓'}
+            </Button>
+          </Box>
         </>
       )}
     </Box>

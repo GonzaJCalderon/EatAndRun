@@ -1,17 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Typography,
-  Box,
-  IconButton,
-  Card,
-  Divider
-} from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import api from '../api/api';
@@ -57,94 +44,98 @@ const TartaGallery = ({ seleccionadas = {}, onChange }) => {
   if (!tartasValidas.length) return null;
 
   return (
-    <Accordion
-      expanded={expanded}
-      onChange={() => setExpanded(prev => !prev)}
-      sx={{ mt: 4 }}
-    >
-      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Typography variant="h6" fontWeight="bold">🥧 Tartas (8 porciones)</Typography>
-      </AccordionSummary>
+    <Box sx={{ mt: 4, mb: 4 }}>
+      <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, px: 1 }}>
+        🥧 Tartas (8 porciones)
+      </Typography>
 
-      <AccordionDetails>
-        {/* Contenedor scroll horizontal */}
-        <Box
-          ref={scrollRef}
-          sx={{
-            display: 'flex',
-            overflowX: 'auto',
-            gap: 2,
-            pb: 1,
-            px: 1,
-            scrollSnapType: 'x mandatory',
-            scrollBehavior: 'smooth',
-            '&::-webkit-scrollbar': {
-              height: 8
-            },
-            '&::-webkit-scrollbar-thumb': {
-              backgroundColor: '#aaa',
-              borderRadius: 4
-            },
-            '&::-webkit-scrollbar-track': {
-              backgroundColor: '#f0f0f0'
-            }
-          }}
-        >
-          {tartasValidas.map((tarta) => {
-            const cantidad = seleccionadas[tarta.key] || 0;
-            return (
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: 'repeat(2, 1fr)',
+            sm: 'repeat(auto-fill, minmax(200px, 1fr))'
+          },
+          gap: 2,
+          justifyContent: 'center',
+          alignItems: 'stretch',
+          px: 1,
+          pb: 2,
+        }}
+      >
+        {tartasValidas.map((tarta) => {
+          const cantidad = seleccionadas[tarta.key] || 0;
+          const isSelected = cantidad > 0;
+          return (
+            <Card 
+              key={tarta.key}
+              sx={{ 
+                p: 0, 
+                borderRadius: 4, 
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: isSelected ? '0 8px 20px rgba(34, 197, 94, 0.25)' : '0 4px 12px rgba(0,0,0,0.06)',
+                border: isSelected ? '2px solid #22c55e' : '2px solid transparent',
+                transition: 'all 0.2s',
+                overflow: 'hidden'
+              }}
+            >
               <Box
-                key={tarta.key}
+                component="img"
+                src={tarta.img}
+                alt={tarta.nombre}
                 sx={{
-                  scrollSnapAlign: 'start',
-                  minWidth: { xs: 220, sm: 240 },
-                  flexShrink: 0
+                  width: '100%',
+                  height: 110,
+                  objectFit: 'cover',
+                  borderBottom: '1px solid #f1f5f9'
                 }}
-              >
-                <Card sx={{ p: 2, borderRadius: 3, textAlign: 'center' }}>
-                  <Box
-                    component="img"
-                    src={tarta.img}
-                    alt={tarta.nombre}
-                    sx={{
-                      width: '100%',
-                      height: 130,
-                      objectFit: 'cover',
-                      borderRadius: 2,
-                      mb: 1
-                    }}
-                  />
-                  <Typography variant="subtitle1" fontWeight="bold">{tarta.nombre}</Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                    {tarta.descripcion}
+              />
+              <Box sx={{ p: 1.5, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                <Typography variant="subtitle2" fontWeight="700" sx={{ color: '#1e293b', mb: 0.5 }}>
+                  {tarta.nombre}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ flexGrow: 1, mb: 1 }}>
+                  {tarta.descripcion}
+                </Typography>
+                <Box 
+                  sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    backgroundColor: isSelected ? '#22c55e' : '#f1f5f9',
+                    color: isSelected ? '#ffffff' : '#334155',
+                    borderRadius: 8,
+                    p: 0.5,
+                    mt: 'auto'
+                  }}
+                >
+                  <IconButton 
+                    onClick={() => handleCantidadChange(tarta.key, cantidad - 1)} 
+                    size="small"
+                    disabled={!isSelected}
+                    sx={{ color: isSelected ? '#ffffff' : 'inherit', p: '4px' }}
+                  >
+                    <RemoveIcon fontSize="small" />
+                  </IconButton>
+                  <Typography sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>
+                    {cantidad > 0 ? cantidad : 'Add'}
                   </Typography>
-                  <Divider sx={{ my: 1 }} />
-                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <IconButton onClick={() => handleCantidadChange(tarta.key, cantidad - 1)} size="small">
-                      <RemoveIcon />
-                    </IconButton>
-                    <Typography variant="body1" sx={{ mx: 2 }}>{cantidad}</Typography>
-                    <IconButton onClick={() => handleCantidadChange(tarta.key, cantidad + 1)} size="small">
-                      <AddIcon />
-                    </IconButton>
-                  </Box>
-                </Card>
+                  <IconButton 
+                    onClick={() => handleCantidadChange(tarta.key, cantidad + 1)} 
+                    size="small"
+                    sx={{ color: isSelected ? '#ffffff' : 'inherit', p: '4px' }}
+                  >
+                    <AddIcon fontSize="small" />
+                  </IconButton>
+                </Box>
               </Box>
-            );
-          })}
-        </Box>
-
-        {/* Flechas de scroll */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
-          <IconButton onClick={() => scrollBy(-250)} size="small">
-            <ArrowBackIosNewIcon fontSize="small" />
-          </IconButton>
-          <IconButton onClick={() => scrollBy(250)} size="small">
-            <ArrowForwardIosIcon fontSize="small" />
-          </IconButton>
-        </Box>
-      </AccordionDetails>
-    </Accordion>
+            </Card>
+          );
+        })}
+      </Box>
+    </Box>
   );
 };
 

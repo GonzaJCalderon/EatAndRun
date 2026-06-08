@@ -123,87 +123,31 @@ const fijosSinDuplicados = useMemo(() => {
 
   
 
-  const renderScrollGrid = (platos, scrollRef, isEspecial = false) => {
-    const scrollBy = (offset) => {
-      if (scrollRef.current) {
-        scrollRef.current.scrollBy({
-          left: offset,
-          behavior: 'smooth'
-        });
-      }
-    };
-
+  const renderGrid = (platos, isEspecial = false) => {
     return (
-      <>
-        <Box
-          ref={scrollRef}
-          sx={{
-            display: 'flex',
-            overflowX: 'auto',
-            gap: 2,
-            scrollSnapType: 'x mandatory',
-            px: 1,
-            pb: 1,
-            '&::-webkit-scrollbar': { height: 6 },
-            '&::-webkit-scrollbar-thumb': {
-              backgroundColor: '#ccc',
-              borderRadius: 4
-            },
-            WebkitOverflowScrolling: 'touch'
-          }}
-        >
-          {isEspecial
-            ? platos.map((plato) => (
-                <Box
-                  key={`especial-${day}-${plato.id}`}
-                  sx={{
-                    scrollSnapAlign: 'start',
-                    flexShrink: 0,
-                    minWidth: { xs: 180, sm: 200, md: 220 }
-                  }}
-                >
- <UnifiedMenuCard
-plato={plato}
-  cantidad={selected[plato.id]?.cantidad || 0}
-  onChange={(p, c) => handleCantidadChange(p, c)}
-/>
-
-
-                </Box>
-              ))
-            : chunkArray(platos, 2).map((colPlatos, colIdx) => (
-                <Box
-                  key={`col-${day}-${colIdx}`}
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 2,
-                    minWidth: { xs: 180, sm: 200, md: 220 },
-                    scrollSnapAlign: 'start',
-                    flexShrink: 0
-                  }}
-                >
-                  {colPlatos.map((plato) => (
-                    <UnifiedMenuCard
-                      key={`fijo-${day}-${plato.id}`}
-                      plato={plato}
-                      cantidad={selected[plato.id]?.cantidad || 0}
-                      onChange={(p, c) => handleCantidadChange(p, c)}
-                    />
-                  ))}
-                </Box>
-              ))}
-        </Box>
-
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
-          <IconButton onClick={() => scrollBy(-250)} size="small">
-            <ArrowBackIosNewIcon fontSize="small" />
-          </IconButton>
-          <IconButton onClick={() => scrollBy(250)} size="small">
-            <ArrowForwardIosIcon fontSize="small" />
-          </IconButton>
-        </Box>
-      </>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: 'repeat(2, 1fr)',
+            sm: 'repeat(auto-fill, minmax(160px, 1fr))'
+          },
+          gap: 2,
+          justifyContent: 'center',
+          alignItems: 'stretch',
+          px: 0.5,
+          pb: 2,
+        }}
+      >
+        {platos.map((plato) => (
+          <UnifiedMenuCard
+            key={`${isEspecial ? 'especial' : 'fijo'}-${day}-${plato.id}`}
+            plato={plato}
+            cantidad={selected[plato.id]?.cantidad || 0}
+            onChange={(p, c) => handleCantidadChange(p, c)}
+          />
+        ))}
+      </Box>
     );
   };
   
@@ -234,7 +178,7 @@ plato={plato}
               <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
                 ⭐ Menú especial del día
               </Typography>
-              {renderScrollGrid(especialesSinDuplicados, scrollRefEspeciales, true)}
+              {renderGrid(especialesSinDuplicados, true)}
             </>
           )}
 
@@ -243,7 +187,7 @@ plato={plato}
               <Typography variant="subtitle1" fontWeight="bold" sx={{ mt: 2, mb: 1 }}>
                 📦 Platos fijos
               </Typography>
-              {renderScrollGrid(fijosSinDuplicados, scrollRefFijos)}
+              {renderGrid(fijosSinDuplicados, false)}
             </>
           )}
         </>
