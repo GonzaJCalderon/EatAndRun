@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 
 import empresaImg from '../assets/imgs/empresaImg.png';
 import plantaImg from '../assets/imgs/planta-elaboradora.png';
-import nutricionImg from '../assets/imgs/nutricionImg.png';
+import nutricionImg from '../assets/imgs/nutricionista_saludable.png';
 
 // Logos
 import acsa from '../assets/logos/acsa_mining.jpg';
