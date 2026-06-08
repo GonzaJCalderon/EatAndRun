@@ -231,6 +231,11 @@ const endpointBase = isProd
         🍽️ Editar Menú Fijo
       </Typography>
 
+      <Alert severity="info" sx={{ mb: 3 }}>
+        <strong>Guía rápida:</strong> Aquí podés administrar los platos fijos que están disponibles todas las semanas. 
+        Si un plato es exclusivo de un día en particular (por ejemplo, "Solo los miércoles"), destildá los demás días en la sección <b>Días disponibles</b> de ese plato.
+      </Alert>
+
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
           <CircularProgress />
