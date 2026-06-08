@@ -219,7 +219,7 @@ const MisPedidos = () => {
                     onClick={() => navigate(`/mis-pedidos/${p.id}`)}
                     sx={{ backgroundColor: '#1e293b', color: 'white', borderRadius: 50, textTransform: 'none', px: 3, py: 1, '&:hover': { backgroundColor: '#334155' } }}
                   >
-                    Ver detalle completo
+                    Seguimiento y Comprobante
                   </Button>
                 </Stack>
               </CardContent>

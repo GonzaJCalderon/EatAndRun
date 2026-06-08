@@ -51,7 +51,12 @@ const PedidoDetalle = () => {
     fetchDetalle();
   }, [id]);
 
-  const formatFecha = (fecha) => new Date(fecha).toLocaleDateString();
+  const formatFecha = (fechaStr) => {
+    if (!fechaStr) return '';
+    const d = new Date(fechaStr);
+    d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
+    return d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+  };
 
   if (loading) {
     return (
