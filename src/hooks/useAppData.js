@@ -68,7 +68,7 @@ export const useAppData = (user, semanaActiva, menuFijosPorRol, setMenuFijosPorR
               cantidad: 0,
               id: p.id?.toString() || p._id?.toString(),
               tipo: 'fijo',
-              available_days: p.available_days || ['lunes', 'martes', 'miércoles', 'jueves', 'viernes']
+              available_days: p.available_days || ['lunes', 'martes', 'miercoles', 'jueves', 'viernes']
             }))
           : [];
 
