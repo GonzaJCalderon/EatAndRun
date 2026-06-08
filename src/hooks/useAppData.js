@@ -67,7 +67,8 @@ export const useAppData = (user, semanaActiva, menuFijosPorRol, setMenuFijosPorR
               img: p.image_url,
               cantidad: 0,
               id: p.id?.toString() || p._id?.toString(),
-              tipo: 'fijo'
+              tipo: 'fijo',
+              available_days: p.available_days || ['lunes', 'martes', 'miércoles', 'jueves', 'viernes']
             }))
           : [];
 
@@ -138,10 +139,12 @@ export const useAppData = (user, semanaActiva, menuFijosPorRol, setMenuFijosPorR
       }));
 
       const especialesSinDuplicados = dedupeByContenido(especialesCombinados);
+      
+      const diaMapeado = dia === 'miercoles' ? 'miércoles' : dia;
 
       nuevoMenuData[dia] = {
         habilitado,
-        fijos: habilitado ? fijosRol.map(p => ({ ...p, tipo: 'fijo' })) : [],
+        fijos: habilitado ? fijosRol.filter(p => p.available_days.includes(diaMapeado)).map(p => ({ ...p, tipo: 'fijo' })) : [],
         especiales: habilitado ? especialesSinDuplicados : []
       };
     });

@@ -2,7 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import {
   Container, Typography, TextField, IconButton, Button,
   Card, CardContent, Box, Stack, Grid,
-  Snackbar, Alert, CircularProgress, Tooltip
+  Snackbar, Alert, CircularProgress, Tooltip,
+  FormGroup, FormControlLabel, Checkbox
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -132,6 +133,10 @@ const endpointBase = isProd
     if (plato.image_url) {
       body.append('image_url', plato.image_url);
     }
+    
+    if (plato.available_days) {
+      body.append('available_days', JSON.stringify(plato.available_days));
+    }
 
     // LOG: Mostrar todo lo que se manda en el FormData
     console.log('🟢 GUARDAR PLATO: Nuevo?', isNew);
@@ -199,7 +204,7 @@ const endpointBase = isProd
 
   // Crea un plato vacío y lo pone al principio del array
   const agregarPlato = () => {
-    setPlatosMenu(prev => [{ name: '', description: '', price: '', image_url: '' }, ...prev]);
+    setPlatosMenu(prev => [{ name: '', description: '', price: '', image_url: '', available_days: ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'] }, ...prev]);
   };
 
   const showSnackbar = (message, severity = 'success') => {
@@ -263,7 +268,7 @@ const endpointBase = isProd
                           fullWidth
                         />
                         <TextField
-                          label="Descripción"
+                          label="Descripción (opcional)"
                           size="small"
                           multiline
                           rows={2}
@@ -272,6 +277,39 @@ const endpointBase = isProd
                           fullWidth
                         />
 
+                        <Box sx={{ mt: 1, border: '1px solid #e0e0e0', borderRadius: 1, p: 1 }}>
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                            Días disponibles:
+                          </Typography>
+                          <FormGroup row sx={{ gap: 0 }}>
+                            {['lunes', 'martes', 'miércoles', 'jueves', 'viernes'].map(dia => (
+                              <FormControlLabel
+                                key={dia}
+                                control={
+                                  <Checkbox 
+                                    size="small" 
+                                    checked={Array.isArray(plato.available_days) ? plato.available_days.includes(dia) : true}
+                                    onChange={(e) => {
+                                      const currentDays = Array.isArray(plato.available_days) 
+                                        ? [...plato.available_days] 
+                                        : ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
+                                      
+                                      let newDays;
+                                      if (e.target.checked) {
+                                        newDays = [...currentDays, dia];
+                                      } else {
+                                        newDays = currentDays.filter(d => d !== dia);
+                                      }
+                                      handleInputChange(index, 'available_days', newDays);
+                                    }}
+                                  />
+                                }
+                                label={<Typography variant="caption" sx={{textTransform: 'capitalize'}}>{dia.slice(0,3)}</Typography>}
+                                sx={{ ml: 0, mr: 1 }}
+                              />
+                            ))}
+                          </FormGroup>
+                        </Box>
 
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1, mb: 1 }}>
                           {plato.image_url ? (
