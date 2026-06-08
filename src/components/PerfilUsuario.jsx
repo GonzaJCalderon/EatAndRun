@@ -65,8 +65,7 @@ const handleLogout = () => {
 
   const handleGuardar = async () => {
     try {
-      const method = perfil?.telefono || perfil?.direccion_principal ? 'put' : 'post';
-      const res = await api[method]('/perfil/me', formData);
+      const res = await api.put('/perfil/me', formData);
       enqueueSnackbar('✅ Perfil actualizado correctamente', { variant: 'success' });
       setPerfil(res.data.profile || res.data);
       setEditando(false);

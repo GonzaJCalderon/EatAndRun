@@ -1,33 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Container,
-  Typography,
-  Card,
-  CardContent,
-  Button,
-  Divider,
-  Box,
-  Snackbar,
-  Alert
+  Container, Typography, Card, CardContent, Button, Divider, Box,
+  Snackbar, Alert, Select, MenuItem, TextField, Tabs, Tab, Avatar, Chip
 } from '@mui/material';
 import MapIcon from '@mui/icons-material/Map';
-
 import DoneIcon from '@mui/icons-material/Done';
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import PhoneIcon from '@mui/icons-material/Phone';
 import api from '../api/api';
 import MapaCliente from '../components/MapaCliente';
 import { useSelector } from 'react-redux';
-import { selectUser, selectToken } from '../store/slices/authSlice';
-import { Select, MenuItem, TextField } from '@mui/material';
-import { Tabs, Tab } from '@mui/material';
-import dayjs from '../utils/day'; // o la ruta relativa que uses
-
-console.log(dayjs().format('dddd')); // "jueves" en español
-
-
-
-
-
+import { selectUser } from '../store/slices/authSlice';
+import dayjs from '../utils/day';
 
 const getTodayName = () => {
   const dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
@@ -40,133 +26,75 @@ const EXTRAS_MAP = {
   3: '💪 Proteína'
 };
 
-const filtrarPedidosPorDia = (pedidos, dia) => {
-  return pedidos.filter(p => {
-    if (Array.isArray(p.items)) {
-      return p.items.some(item =>
-        item.dia === dia || item.dia === 'sin_dia' || !item.dia
-      );
-    }
-
-    const diarios = p.pedido?.diarios?.[dia]
-      || p.diarios?.[dia]
-      || p.pedido?.diarios?.['sin_dia']
-      || p.diarios?.['sin_dia']
-      || {};
-
-    const extras = p.pedido?.extras?.[dia]
-      || p.extras?.[dia]
-      || p.pedido?.extras?.['sin_dia']
-      || p.extras?.['sin_dia']
-      || {};
-
-    const tartas = p.pedido?.tartas || p.tartas || {};
-
-    const hayDiarios = Object.values(diarios).some(v => typeof v === 'number' || typeof v === 'object');
-    const hayExtras = Object.values(extras).some(v => typeof v === 'number' || typeof v === 'object');
-    const hayTartas = Object.keys(tartas).length > 0;
-
-    return hayDiarios || hayExtras || hayTartas;
-  });
+const cardStyle = {
+  mb: 4,
+  borderRadius: 4,
+  boxShadow: '0 8px 32px rgba(0,0,0,0.06)',
+  border: '1px solid rgba(0,0,0,0.05)',
+  transition: 'transform 0.2s',
+  '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 12px 40px rgba(0,0,0,0.1)' }
 };
 
 const DeliveryDashboard = () => {
   const [pedidosAsignados, setPedidosAsignados] = useState([]);
   const [pedidosSinAsignar, setPedidosSinAsignar] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [menuEspecialHoy, setMenuEspecialHoy] = useState([]);
   const [mensajeExito, setMensajeExito] = useState('');
   const [mostrarSnackbar, setMostrarSnackbar] = useState(false);
-  const [usuario, setUsuario] = useState(null);
-const [pedidoActual, setPedidoActual] = useState(null);
-const [mostrarModalMotivo, setMostrarModalMotivo] = useState(false);
-const [motivoNoEntrega, setMotivoNoEntrega] = useState('');
-const [filtroFecha, setFiltroFecha] = useState('hoy');
-const [desdeFecha, setDesdeFecha] = useState(dayjs().format('YYYY-MM-DD'));
-const [hastaFecha, setHastaFecha] = useState(dayjs().format('YYYY-MM-DD'));
-const [tabIndex, setTabIndex] = useState(0);
-
-
+  const [pedidoActual, setPedidoActual] = useState(null);
+  const [mostrarModalMotivo, setMostrarModalMotivo] = useState(false);
+  const [motivoNoEntrega, setMotivoNoEntrega] = useState('');
+  const [filtroFecha, setFiltroFecha] = useState('hoy');
+  const [desdeFecha, setDesdeFecha] = useState(dayjs().format('YYYY-MM-DD'));
+  const [hastaFecha, setHastaFecha] = useState(dayjs().format('YYYY-MM-DD'));
+  const [tabIndex, setTabIndex] = useState(0);
 
   const hoy = getTodayName();
-
-const user = useSelector(selectUser);
-const token = useSelector(selectToken);
-
-
-
+  const user = useSelector(selectUser);
 
   useEffect(() => {
-    const fetchMenus = async () => {
+    const fetchData = async () => {
       try {
-        const res = await api.get('/daily/today');
-        setMenuEspecialHoy(res.data);
+        let query = '';
+        const hoyStr = dayjs().format('YYYY-MM-DD');
+
+        if (filtroFecha !== 'hoy') {
+          query = `?desde=${desdeFecha}&hasta=${hastaFecha}`;
+        } else {
+          query = `?desde=${hoyStr}&hasta=${hoyStr}`;
+        }
+
+        const asignadosRes = await api.get(`/delivery/my-orders${query}`);
+        const sinAsignarRes = await api.get('/delivery/unassigned-orders');
+
+        let asignados = asignadosRes.data.map(p => ({
+          ...p, items: (p.items || []).filter(i => i.item_type !== 'especial')
+        })).filter(p => p.items.length > 0);
+
+        let sinAsignar = sinAsignarRes.data.map(p => ({
+          ...p, items: (p.items || []).filter(i => i.item_type !== 'especial')
+        })).filter(p => p.items.length > 0);
+
+        const sortPorFecha = (a, b) => dayjs(a.fecha_entrega).diff(dayjs(b.fecha_entrega));
+
+        asignados.sort(sortPorFecha);
+        sinAsignar.sort(sortPorFecha);
+
+        setPedidosAsignados(asignados);
+        setPedidosSinAsignar(sinAsignar);
       } catch (err) {
-        console.error('❌ Error al obtener menú especial de hoy:', err);
+        console.error('❌ Error al obtener pedidos', err);
+      } finally {
+        setLoading(false);
       }
     };
-
-    fetchMenus();
-  }, []);
-useEffect(() => {
-  const fetchData = async () => {
-    try {
-      let query = '';
-      const hoyStr = dayjs().format('YYYY-MM-DD'); // Fecha hoy formato YYYY-MM-DD
-
-      // Solo aplicar query de fecha si NO es hoy
-      if (filtroFecha !== 'hoy') {
-        query = `?desde=${desdeFecha}&hasta=${hastaFecha}`;
-      } else {
-        // Forzar query igual para pedidos asignados del día
-        query = `?desde=${hoyStr}&hasta=${hoyStr}`;
-      }
-
-      const asignadosRes = await api.get(`/delivery/my-orders${query}`);
-      const sinAsignarRes = await api.get('/delivery/unassigned-orders');
-
-      // Filtrar items especiales y eliminar pedidos que queden vacíos
-      let asignados = asignadosRes.data.map(p => ({
-        ...p,
-        items: (p.items || []).filter(i => i.item_type !== 'especial')
-      })).filter(p => p.items.length > 0);
-
-      let sinAsignar = sinAsignarRes.data.map(p => ({
-        ...p,
-        items: (p.items || []).filter(i => i.item_type !== 'especial')
-      })).filter(p => p.items.length > 0);
-
-      // Ordenar por fecha_entrega ascendente (los más viejos o los de hoy primero)
-      const sortPorFecha = (a, b) => {
-        const fechaA = dayjs(a.fecha_entrega);
-        const fechaB = dayjs(b.fecha_entrega);
-        return fechaA.diff(fechaB);
-      };
-
-      asignados.sort(sortPorFecha);
-      sinAsignar.sort(sortPorFecha);
-
-      setPedidosAsignados(asignados);
-      setPedidosSinAsignar(sinAsignar);
-    } catch (err) {
-      console.error('❌ Error al obtener pedidos', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchData();
-}, [hoy, filtroFecha, desdeFecha, hastaFecha]);
-
-
+    fetchData();
+  }, [hoy, filtroFecha, desdeFecha, hastaFecha]);
 
   const cambiarEstado = async (id, nuevoEstado) => {
     try {
       await api.put(`/orders/${id}/status`, { status: nuevoEstado });
-      setPedidosAsignados(prev =>
-        prev.map(p => (p.id === id ? { ...p, estado: nuevoEstado } : p))
-      );
-
+      setPedidosAsignados(prev => prev.map(p => (p.id === id ? { ...p, estado: nuevoEstado } : p)));
       setMensajeExito(`Pedido #${id} marcado como "${nuevoEstado}"`);
       setMostrarSnackbar(true);
     } catch (err) {
@@ -180,55 +108,51 @@ useEffect(() => {
       const pedidoAsignado = pedidosSinAsignar.find(p => p.id === id);
       setPedidosAsignados(prev => [...prev, { ...pedidoAsignado, estado: 'preparando' }]);
       setPedidosSinAsignar(prev => prev.filter(p => p.id !== id));
+      setMensajeExito('✅ Pedido asignado con éxito');
+      setMostrarSnackbar(true);
     } catch (err) {
       console.error('❌ Error al autoasignar pedido:', err);
     }
   };
 
   const marcarNoEntregado = async () => {
-  if (!motivoNoEntrega || motivoNoEntrega.trim().length < 5) {
-    alert('Por favor, escribí un motivo válido (mínimo 5 caracteres).');
-    return;
-  }
-
-  try {
-await api.put(`/orders/${pedidoActual.id}/status`, {
-  status: 'no_entregado',
-  motivo: motivoNoEntrega
-});
-
-
-
-    setPedidosAsignados(prev =>
-      prev.map(p =>
-        p.id === pedidoActual.id ? { ...p, estado: 'no_entregado' } : p
-      )
-    );
-
-    setMostrarSnackbar(true);
-    setMensajeExito(`Pedido #${pedidoActual.id} marcado como no entregado`);
-    setMostrarModalMotivo(false);
-    setMotivoNoEntrega('');
-  } catch (err) {
-    console.error('❌ Error al marcar como no entregado:', err);
-    alert('Hubo un error al enviar el motivo.');
-  }
-};
-
+    if (!motivoNoEntrega || motivoNoEntrega.trim().length < 5) {
+      alert('Por favor, escribí un motivo válido (mínimo 5 caracteres).');
+      return;
+    }
+    try {
+      await api.put(`/orders/${pedidoActual.id}/status`, {
+        status: 'no_entregado',
+        motivo: motivoNoEntrega
+      });
+      setPedidosAsignados(prev => prev.map(p => p.id === pedidoActual.id ? { ...p, estado: 'no_entregado' } : p));
+      setMostrarSnackbar(true);
+      setMensajeExito(`Pedido #${pedidoActual.id} marcado como no entregado`);
+      setMostrarModalMotivo(false);
+      setMotivoNoEntrega('');
+    } catch (err) {
+      console.error('❌ Error al marcar como no entregado:', err);
+      alert('Hubo un error al enviar el motivo.');
+    }
+  };
 
   const renderContenidoPedido = pedido => {
     if (pedido.items && Array.isArray(pedido.items)) {
       if (pedido.items.length === 0) return <Typography>📭 Sin ítems</Typography>;
-
       return (
-        <>
+        <Box display="flex" flexDirection="column" gap={1}>
           {pedido.items.map((item, i) => (
-            <Typography key={i}>
-              {item.item_type === 'extra' ? '🧁' : '🍽️'}
-              {item.item_name || item.item_id}: {item.quantity} {item.dia && item.dia !== 'sin_dia' ? `(${item.dia})` : ''}
-            </Typography>
+            <Box key={i} display="flex" alignItems="center" gap={1}>
+              <Chip size="small" color={item.item_type === 'extra' ? 'warning' : 'primary'} label={`${item.quantity}x`} sx={{ fontWeight: 'bold' }} />
+              <Typography variant="body2" fontWeight="500">
+                {item.item_name || item.item_id}
+              </Typography>
+              {item.dia && item.dia !== 'sin_dia' && (
+                <Chip size="small" variant="outlined" label={item.dia} sx={{ ml: 'auto' }} />
+              )}
+            </Box>
           ))}
-        </>
+        </Box>
       );
     }
 
@@ -237,322 +161,240 @@ await api.put(`/orders/${pedidoActual.id}/status`, {
     const tartas = pedido.pedido?.tartas || pedido.tartas || {};
 
     return (
-      <>
+      <Box display="flex" flexDirection="column" gap={1}>
         {Object.entries(diarios).map(([dia, platos]) => 
           Object.entries(platos).map(([nombre, cantidad], i) => (
-            <Typography key={`plato-${dia}-${i}`}>🍽️ {nombre}: {cantidad} ({dia})</Typography>
+            <Box key={`plato-${dia}-${i}`} display="flex" alignItems="center" gap={1}>
+              <Chip size="small" color="primary" label={`${cantidad}x`} sx={{ fontWeight: 'bold' }} />
+              <Typography variant="body2" fontWeight="500">{nombre}</Typography>
+              <Chip size="small" variant="outlined" label={dia} sx={{ ml: 'auto' }} />
+            </Box>
           ))
         )}
         {Object.entries(extras).map(([dia, extrasDia]) => 
           Object.entries(extrasDia).map(([key, cantidad], i) => {
             const nombre = isNaN(key) ? key : EXTRAS_MAP[Number(key)] || `Extra #${key}`;
             return (
-              <Typography key={`extra-${dia}-${i}`}>🧁 {nombre}: {cantidad} ({dia})</Typography>
+              <Box key={`extra-${dia}-${i}`} display="flex" alignItems="center" gap={1}>
+                <Chip size="small" color="warning" label={`${cantidad}x`} sx={{ fontWeight: 'bold' }} />
+                <Typography variant="body2" fontWeight="500">{nombre}</Typography>
+                <Chip size="small" variant="outlined" label={dia} sx={{ ml: 'auto' }} />
+              </Box>
             );
           })
         )}
         {Object.entries(tartas).map(([nombre, cantidad], i) => (
-          <Typography key={`tarta-${i}`}>🥧 {nombre}: {cantidad}</Typography>
+          <Box key={`tarta-${i}`} display="flex" alignItems="center" gap={1}>
+            <Chip size="small" color="error" label={`${cantidad}x`} sx={{ fontWeight: 'bold' }} />
+            <Typography variant="body2" fontWeight="500">{nombre}</Typography>
+            <Chip size="small" variant="outlined" label="Tarta" sx={{ ml: 'auto' }} />
+          </Box>
         ))}
-      </>
+      </Box>
     );
   };
 
-const pedidosEntregados = pedidosAsignados.filter(p => p.estado === 'entregado');
-const pedidosPendientes = pedidosAsignados.filter(p => p.estado !== 'entregado' && p.estado !== 'cancelado' && p.estado !== 'no_entregado');
-const pedidosCancelados = pedidosAsignados.filter(
-  p => p.estado === 'cancelado' || p.estado === 'no_entregado'
-);
-
+  const pedidosEntregados = pedidosAsignados.filter(p => p.estado === 'entregado');
+  const pedidosPendientes = pedidosAsignados.filter(p => p.estado !== 'entregado' && p.estado !== 'cancelado' && p.estado !== 'no_entregado');
+  const pedidosCancelados = pedidosAsignados.filter(p => p.estado === 'cancelado' || p.estado === 'no_entregado');
 
   return (
-    
-    <Container sx={{ mt: 4, pb: 8 }}>
-      <Box
-  display="flex"
-  justifyContent="space-between"
-  alignItems="center"
-  sx={{ mb: 4 }}
->
-  <Box>
-       <Typography variant="h5" gutterBottom>
-      👋 ¡Bienvenido{user?.nombre ? `, ${user.nombre}` : ''}!
-    </Typography>
-    <Typography variant="subtitle1">
-      Estos son tus pedidos asignados.
-    </Typography>
-  </Box>
-  <Button
-    variant="outlined"
-    color="error"
-    onClick={() => {
-      localStorage.clear(); // o token específico
-      window.location.href = '/login';
-    }}
-  >
-    Cerrar sesión
-  </Button>
-</Box>
-
+    <Container sx={{ mt: { xs: 2, md: 4 }, pb: 10, maxWidth: '800px !important' }}>
       
-      <Typography variant="h4" gutterBottom>
- <Box display="flex" alignItems="center" gap={2} sx={{ mb: 2 }}>
-  <Select
-    value={filtroFecha}
-    onChange={(e) => {
-      const value = e.target.value;
-      setFiltroFecha(value);
+      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 4, background: 'linear-gradient(135deg, #4caf50 0%, #2e7d32 100%)', p: 3, borderRadius: 4, color: 'white', boxShadow: '0 10px 30px rgba(76, 175, 80, 0.3)' }}>
+        <Box display="flex" alignItems="center" gap={2}>
+          <Avatar sx={{ bgcolor: 'white', color: '#2e7d32', width: 56, height: 56 }}>
+            <LocalShippingIcon fontSize="large" />
+          </Avatar>
+          <Box>
+            <Typography variant="h5" fontWeight="bold">
+              ¡Hola, {user?.nombre || 'Repartidor'}! 👋
+            </Typography>
+            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+              Listado de entregas y asignaciones
+            </Typography>
+          </Box>
+        </Box>
+        <Button variant="contained" color="error" size="small" sx={{ borderRadius: 8, textTransform: 'none', fontWeight: 'bold' }} onClick={() => { localStorage.clear(); window.location.href = '/login'; }}>
+          Salir
+        </Button>
+      </Box>
 
-      const hoy = dayjs();
-      if (value === 'semana_actual') {
-        setDesdeFecha(hoy.startOf('week').add(1, 'day').format('YYYY-MM-DD')); // lunes
-        setHastaFecha(hoy.endOf('week').add(1, 'day').format('YYYY-MM-DD'));   // domingo
-      } else if (value === 'semana_pasada') {
-        setDesdeFecha(hoy.startOf('week').subtract(6, 'day').format('YYYY-MM-DD'));
-        setHastaFecha(hoy.startOf('week').format('YYYY-MM-DD'));
-      } else if (value === 'hoy') {
-        setDesdeFecha(hoy.format('YYYY-MM-DD'));
-        setHastaFecha(hoy.format('YYYY-MM-DD'));
-      }
-    }}
-    size="small"
-  >
-    <MenuItem value="hoy">📅 Hoy</MenuItem>
-    <MenuItem value="semana_actual">🗓️ Semana actual</MenuItem>
-    <MenuItem value="semana_pasada">📆 Semana pasada</MenuItem>
-    <MenuItem value="personalizado">📅 Personalizado</MenuItem>
-  </Select>
-
-  {filtroFecha === 'personalizado' && (
-    <>
-      <TextField
-        type="date"
-        label="Desde"
-        size="small"
-        value={desdeFecha}
-        onChange={(e) => setDesdeFecha(e.target.value)}
-      />
-      <TextField
-        type="date"
-        label="Hasta"
-        size="small"
-        value={hastaFecha}
-        onChange={(e) => setHastaFecha(e.target.value)}
-      />
-    </>
-  )}
-</Box>
-
-      </Typography>
+      <Box sx={{ mb: 4, p: 2, bgcolor: '#f8fafc', borderRadius: 4, border: '1px solid #e2e8f0' }}>
+        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom>
+          Filtro de Fecha
+        </Typography>
+        <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
+          <Select value={filtroFecha} onChange={(e) => {
+            const value = e.target.value;
+            setFiltroFecha(value);
+            const hoy = dayjs();
+            if (value === 'semana_actual') {
+              setDesdeFecha(hoy.startOf('week').add(1, 'day').format('YYYY-MM-DD'));
+              setHastaFecha(hoy.endOf('week').add(1, 'day').format('YYYY-MM-DD'));
+            } else if (value === 'semana_pasada') {
+              setDesdeFecha(hoy.startOf('week').subtract(6, 'day').format('YYYY-MM-DD'));
+              setHastaFecha(hoy.startOf('week').format('YYYY-MM-DD'));
+            } else if (value === 'hoy') {
+              setDesdeFecha(hoy.format('YYYY-MM-DD'));
+              setHastaFecha(hoy.format('YYYY-MM-DD'));
+            }
+          }} size="small" sx={{ minWidth: 150, bgcolor: 'white', borderRadius: 2 }}>
+            <MenuItem value="hoy">📅 Hoy</MenuItem>
+            <MenuItem value="semana_actual">🗓️ Semana actual</MenuItem>
+            <MenuItem value="semana_pasada">📆 Semana pasada</MenuItem>
+            <MenuItem value="personalizado">⚙️ Personalizado</MenuItem>
+          </Select>
+          {filtroFecha === 'personalizado' && (
+            <>
+              <TextField type="date" label="Desde" size="small" value={desdeFecha} onChange={(e) => setDesdeFecha(e.target.value)} sx={{ bgcolor: 'white', borderRadius: 2 }} />
+              <TextField type="date" label="Hasta" size="small" value={hastaFecha} onChange={(e) => setHastaFecha(e.target.value)} sx={{ bgcolor: 'white', borderRadius: 2 }} />
+            </>
+          )}
+        </Box>
+      </Box>
 
       {loading ? (
-        <Typography>Cargando...</Typography>
-      ) : pedidosAsignados.length === 0 ? (
-        <Typography>No tenés entregas asignadas hoy</Typography>
+        <Typography textAlign="center">Cargando datos...</Typography>
       ) : (
         <>
-          <Tabs value={tabIndex} onChange={(e, newIndex) => setTabIndex(newIndex)} sx={{ mb: 3 }}>
-  <Tab label="📦 Pendientes" />
-  <Tab label="✅ Entregados" />
-  <Tab label="❌ No entregados / Cancelados" />
-</Tabs>
+          <Tabs value={tabIndex} onChange={(e, newIndex) => setTabIndex(newIndex)} sx={{ mb: 4, '& .MuiTabs-flexContainer': { gap: 2 } }} TabIndicatorProps={{ style: { display: 'none' } }}>
+            {['📦 Pendientes', '✅ Entregados', '❌ Cancelados'].map((label, idx) => (
+              <Tab key={idx} label={label} sx={{ borderRadius: 8, border: '1px solid #e2e8f0', bgcolor: tabIndex === idx ? '#4caf50' : '#f8fafc', color: tabIndex === idx ? 'white !important' : 'text.primary', fontWeight: 'bold', textTransform: 'none', transition: 'all 0.2s', minHeight: 40, py: 1 }} />
+            ))}
+          </Tabs>
 
-{tabIndex === 0 && pedidosPendientes.map(pedido => (
-  <Card key={pedido.id} sx={{ mb: 4, boxShadow: 2 }}>
-    <CardContent>
-      <Typography variant="h6">📦 Pedido #{pedido.id}</Typography>
-      <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 'bold' }}>
-        📅 Fecha a entregar: {dayjs(pedido.fecha_entrega).format('dddd DD/MM/YYYY')}
-      </Typography>
-      <Typography>👤 {pedido.usuario?.nombre}</Typography>
-      <Typography>📧 {pedido.usuario?.email}</Typography>
-      <Typography>📍 Dirección: {pedido.usuario?.direccion || 'No especificada'}</Typography>
-      <Typography>📞 {pedido.usuario?.telefono || 'No especificado'}</Typography>
+          {tabIndex === 0 && (
+            pedidosPendientes.length === 0 ? <Typography textAlign="center" color="text.secondary">No tenés entregas pendientes hoy</Typography> :
+            pedidosPendientes.map(pedido => (
+              <Card key={pedido.id} sx={cardStyle}>
+                <Box sx={{ bgcolor: '#f8fafc', p: 2, borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="h6" fontWeight="bold">📦 Pedido #{pedido.id}</Typography>
+                  <Chip size="small" color="primary" label={dayjs(pedido.fecha_entrega).format('dddd DD/MM')} sx={{ fontWeight: 'bold', textTransform: 'capitalize' }} />
+                </Box>
+                <CardContent sx={{ p: 3 }}>
+                  <Box display="flex" alignItems="center" gap={1} mb={1}>
+                    <PersonOutlineIcon color="action" fontSize="small" />
+                    <Typography fontWeight="500">{pedido.usuario?.nombre} {pedido.usuario?.apellido || ''}</Typography>
+                  </Box>
+                  <Box display="flex" alignItems="center" gap={1} mb={1}>
+                    <MapIcon color="action" fontSize="small" />
+                    <Typography>{pedido.usuario?.direccion || 'Sin dirección'}</Typography>
+                  </Box>
+                  <Box display="flex" alignItems="center" gap={1} mb={2}>
+                    <PhoneIcon color="action" fontSize="small" />
+                    <Typography>{pedido.usuario?.telefono || 'Sin teléfono'}</Typography>
+                  </Box>
 
-      <Divider sx={{ my: 2 }} />
-      {renderContenidoPedido(pedido)}
+                  <Divider sx={{ my: 2 }} />
+                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>Detalle del pedido</Typography>
+                  {renderContenidoPedido(pedido)}
 
-      <Typography sx={{ mt: 1 }}>
-        💬 Observaciones: {pedido.observaciones || '—'}
-      </Typography>
+                  {pedido.observaciones && (
+                    <Box sx={{ mt: 2, p: 1.5, bgcolor: '#fffbeb', borderRadius: 2, border: '1px solid #fde68a' }}>
+                      <Typography variant="body2" color="#b45309">💬 <strong>Observaciones:</strong> {pedido.observaciones}</Typography>
+                    </Box>
+                  )}
 
-      <Box sx={{ mt: 2 }}>
-        <MapaCliente
-          direccion={pedido.usuario?.direccion}
-          nombre={pedido.usuario?.nombre}
-        />
-        <Button
-          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-            pedido.usuario?.direccion || ''
-          )}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          variant="outlined"
-          color="primary"
-          fullWidth
-          sx={{ mt: 2 }}
-        >
-          Abrir en Google Maps
-        </Button>
+                  <Box sx={{ mt: 3 }}>
+                    <MapaCliente direccion={pedido.usuario?.direccion} nombre={pedido.usuario?.nombre} />
+                    <Button href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pedido.usuario?.direccion || '')}`} target="_blank" rel="noopener noreferrer" variant="outlined" color="primary" fullWidth sx={{ mt: 2, borderRadius: 2, fontWeight: 'bold' }}>
+                      Abrir en Google Maps
+                    </Button>
+                  </Box>
+
+                  <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
+                    {pedido.estado !== 'en camino' && (
+                      <Button variant="outlined" startIcon={<LocalShippingIcon />} onClick={() => cambiarEstado(pedido.id, 'en camino')} sx={{ borderRadius: 2, flex: 1, fontWeight: 'bold' }}>
+                        En camino
+                      </Button>
+                    )}
+                    <Button variant="contained" color="success" startIcon={<DoneIcon />} onClick={() => cambiarEstado(pedido.id, 'entregado')} sx={{ borderRadius: 2, flex: 1, fontWeight: 'bold', boxShadow: '0 4px 14px rgba(76, 175, 80, 0.4)' }}>
+                      Entregado
+                    </Button>
+                    <Button variant="text" color="error" onClick={() => { setPedidoActual(pedido); setMostrarModalMotivo(true); }} sx={{ fontWeight: 'bold' }}>
+                      Rechazar
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+            ))
+          )}
+
+          {tabIndex === 1 && pedidosEntregados.map(pedido => (
+            <Card key={pedido.id} sx={{ mb: 3, bgcolor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 4 }}>
+              <CardContent>
+                <Typography variant="h6" color="#166534" fontWeight="bold">✅ Pedido #{pedido.id} (Entregado)</Typography>
+                <Typography mt={1}>👤 {pedido.usuario?.nombre}</Typography>
+                <Typography>📍 {pedido.usuario?.direccion}</Typography>
+              </CardContent>
+            </Card>
+          ))}
+
+          {tabIndex === 2 && pedidosCancelados.map(pedido => (
+            <Card key={pedido.id} sx={{ mb: 3, bgcolor: '#fef2f2', border: '1px solid #fecaca', borderRadius: 4 }}>
+              <CardContent>
+                <Typography variant="h6" color="#991b1b" fontWeight="bold">❌ Pedido #{pedido.id} ({pedido.estado})</Typography>
+                <Typography mt={1}>👤 {pedido.usuario?.nombre}</Typography>
+                <Typography>📍 {pedido.usuario?.direccion}</Typography>
+                <Divider sx={{ my: 1.5 }} />
+                {renderContenidoPedido(pedido)}
+                <Button variant="outlined" color="success" sx={{ mt: 2, borderRadius: 2, fontWeight: 'bold' }} onClick={() => cambiarEstado(pedido.id, 'entregado')}>
+                  ✅ Marcar como entregado
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </>
+      )}
+
+      <Box sx={{ mt: 6, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+        <AssignmentIndIcon color="primary" />
+        <Typography variant="h5" fontWeight="bold">Pedidos disponibles sin asignar</Typography>
       </Box>
-
-      <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
-        {pedido.estado !== 'en camino' && (
-          <Button
-            variant="outlined"
-            startIcon={<MapIcon />}
-            onClick={() => cambiarEstado(pedido.id, 'en camino')}
-          >
-            Marcar en camino
-          </Button>
-        )}
-        <Button
-          variant="contained"
-          color="success"
-          startIcon={<DoneIcon />}
-          onClick={() => cambiarEstado(pedido.id, 'entregado')}
-        >
-          Marcar entregado
-        </Button>
-        <Button
-          variant="outlined"
-          color="warning"
-          onClick={() => {
-            setPedidoActual(pedido);
-            setMostrarModalMotivo(true);
-          }}
-        >
-          No entregado
-        </Button>
-      </Box>
-    </CardContent>
-  </Card>
-))}
-
-{tabIndex === 1 && pedidosEntregados.map(pedido => (
-  <Card key={pedido.id} sx={{ mb: 3, backgroundColor: '#f0f0f0' }}>
-    <CardContent>
-      <Typography variant="h6">📦 Pedido #{pedido.id} (Entregado)</Typography>
-      <Typography>👤 {pedido.usuario?.nombre}</Typography>
-      <Typography>📍 Dirección: {pedido.usuario?.direccion}</Typography>
-    </CardContent>
-  </Card>
-))}
-
-{tabIndex === 2 && pedidosCancelados.map(pedido => (
-  <Card key={pedido.id} sx={{ mb: 3, backgroundColor: '#fff3f3' }}>
-    <CardContent>
-      <Typography variant="h6">📦 Pedido #{pedido.id} ({pedido.estado})</Typography>
-      <Typography>👤 {pedido.usuario?.nombre}</Typography>
-      <Typography>📍 Dirección: {pedido.usuario?.direccion}</Typography>
-
-      <Divider sx={{ my: 1.5 }} />
-      {renderContenidoPedido(pedido)}
-
-      <Button
-        variant="outlined"
-        color="success"
-        sx={{ mt: 2 }}
-        onClick={() => cambiarEstado(pedido.id, 'entregado')}
-        
-      >
-        ✅ Cambiar a entregado
-      </Button>
-    </CardContent>
-  </Card>
-))}
-
-  </>
-)}
-
-
-      <Typography variant="h5" gutterBottom sx={{ mt: 5 }}>
-        📥 Pedidos disponibles sin asignar
-      </Typography>
 
       {pedidosSinAsignar.length === 0 ? (
-        <Typography>No hay pedidos disponibles</Typography>
+        <Alert severity="success" sx={{ borderRadius: 3 }}>¡Todo al día! No hay pedidos sueltos por ahora.</Alert>
       ) : (
         pedidosSinAsignar.map(pedido => (
-          <Card key={pedido.id} sx={{ mb: 3 }}>
+          <Card key={pedido.id} sx={{ mb: 3, borderRadius: 4, borderLeft: '6px solid #3b82f6', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
             <CardContent>
-              <Typography variant="h6">Pedido #{pedido.id}</Typography>
-              <Typography>🧍 Cliente: {pedido.usuario?.nombre}</Typography>
-              <Typography>📍 Dirección: {pedido.usuario?.direccion}</Typography>
-              <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 'bold', mt: 1 }}>
-                📅 Fecha de entrega: {dayjs(pedido.fecha_entrega).format('dddd DD/MM/YYYY')}
-              </Typography>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                <Typography variant="h6" fontWeight="bold">Pedido #{pedido.id}</Typography>
+                <Chip size="small" color="primary" label={dayjs(pedido.fecha_entrega).format('dddd DD/MM')} sx={{ fontWeight: 'bold', textTransform: 'capitalize' }} />
+              </Box>
+              <Typography>🧍 <strong>Cliente:</strong> {pedido.usuario?.nombre}</Typography>
+              <Typography>📍 <strong>Dirección:</strong> {pedido.usuario?.direccion}</Typography>
+              <Typography color="text.secondary" variant="body2" mt={1}>💬 {pedido.observaciones || 'Sin observaciones'}</Typography>
 
-              <Typography>💬 Observaciones: {pedido.observaciones || '—'}</Typography>
+              <Box sx={{ mt: 2, p: 2, bgcolor: '#f8fafc', borderRadius: 2 }}>
+                {renderContenidoPedido(pedido)}
+              </Box>
 
-              <Divider sx={{ my: 2 }} />
-              {renderContenidoPedido(pedido)}
-
-              <Button
-                variant="contained"
-                fullWidth
-                sx={{ mt: 2 }}
-                color="primary"
-                startIcon={<AssignmentIndIcon />}
-                onClick={() => autoAsignarPedido(pedido.id)}
-              >
-                Asignarme este pedido
+              <Button variant="contained" fullWidth sx={{ mt: 3, borderRadius: 2, py: 1.5, fontWeight: 'bold', bgcolor: '#3b82f6', '&:hover': { bgcolor: '#2563eb' } }} startIcon={<AssignmentIndIcon />} onClick={() => autoAsignarPedido(pedido.id)}>
+                ¡Asignarme este pedido!
               </Button>
             </CardContent>
           </Card>
         ))
       )}
 
-
-
-      <Snackbar
-        open={mostrarSnackbar}
-        autoHideDuration={3000}
-        onClose={() => setMostrarSnackbar(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert onClose={() => setMostrarSnackbar(false)} severity="success" sx={{ width: '100%' }}>
-          {mensajeExito}
-        </Alert>
+      <Snackbar open={mostrarSnackbar} autoHideDuration={3000} onClose={() => setMostrarSnackbar(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert onClose={() => setMostrarSnackbar(false)} severity="success" sx={{ width: '100%', borderRadius: 2 }}>{mensajeExito}</Alert>
       </Snackbar>
-{mostrarModalMotivo && (
-  <Box
-    sx={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100vw',
-      height: '100vh',
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 9999
-    }}
-  >
-    <Card sx={{ width: 400, p: 3 }}>
-      <Typography variant="h6" gutterBottom>
-        Motivo de no entrega para pedido #{pedidoActual?.id}
-      </Typography>
-      <textarea
-        rows={4}
-        style={{ width: '100%', padding: '8px' }}
-        value={motivoNoEntrega}
-        onChange={e => setMotivoNoEntrega(e.target.value)}
-        placeholder="Escribí el motivo..."
-      />
-      <Box display="flex" justifyContent="flex-end" gap={2} sx={{ mt: 2 }}>
-        <Button variant="outlined" onClick={() => setMostrarModalMotivo(false)}>
-          Cancelar
-        </Button>
-        <Button variant="contained" color="warning" onClick={marcarNoEntregado}>
-          Enviar motivo
-        </Button>
-      </Box>
-    </Card>
-  </Box>
-)}
 
+      {mostrarModalMotivo && (
+        <Box sx={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
+          <Card sx={{ width: '90%', maxWidth: 400, p: 3, borderRadius: 4, boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+            <Typography variant="h6" fontWeight="bold" gutterBottom>Motivo de rechazo (Pedido #{pedidoActual?.id})</Typography>
+            <TextField multiline rows={4} fullWidth variant="outlined" placeholder="Escribí el motivo por el que no se pudo entregar..." value={motivoNoEntrega} onChange={e => setMotivoNoEntrega(e.target.value)} sx={{ mt: 2 }} />
+            <Box display="flex" justifyContent="flex-end" gap={2} sx={{ mt: 3 }}>
+              <Button variant="text" color="inherit" onClick={() => setMostrarModalMotivo(false)} sx={{ fontWeight: 'bold' }}>Cancelar</Button>
+              <Button variant="contained" color="error" onClick={marcarNoEntregado} sx={{ borderRadius: 2, fontWeight: 'bold' }}>Rechazar Pedido</Button>
+            </Box>
+          </Card>
+        </Box>
+      )}
     </Container>
   );
 };

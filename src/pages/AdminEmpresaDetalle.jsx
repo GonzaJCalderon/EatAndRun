@@ -61,7 +61,7 @@ const AdminEmpresaDetalle = () => {
       const codigo = res.data.codigo_invitacion;
       const expira = res.data.codigo_expira;
       if (codigo) {
-        const frontendUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || window.location.origin;
+        const frontendUrl = 'https://eatandrun.com.ar';
         setLinkInvitacion({
           link: `${frontendUrl}/registro?empresa=${codigo}`,
           expira
