@@ -114,7 +114,18 @@ const MisPedidos = () => {
     });
 
     const hasTartas = tartasObj && Object.keys(tartasObj).length > 0;
-    const daysArray = Object.values(daysMap).filter(d => d.items.length > 0);
+    
+    // Sort days logically (Lunes -> Viernes)
+    const diasOrden = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+    const daysArray = Object.values(daysMap)
+      .filter(d => d.items.length > 0)
+      .sort((a, b) => {
+        const diaA = a.displayDate.split('-')[0].toLowerCase();
+        const diaB = b.displayDate.split('-')[0].toLowerCase();
+        const indexA = diasOrden.indexOf(diaA);
+        const indexB = diasOrden.indexOf(diaB);
+        return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
+      });
 
     return (
       <Box sx={{ mt: 2 }}>

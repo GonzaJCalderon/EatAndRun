@@ -411,8 +411,15 @@ const AdminEmpresaDetalle = () => {
                       const nombreEmpleado = pedido.usuario
                         ? `${pedido.usuario.nombre || ''} ${pedido.usuario.apellido || ''}`.trim() || pedido.usuario.email
                         : 'Desconocido';
-                      const diarios = Object.entries(pedido.pedido?.diarios || {});
-                      const extras = Object.entries(pedido.pedido?.extras || {});
+                      const diasOrden = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+                      const sortPorDia = (a, b) => {
+                        const idxA = diasOrden.indexOf(a[0].split('-')[0].toLowerCase());
+                        const idxB = diasOrden.indexOf(b[0].split('-')[0].toLowerCase());
+                        return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
+                      };
+
+                      const diarios = Object.entries(pedido.pedido?.diarios || {}).sort(sortPorDia);
+                      const extras = Object.entries(pedido.pedido?.extras || {}).sort(sortPorDia);
                       const tartas = Object.entries(pedido.pedido?.tartas || {});
                       return (
                         <TableRow key={pedido.id} hover>
