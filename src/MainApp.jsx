@@ -96,7 +96,7 @@ function MainApp() {
 
 const filteredMenuData = useMemo(() => {
   if (!menuData) return {};
-  const isUserEmpresa = Boolean(user?.empresa_id);
+  const isUserEmpresa = user?.role === 'empresa' || user?.role === 'empleado';
   
   if (!isUserEmpresa) return menuData;
 

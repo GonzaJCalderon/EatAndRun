@@ -1,21 +1,13 @@
-// src/pages/AdminEmpresa.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
-  Box,
-  Typography,
-  Paper,
-  Grid,
-  Button,
-  TextField,
-  IconButton,
-  Tooltip,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
-  CircularProgress,
+  Box, Typography, Card, CardContent, Grid, Button, TextField, IconButton,
+  Tooltip, Divider, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions,
+  InputAdornment, Avatar, Stack, Chip, Container
 } from '@mui/material';
-import { Delete, ContentCopy, Autorenew } from '@mui/icons-material';
+import {
+  Delete, ContentCopy, Autorenew, Search, PersonAdd,
+  ReceiptLong, Email, VpnKey, BusinessCenter
+} from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import axios from '../api/api';
 import { useNavigate } from 'react-router-dom';
@@ -29,22 +21,13 @@ const AdminEmpresa = () => {
   const [loadingLink, setLoadingLink] = useState(false);
 
   const [empleados, setEmpleados] = useState([]);
-  const [loadingEmpleados, setLoadingEmpleados] = useState(false);
+  const [loadingEmpleados, setLoadingEmpleados] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const [formEmpleado, setFormEmpleado] = useState({
-    name: '',
-    apellido: '',
-    email: '',
-  });
+  const [openDialog, setOpenDialog] = useState(false);
+  const [formEmpleado, setFormEmpleado] = useState({ name: '', apellido: '', email: '' });
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleInputChange = (e) => {
-    setFormEmpleado({
-      ...formEmpleado,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  // 🔗 Obtener link invitación
   const fetchLink = async () => {
     try {
       const res = await axios.get('/empresa/link-invitacion');
@@ -56,7 +39,6 @@ const AdminEmpresa = () => {
     }
   };
 
-  // 👥 Obtener empleados
   const fetchEmpleados = async () => {
     try {
       setLoadingEmpleados(true);
@@ -70,7 +52,6 @@ const AdminEmpresa = () => {
     }
   };
 
-  // 🔁 Regenerar link
   const regenerarLink = async () => {
     try {
       setLoadingLink(true);
@@ -86,39 +67,40 @@ const AdminEmpresa = () => {
     }
   };
 
-  // 📋 Copiar link
   const copiarLink = () => {
     navigator.clipboard.writeText(link)
       .then(() => enqueueSnackbar('📋 Link copiado al portapapeles', { variant: 'info' }))
       .catch(() => enqueueSnackbar('❌ No se pudo copiar el link', { variant: 'error' }));
   };
 
-  // ➕ Agregar empleado
+  const handleInputChange = (e) => {
+    setFormEmpleado({ ...formEmpleado, [e.target.name]: e.target.value });
+  };
+
   const handleAgregarEmpleado = async () => {
     const { name, apellido, email } = formEmpleado;
-
     if (!name || !apellido || !email) {
       return enqueueSnackbar('Completa todos los campos', { variant: 'warning' });
     }
 
     try {
-      await axios.post('/empresa/empleados/nuevo', {
-        name,
-        apellido,
-        email,
-      });
+      setSubmitting(true);
+      await axios.post('/empresa/empleados/nuevo', { name, apellido, email });
       enqueueSnackbar('✅ Empleado creado correctamente', { variant: 'success' });
       setFormEmpleado({ name: '', apellido: '', email: '' });
+      setOpenDialog(false);
       fetchEmpleados();
     } catch (err) {
       console.error('❌ Error al crear empleado:', err);
       const msg = err.response?.data?.error || 'Error al crear empleado';
       enqueueSnackbar(msg, { variant: 'error' });
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  // 🗑️ Eliminar empleado
-  const handleEliminarEmpleado = async (id) => {
+  const handleEliminarEmpleado = async (id, nombre) => {
+    if (!window.confirm(`¿Estás seguro de que deseas eliminar a ${nombre} de tu empresa?`)) return;
     try {
       await axios.delete(`/empresa/eliminar-empleado/${id}`);
       enqueueSnackbar('🗑️ Empleado eliminado', { variant: 'info' });
@@ -134,51 +116,182 @@ const AdminEmpresa = () => {
     fetchEmpleados();
   }, []);
 
+  const empleadosFiltrados = useMemo(() => {
+    if (!searchQuery) return empleados;
+    const lower = searchQuery.toLowerCase();
+    return empleados.filter(emp =>
+      emp.name?.toLowerCase().includes(lower) ||
+      emp.apellido?.toLowerCase().includes(lower) ||
+      emp.email?.toLowerCase().includes(lower)
+    );
+  }, [empleados, searchQuery]);
+
   return (
-    <Box p={4}>
-      <Typography variant="h4" fontWeight="bold" gutterBottom>
-        🏢 Panel de Empresa
-      </Typography>
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
+      <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }} gap={2} sx={{ mb: 4 }}>
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 900, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 1 }}>
+            <BusinessCenter fontSize="large" color="primary" /> Panel de Empresa
+          </Typography>
+          <Typography variant="subtitle1" sx={{ color: '#64748b' }}>
+            Gestiona los empleados y pedidos de tu organización
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          size="large"
+          startIcon={<ReceiptLong />}
+          onClick={() => navigate('/empresa/pedidos')}
+          sx={{ borderRadius: 50, px: 4, textTransform: 'none', fontWeight: 'bold' }}
+        >
+          Ver Pedidos Globales
+        </Button>
+      </Stack>
 
-      {/* 🔗 Link de invitación */}
-      <Paper sx={{ p: 3, mb: 4 }}>
-        <Typography variant="h6">🔗 Link de invitación</Typography>
-        {link ? (
-          <>
-            <Typography variant="body2" sx={{ wordBreak: 'break-all' }}>
-              {link}
-              <Tooltip title="Copiar">
-                <IconButton size="small" onClick={copiarLink}>
-                  <ContentCopy fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Typography>
-            {expira && (
-              <Typography variant="caption" color="text.secondary">
-                Expira: {new Date(expira).toLocaleString('es-AR')}
+      <Grid container spacing={4}>
+        {/* Link Invitación */}
+        <Grid item xs={12} md={5}>
+          <Card sx={{ borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', height: '100%' }}>
+            <CardContent sx={{ p: 4 }}>
+              <Typography variant="h6" sx={{ fontWeight: 800, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <VpnKey color="primary" /> Enlace de Invitación
               </Typography>
-            )}
-            <Box mt={2}>
-              <Button
-                variant="outlined"
-                startIcon={<Autorenew />}
-                onClick={regenerarLink}
-                disabled={loadingLink}
-              >
-                {loadingLink ? 'Regenerando...' : 'Regenerar Link'}
-              </Button>
-            </Box>
-          </>
-        ) : (
-          <Typography variant="body2">Cargando link...</Typography>
-        )}
-      </Paper>
+              <Typography variant="body2" sx={{ color: '#64748b', mb: 3 }}>
+                Comparte este enlace con tus empleados para que se registren automáticamente bajo tu empresa.
+              </Typography>
 
-      {/* ➕ Agregar empleado */}
-      <Paper sx={{ p: 3, mb: 4 }}>
-        <Typography variant="h6">➕ Crear nuevo empleado</Typography>
-        <Grid container spacing={2} mt={1}>
-          <Grid item xs={12} md={4}>
+              {link ? (
+                <Box>
+                  <TextField
+                    fullWidth
+                    value={link}
+                    InputProps={{
+                      readOnly: true,
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <Tooltip title="Copiar enlace">
+                            <IconButton onClick={copiarLink} color="primary">
+                              <ContentCopy />
+                            </IconButton>
+                          </Tooltip>
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{ backgroundColor: '#f8fafc', borderRadius: 2 }}
+                  />
+                  {expira && (
+                    <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#94a3b8', fontWeight: 'bold' }}>
+                      ⏳ Expira: {new Date(expira).toLocaleString('es-AR')}
+                    </Typography>
+                  )}
+                  <Button
+                    variant="outlined"
+                    startIcon={<Autorenew />}
+                    onClick={regenerarLink}
+                    disabled={loadingLink}
+                    fullWidth
+                    sx={{ mt: 3, borderRadius: 2, textTransform: 'none', fontWeight: 'bold' }}
+                  >
+                    {loadingLink ? 'Regenerando...' : 'Generar nuevo enlace'}
+                  </Button>
+                </Box>
+              ) : (
+                <Box display="flex" justifyContent="center" p={2}>
+                  <CircularProgress size={30} />
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Empleados */}
+        <Grid item xs={12} md={7}>
+          <Card sx={{ borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', height: '100%' }}>
+            <CardContent sx={{ p: 4 }}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} gap={2} sx={{ mb: 3 }}>
+                <Typography variant="h6" sx={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  👨‍💼 Empleados ({empleados.length})
+                </Typography>
+                <Button
+                  variant="contained"
+                  color="success"
+                  startIcon={<PersonAdd />}
+                  onClick={() => setOpenDialog(true)}
+                  sx={{ borderRadius: 50, textTransform: 'none', px: 3 }}
+                >
+                  Nuevo Empleado
+                </Button>
+              </Stack>
+
+              <TextField
+                fullWidth
+                placeholder="Buscar por nombre, apellido o email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search sx={{ color: '#94a3b8' }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ mb: 3, '& .MuiOutlinedInput-root': { borderRadius: 3, backgroundColor: '#f8fafc' } }}
+              />
+
+              {loadingEmpleados ? (
+                <Box display="flex" justifyContent="center" p={4}>
+                  <CircularProgress />
+                </Box>
+              ) : empleadosFiltrados.length === 0 ? (
+                <Box textAlign="center" p={4} sx={{ backgroundColor: '#f8fafc', borderRadius: 3, border: '1px dashed #cbd5e1' }}>
+                  <Typography variant="body1" sx={{ color: '#64748b' }}>No se encontraron empleados.</Typography>
+                </Box>
+              ) : (
+                <Box sx={{ maxHeight: 400, overflowY: 'auto', pr: 1 }}>
+                  <Stack spacing={2}>
+                    {empleadosFiltrados.map((emp) => (
+                      <Card key={emp.id} variant="outlined" sx={{ borderRadius: 3, transition: '0.2s', '&:hover': { borderColor: '#cbd5e1', backgroundColor: '#f8fafc' } }}>
+                        <CardContent sx={{ p: '16px !important', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <Stack direction="row" alignItems="center" spacing={2}>
+                            <Avatar sx={{ bgcolor: 'primary.main', fontWeight: 'bold' }}>
+                              {emp.name?.charAt(0).toUpperCase()}
+                            </Avatar>
+                            <Box>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#1e293b' }}>
+                                {emp.name} {emp.apellido || ''}
+                              </Typography>
+                              <Typography variant="caption" sx={{ color: '#64748b', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <Email fontSize="inherit" /> {emp.email}
+                              </Typography>
+                            </Box>
+                          </Stack>
+                          <Stack direction="row" alignItems="center" spacing={1}>
+                            <Chip label={emp.rol} size="small" sx={{ textTransform: 'capitalize', fontWeight: 'bold', backgroundColor: '#e2e8f0', color: '#475569' }} />
+                            <Tooltip title="Eliminar empleado">
+                              <IconButton color="error" size="small" onClick={() => handleEliminarEmpleado(emp.id, emp.name)}>
+                                <Delete fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Stack>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </Stack>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Modal Nuevo Empleado */}
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 4, p: 2 } }}>
+        <DialogTitle sx={{ fontWeight: 900, textAlign: 'center', color: '#1e293b' }}>Crear Empleado</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: '#64748b', mb: 3, textAlign: 'center' }}>
+            Ingresa los datos para registrar un nuevo empleado en tu empresa. Se le enviará una notificación (próximamente).
+          </Typography>
+          <Stack spacing={3} mt={1}>
             <TextField
               fullWidth
               name="name"
@@ -186,8 +299,6 @@ const AdminEmpresa = () => {
               value={formEmpleado.name}
               onChange={handleInputChange}
             />
-          </Grid>
-          <Grid item xs={12} md={4}>
             <TextField
               fullWidth
               name="apellido"
@@ -195,69 +306,30 @@ const AdminEmpresa = () => {
               value={formEmpleado.apellido}
               onChange={handleInputChange}
             />
-          </Grid>
-          <Grid item xs={12} md={4}>
             <TextField
               fullWidth
               name="email"
-              label="Email"
+              label="Correo Electrónico"
               type="email"
               value={formEmpleado.email}
               onChange={handleInputChange}
             />
-          </Grid>
-          <Grid item xs={12}>
-            <Button variant="contained" onClick={handleAgregarEmpleado}>
-              Crear empleado
-            </Button>
-          </Grid>
-        </Grid>
-      </Paper>
-
-      {/* 👨‍💼 Lista de empleados */}
-      <Paper sx={{ p: 3, mb: 4 }}>
-        <Typography variant="h6" gutterBottom>
-          👨‍💼 Empleados actuales
-        </Typography>
-        {loadingEmpleados ? (
-          <CircularProgress />
-        ) : (
-          <List>
-            {empleados.map((emp) => (
-              <React.Fragment key={emp.id}>
-                <ListItem
-                  secondaryAction={
-                    <IconButton edge="end" onClick={() => handleEliminarEmpleado(emp.id)}>
-                      <Delete />
-                    </IconButton>
-                  }
-                >
-                  <ListItemText
-                    primary={`${emp.name} ${emp.apellido || ''}`}
-                    secondary={`${emp.email} — Rol: ${emp.rol}`}
-                  />
-                </ListItem>
-                <Divider />
-              </React.Fragment>
-            ))}
-          </List>
-        )}
-      </Paper>
-
-      {/* 📦 Ver pedidos */}
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Acciones adicionales
-        </Typography>
-        <Grid container spacing={2}>
-          <Grid item>
-            <Button variant="outlined" onClick={() => navigate('/empresa/pedidos')}>
-              📦 Ver pedidos de empleados
-            </Button>
-          </Grid>
-        </Grid>
-      </Paper>
-    </Box>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
+          <Button onClick={() => setOpenDialog(false)} color="inherit" sx={{ borderRadius: 50, px: 3, textTransform: 'none' }}>Cancelar</Button>
+          <Button
+            onClick={handleAgregarEmpleado}
+            variant="contained"
+            color="success"
+            disabled={submitting}
+            sx={{ borderRadius: 50, px: 3, textTransform: 'none', fontWeight: 'bold' }}
+          >
+            {submitting ? 'Guardando...' : 'Crear empleado'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Container>
   );
 };
 
