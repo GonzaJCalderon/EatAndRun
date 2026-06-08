@@ -146,17 +146,10 @@ const agruparPedidosPorFechaConDetalle = (pedidos) => {
     }
 
     if (Object.keys(pedidoObj?.tartas || {}).length > 0) {
-      let fechaKey = 'Fecha desconocida';
-      try {
-        if (p.fecha_entrega_tartas) {
-           fechaKey = p.fecha_entrega_tartas.toString().split('T')[0];
-        } else if (fecha) {
-           fechaKey = fecha.toString().split('T')[0];
-        }
-      } catch (e) { }
+      // Tartas van a una pestaña fija '__TARTAS__'
       const detalle = { ...baseDetalle, platos: [], extras: [], tartas: [] };
       for (const [tarta, cantidad] of Object.entries(pedidoObj.tartas)) detalle.tartas.push({ nombre: tarta, cantidad });
-      addOrMergeDetalle(fechaKey, detalle);
+      addOrMergeDetalle('__TARTAS__', detalle);
     }
   });
 
@@ -204,12 +197,29 @@ const AdminPedidos = () => {
   const [comprobanteUrl, setComprobanteUrl] = useState(null);
   const [filtroDesde, setFiltroDesde] = useState(null);
   const [filtroHasta, setFiltroHasta] = useState(null);
+  const [dictPlatos, setDictPlatos] = useState({});
+
+  // Resolver ID:XX → nombre real usando el menú fijo
+  const resolverNombre = (nombre) => {
+    if (!nombre) return nombre;
+    const id = nombre.replace(/^ID:/, '');
+    return dictPlatos[`ID:${id}`] || dictPlatos[id] || nombre;
+  };
 
   useEffect(() => {
     api.get('/semana/actual').then(res => {
       const semana = res.data.semana || res.data;
       setSemanaActiva(semana);
     });
+    // Cargar diccionario de platos para resolver ID:XX sin depender del backend
+    api.get('/fixed').then(res => {
+      const dict = {};
+      (res.data || []).forEach(p => {
+        dict[`ID:${p.id}`] = p.name;
+        dict[`${p.id}`] = p.name;
+      });
+      setDictPlatos(dict);
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -325,9 +335,12 @@ const AdminPedidos = () => {
           scrollButtons="auto"
           sx={{ '& .MuiTab-root': { fontWeight: 'bold', fontSize: '1rem', textTransform: 'capitalize', minHeight: 60 }, '& .Mui-selected': { color: '#1976d2' } }}
         >
-          {fechasDisponibles.map(f => (
+          {fechasDisponibles.filter(f => f !== '__TARTAS__').map(f => (
             <Tab key={f} label={formatearFechaBonita(f)} value={f} />
           ))}
+          {fechasDisponibles.includes('__TARTAS__') && (
+            <Tab key="__TARTAS__" label="🥧 Tartas" value="__TARTAS__" />
+          )}
           <Tab label="📜 Historial Completo" value="HISTORIAL" sx={{ color: '#d32f2f' }} />
         </Tabs>
       </Box>
@@ -372,7 +385,7 @@ const AdminPedidos = () => {
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                         {pedido.platos.map((plato, j) => (
                           <Typography key={j} variant="caption" sx={{ display: 'flex', justifyContent: 'space-between', bgcolor: '#f1f5f9', px: 1, borderRadius: 1 }}>
-                            <span>🍽 {plato.nombre}</span> <strong>x{plato.cantidad}</strong>
+                            <span>🍽 {resolverNombre(plato.nombre)}</span> <strong>x{plato.cantidad}</strong>
                           </Typography>
                         ))}
                         {pedido.extras.map((extra, j) => {
