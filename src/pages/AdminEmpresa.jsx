@@ -6,7 +6,7 @@ import {
 } from '@mui/material';
 import {
   Delete, ContentCopy, Autorenew, Search, PersonAdd,
-  ReceiptLong, Email, VpnKey, BusinessCenter
+  ReceiptLong, Email, VpnKey, BusinessCenter, RestaurantMenu
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import axios from '../api/api';
@@ -20,6 +20,7 @@ const AdminEmpresa = () => {
   const [expira, setExpira] = useState(null);
   const [loadingLink, setLoadingLink] = useState(false);
 
+  const [empresa, setEmpresa] = useState(null);
   const [empleados, setEmpleados] = useState([]);
   const [loadingEmpleados, setLoadingEmpleados] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,6 +28,15 @@ const AdminEmpresa = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [formEmpleado, setFormEmpleado] = useState({ name: '', apellido: '', email: '' });
   const [submitting, setSubmitting] = useState(false);
+
+  const fetchMiEmpresa = async () => {
+    try {
+      const res = await axios.get('/empresa/mi-empresa');
+      setEmpresa(res.data);
+    } catch (err) {
+      console.error('❌ Error al obtener empresa:', err);
+    }
+  };
 
   const fetchLink = async () => {
     try {
@@ -114,6 +124,7 @@ const AdminEmpresa = () => {
   useEffect(() => {
     fetchLink();
     fetchEmpleados();
+    fetchMiEmpresa();
   }, []);
 
   const empleadosFiltrados = useMemo(() => {
@@ -131,21 +142,33 @@ const AdminEmpresa = () => {
       <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }} gap={2} sx={{ mb: 4 }}>
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 900, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 1 }}>
-            <BusinessCenter fontSize="large" color="primary" /> Panel de Empresa
+            <BusinessCenter fontSize="large" color="primary" /> {empresa ? `Hola, ${empresa.razon_social}` : 'Panel de Empresa'}
           </Typography>
           <Typography variant="subtitle1" sx={{ color: '#64748b' }}>
             Gestiona los empleados y pedidos de tu organización
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          size="large"
-          startIcon={<ReceiptLong />}
-          onClick={() => navigate('/empresa/pedidos')}
-          sx={{ borderRadius: 50, px: 4, textTransform: 'none', fontWeight: 'bold' }}
-        >
-          Ver Pedidos Globales
-        </Button>
+        <Stack direction={{ xs: 'column', sm: 'row' }} gap={2}>
+          <Button
+            variant="outlined"
+            color="primary"
+            size="large"
+            startIcon={<RestaurantMenu />}
+            onClick={() => navigate('/app')}
+            sx={{ borderRadius: 50, px: 3, textTransform: 'none', fontWeight: 'bold' }}
+          >
+            Ir al Menú
+          </Button>
+          <Button
+            variant="contained"
+            size="large"
+            startIcon={<ReceiptLong />}
+            onClick={() => navigate('/empresa/pedidos')}
+            sx={{ borderRadius: 50, px: 4, textTransform: 'none', fontWeight: 'bold' }}
+          >
+            Ver Pedidos Globales
+          </Button>
+        </Stack>
       </Stack>
 
       <Grid container spacing={4}>
