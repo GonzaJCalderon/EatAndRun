@@ -142,9 +142,12 @@ const AdminEmpresaDetalle = () => {
         nombre: empresa.nombre,
         cuit: empresa.cuit,
         direccion: empresa.direccion,
-        telefono: empresa.telefono
+        telefono: empresa.telefono,
+        responsable_nombre: empresa.responsable_nombre,
+        responsable_email: empresa.responsable_email
       });
       enqueueSnackbar('✅ Empresa actualizada', { variant: 'success' });
+      fetchEmpresa(); // Recargar datos para ver el cambio reflejado
     } catch (err) {
       enqueueSnackbar(err.response?.data?.error || 'Error al actualizar', { variant: 'error' });
     }
@@ -199,10 +202,12 @@ const AdminEmpresaDetalle = () => {
                 </Grid>
               ))}
               <Grid item xs={12} sm={6}>
-                <TextField label="Responsable" fullWidth size="small" value={empresa.responsable_nombre || ''} disabled />
+                <TextField label="Nombre del Responsable" fullWidth size="small" name="responsable_nombre"
+                  value={empresa.responsable_nombre || ''} onChange={e => setEmpresa(p => ({ ...p, responsable_nombre: e.target.value }))} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField label="Email responsable" fullWidth size="small" value={empresa.responsable_email || ''} disabled />
+                <TextField label="Email del Responsable" fullWidth size="small" name="responsable_email"
+                  value={empresa.responsable_email || ''} onChange={e => setEmpresa(p => ({ ...p, responsable_email: e.target.value }))} />
               </Grid>
               <Grid item xs={12}>
                 <Button variant="contained" onClick={handleActualizarEmpresa} sx={{ borderRadius: 2 }}>
