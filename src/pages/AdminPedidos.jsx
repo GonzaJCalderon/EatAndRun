@@ -125,8 +125,9 @@ const agruparPedidosPorFechaConDetalle = (pedidos) => {
     };
 
     for (const [dia, items] of Object.entries(pedidoObj?.diarios || {})) {
-      const fallbackDate = dayjs(p.fecha ? p.fecha.toString().split('T')[0] : undefined).day(diaMap[dia.toLowerCase()] || 1).format('YYYY-MM-DD');
-      const fechaReal = pedidoObj.fecha_dia_por_dia?.[dia.toLowerCase()] || fallbackDate;
+      const diaKey = dia.split(' ')[0].toLowerCase();
+      const fallbackDate = dayjs(p.fecha ? p.fecha.toString().split('T')[0] : undefined).day(diaMap[diaKey] || 1).format('YYYY-MM-DD');
+      const fechaReal = pedidoObj.fecha_dia_por_dia?.[diaKey] || fallbackDate;
 
       if (!fechaReal || fechaReal === 'Invalid Date') continue;
       const detalle = { ...baseDetalle, platos: [], extras: [], tartas: [] };
@@ -135,7 +136,8 @@ const agruparPedidosPorFechaConDetalle = (pedidos) => {
     }
 
     for (const [dia, items] of Object.entries(pedidoObj?.extras || {})) {
-      const fechaReal = pedidoObj.fecha_dia_por_dia?.[dia.toLowerCase()];
+      const diaKey = dia.split(' ')[0].toLowerCase();
+      const fechaReal = pedidoObj.fecha_dia_por_dia?.[diaKey];
       if (!fechaReal || fechaReal === 'Invalid Date') continue;
       const detalle = { ...baseDetalle, platos: [], extras: [], tartas: [] };
       for (const [extra, cantidad] of Object.entries(items)) detalle.extras.push({ nombre: extra, cantidad });
