@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/api';
 import {
   Container, Typography, Card, CardContent,
-  Box, List, CircularProgress, Button, Stack, IconButton
+  Box, List, CircularProgress, Button, Stack, IconButton, Chip, Divider
 } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -23,7 +23,6 @@ const MisPedidos = () => {
   useEffect(() => {
     api.get('/orders')
       .then(res => {
-        console.log("📦 Pedidos recibidos:", res.data);
         setPedidos(res.data);
       })
       .catch(err => console.error(err))
@@ -70,112 +69,152 @@ const MisPedidos = () => {
     }
   };
 
+  const getStatusColor = (status) => {
+    const s = (status || '').toLowerCase();
+    if (s.includes('pendiente')) return 'warning';
+    if (s.includes('entregado') || s.includes('completado')) return 'success';
+    if (s.includes('cancelado')) return 'error';
+    return 'default';
+  };
+
   const renderItems = (pedido) => {
     if (!pedido.pedido || typeof pedido.pedido !== 'object') return null;
 
-    return Object.entries(pedido.pedido).map(([tipo, grupo]) => {
-      if (!grupo) return null;
+    const allowedTypes = ['diarios', 'extras', 'tartas'];
+    
+    return Object.entries(pedido.pedido)
+      .filter(([tipo]) => allowedTypes.includes(tipo.toLowerCase()))
+      .map(([tipo, grupo]) => {
+        if (!grupo) return null;
 
-      return (
-        <Box key={tipo} sx={{ mt: 1 }}>
-          <Typography variant="subtitle2"><em>{tipo.toUpperCase()}</em></Typography>
+        // Prevent rendering empty categories
+        if (tipo === 'tartas') {
+          if (Object.keys(grupo).length === 0) return null;
+        } else {
+          const hasItems = Object.values(grupo).some(val => val && typeof val === 'object' && Object.keys(val).length > 0);
+          if (!hasItems) return null;
+        }
 
-          {tipo === 'tartas' ? (
-            Object.keys(grupo).length > 0 ? (
-              Object.entries(grupo).map(([nombre, cantidad]) => (
-                <Typography key={nombre} sx={{ ml: 2 }}>
-                  • {normalizarNombre(nombre, tipo)}: {cantidad}
-                </Typography>
-              ))
+        const Icon = tipo === 'tartas' ? '🥧' : tipo === 'extras' ? '🥗' : '🍽️';
+        const Title = tipo.charAt(0).toUpperCase() + tipo.slice(1);
+
+        return (
+          <Box key={tipo} sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" sx={{ color: '#475569', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}>
+              {Icon} {Title}
+            </Typography>
+
+            {tipo === 'tartas' ? (
+              <Box sx={{ ml: 3, mt: 1 }}>
+                {Object.entries(grupo).map(([nombre, cantidad]) => (
+                  <Typography key={nombre} variant="body2" sx={{ color: '#1e293b', mb: 0.5 }}>
+                    <strong style={{ color: '#22c55e' }}>{cantidad}x</strong> {normalizarNombre(nombre, tipo)}
+                  </Typography>
+                ))}
+              </Box>
             ) : (
-              <Typography sx={{ ml: 2 }} color="text.secondary">
-                (Sin ítems registrados)
-              </Typography>
-            )
-          ) : (
-            typeof grupo === 'object' && Object.entries(grupo).map(([subkey, value]) => {
-              if (!value) return null;
-              return (
-                <Box key={subkey} sx={{ ml: 2 }}>
-                  <Typography variant="body2">{subkey}</Typography>
-                  {typeof value === 'object' && Object.keys(value).length > 0 ? (
-                    Object.entries(value).map(([nombre, cantidad]) => (
-                      <Typography key={nombre} sx={{ ml: 2 }}>
-                        • {normalizarNombre(nombre, tipo)}: {cantidad}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 1 }}>
+                {Object.entries(grupo).map(([subkey, value]) => {
+                  if (!value || typeof value !== 'object' || Object.keys(value).length === 0) return null;
+                  return (
+                    <Box key={subkey} sx={{ ml: 3, p: 1.5, backgroundColor: '#f8fafc', borderRadius: 2, borderLeft: '3px solid #e2e8f0' }}>
+                      <Typography variant="caption" sx={{ fontWeight: 'bold', textTransform: 'uppercase', color: '#64748b' }}>
+                        📅 {subkey}
                       </Typography>
-                    ))
-                  ) : (
-                    <Typography sx={{ ml: 2 }} color="text.secondary">
-                      (Sin ítems registrados)
-                    </Typography>
-                  )}
-                </Box>
-              );
-            })
-          )}
-        </Box>
-      );
-    });
+                      <Box sx={{ mt: 0.5 }}>
+                        {Object.entries(value).map(([nombre, cantidad]) => (
+                          <Typography key={nombre} variant="body2" sx={{ color: '#1e293b', mt: 0.5 }}>
+                            <strong style={{ color: '#22c55e' }}>{cantidad}x</strong> {normalizarNombre(nombre, tipo)}
+                          </Typography>
+                        ))}
+                      </Box>
+                    </Box>
+                  );
+                })}
+              </Box>
+            )}
+          </Box>
+        );
+      });
   };
 
   if (cargando) return (
-    <Container sx={{ mt: 4, textAlign: 'center' }}>
-      <CircularProgress />
-      <Typography>Obteniendo tus pedidos...</Typography>
+    <Container sx={{ mt: 10, textAlign: 'center' }}>
+      <CircularProgress color="success" size={50} />
+      <Typography variant="h6" sx={{ mt: 2, color: '#64748b' }}>Obteniendo tus pedidos...</Typography>
     </Container>
   );
 
   return (
-    <Container sx={{ mt: 4, mb: 8 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-        <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => navigate('/app')}>
-          Volver
+    <Container maxWidth="md" sx={{ mt: 4, mb: 8 }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
+        <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => navigate('/app')} sx={{ borderRadius: 50, textTransform: 'none', color: '#475569', borderColor: '#cbd5e1' }}>
+          Volver a la App
         </Button>
 
         <Stack direction="row" gap={1}>
-          <IconButton onClick={() => navigate('/')} title="Cerrar">
+          <IconButton onClick={() => navigate('/')} title="Ir al Inicio" sx={{ backgroundColor: '#f1f5f9' }}>
             <CloseIcon />
           </IconButton>
-          <Button onClick={logout} color="error" startIcon={<LogoutIcon />}>
+          <Button onClick={logout} color="error" startIcon={<LogoutIcon />} sx={{ borderRadius: 50, textTransform: 'none' }}>
             Cerrar sesión
           </Button>
         </Stack>
       </Stack>
 
-      <Typography variant="h5" sx={{ mb: 3 }}>🧾 Mis pedidos</Typography>
+      <Typography variant="h4" sx={{ mb: 4, fontWeight: 900, color: '#1e293b' }}>
+        🧾 Mis pedidos
+      </Typography>
 
       {pedidos.length === 0 ? (
-        <Typography>No has realizado pedidos aún.</Typography>
+        <Card sx={{ borderRadius: 4, p: 4, textAlign: 'center', backgroundColor: '#f8fafc', boxShadow: 'none', border: '1px dashed #cbd5e1' }}>
+          <Typography variant="h6" sx={{ color: '#64748b' }}>No has realizado pedidos aún.</Typography>
+          <Button variant="contained" color="success" sx={{ mt: 3, borderRadius: 50, textTransform: 'none' }} onClick={() => navigate('/app')}>
+            ¡Hacer mi primer pedido!
+          </Button>
+        </Card>
       ) : (
-        <List>
+        <List sx={{ p: 0 }}>
           {pedidos.map(p => (
-            <Card key={p.id} sx={{ mb: 2 }}>
-              <CardContent>
-                <Typography><strong>ID:</strong> {p.id}</Typography>
-                <Typography><strong>Fecha de entrega:</strong> {new Date(p.fecha_entrega).toLocaleDateString()}</Typography>
-                <Typography><strong>Estado:</strong> {p.estado || p.status}</Typography>
-                <Typography><strong>Total:</strong> ${Number(p.total).toLocaleString()}</Typography>
+            <Card key={p.id} sx={{ mb: 3, borderRadius: 4, boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', transition: 'transform 0.2s', '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 20px rgba(0,0,0,0.08)' } }}>
+              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
+                  <Box>
+                    <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 'bold', letterSpacing: 1 }}>PEDIDO #{p.id}</Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b', mt: 0.5, textTransform: 'capitalize' }}>
+                      {new Date(p.fecha_entrega).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                    </Typography>
+                  </Box>
+                  <Chip label={(p.estado || p.status || 'Pendiente').toUpperCase()} color={getStatusColor(p.estado || p.status)} size="small" sx={{ fontWeight: 'bold', borderRadius: 2 }} />
+                </Stack>
+                
+                <Divider sx={{ my: 2 }} />
 
-                <Box sx={{ mt: 1 }}>
-                  <Typography variant="subtitle2">Detalles:</Typography>
+                <Box sx={{ mb: 3 }}>
                   {tieneDetalles(p.pedido) ? (
                     renderItems(p)
                   ) : (
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" sx={{ color: '#94a3b8', fontStyle: 'italic' }}>
                       Este pedido no tiene detalles registrados.
                     </Typography>
                   )}
                 </Box>
 
-                <Box mt={2}>
+                <Divider sx={{ my: 2 }} />
+
+                <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#1e293b' }}>
+                    Total: <span style={{ color: '#22c55e', fontSize: '1.2rem' }}>${Number(p.total).toLocaleString()}</span>
+                  </Typography>
                   <Button
-                    variant="outlined"
-                    fullWidth
+                    variant="contained"
+                    size="small"
                     onClick={() => navigate(`/mis-pedidos/${p.id}`)}
+                    sx={{ backgroundColor: '#1e293b', color: 'white', borderRadius: 50, textTransform: 'none', px: 3, py: 1, '&:hover': { backgroundColor: '#334155' } }}
                   >
-                    Ver detalle
+                    Ver detalle completo
                   </Button>
-                </Box>
+                </Stack>
               </CardContent>
             </Card>
           ))}
