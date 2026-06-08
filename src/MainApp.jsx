@@ -577,11 +577,43 @@ return (
   <>
     <Container maxWidth="sm" sx={{ mt: 4, pb: 10 }}>
       {/* HEADER */}
-      <Box sx={{ textAlign: 'center', mb: 4 }}>
+      {/* HEADER PREMIUM */}
+      <Box 
+        sx={{ 
+          textAlign: 'center', 
+          mb: 4, 
+          pt: 2,
+          pb: 4,
+          px: 2,
+          background: 'linear-gradient(180deg, #f8fafc 0%, rgba(248, 250, 252, 0) 100%)',
+          borderRadius: '0 0 32px 32px',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)'
+        }}
+      >
         <LogoAnimado />
-        <Typography variant="h5" fontWeight="bold">¡Hola {user.name}! 🌱</Typography>
-        <Typography variant="h6" fontWeight="bold" sx={{ my: 2 }}>
-          🥗 Aquí podrás elegir tu comida semanal
+        <Typography 
+          variant="h4" 
+          fontWeight="800" 
+          sx={{ 
+            mt: 2, 
+            color: '#0f172a',
+            letterSpacing: '-0.5px' 
+          }}
+        >
+          ¡Hola {user.name}! <span style={{ fontSize: '1.2em' }}>🌱</span>
+        </Typography>
+        <Typography 
+          variant="subtitle1" 
+          sx={{ 
+            mt: 1, 
+            color: '#64748b',
+            fontWeight: 500,
+            maxWidth: '280px',
+            mx: 'auto',
+            lineHeight: 1.4
+          }}
+        >
+          Prepará tu comida semanal de forma rápida y saludable.
         </Typography>
       </Box>
 
@@ -600,15 +632,36 @@ return (
             </Tabs>
           )}
 
-          {/* SEMANA ACTIVA */}
+          {/* SEMANA ACTIVA PREMIUM */}
           {semanaCargada && semanaActiva?.habilitado && (
-            <>
-              <Typography variant="body2" sx={{ mb: 2 }}>
-                📅 Pedidos habilitados del{' '}
-                <strong>{dayjs.utc(semanaActiva.semana_inicio).format('D/M/YYYY')}</strong> al{' '}
-                <strong>{dayjs.utc(semanaActiva.semana_fin).format('D/M/YYYY')}</strong>
-              </Typography>
-            </>
+            <Box sx={{ px: 2, mb: 3 }}>
+              <Box 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  gap: 1.5,
+                  backgroundColor: '#f0fdf4',
+                  border: '1px solid #bbf7d0',
+                  color: '#166534',
+                  py: 1.5,
+                  px: 3,
+                  borderRadius: 16,
+                  boxShadow: '0 2px 10px rgba(22, 163, 74, 0.05)'
+                }}
+              >
+                <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                  🗓️ Menú disponible del{' '}
+                  <Box component="span" sx={{ color: '#15803d', fontWeight: 800 }}>
+                    {dayjs.utc(semanaActiva.semana_inicio).format('D/M')}
+                  </Box>{' '}
+                  al{' '}
+                  <Box component="span" sx={{ color: '#15803d', fontWeight: 800 }}>
+                    {dayjs.utc(semanaActiva.semana_fin).format('D/M')}
+                  </Box>
+                </Typography>
+              </Box>
+            </Box>
           )}
 
           {/* 1. MENÚ POR DÍA */}
