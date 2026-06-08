@@ -220,13 +220,18 @@ const DashboardAdmin = () => {
 
   return (
     <Container sx={{ mt: 4, pb: 6, maxWidth: '1200px !important' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Button variant="outlined" startIcon={<ArrowBack />} onClick={() => window.location.href = "/admin"}>
           Volver
         </Button>
         <Typography variant="h4" fontWeight="bold">📊 Panel de Métricas</Typography>
         <Box /> {/* Spacer */}
       </Box>
+
+      <Alert severity="info" sx={{ mb: 4 }}>
+        <strong>Guía rápida:</strong> Este panel te permite analizar el rendimiento del negocio.
+        Acá podés ver la distribución de pedidos entre particulares y empresas, y cuáles son los platos estrella de la semana.
+      </Alert>
 
       {loading ? (
         <Typography textAlign="center" color="text.secondary" mt={10}>Cargando estadísticas...</Typography>

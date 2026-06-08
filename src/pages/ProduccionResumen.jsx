@@ -740,6 +740,11 @@ const exportarExcelPorEmpresa = async () => {
         🍽️ Resumen de Producción
       </Typography>
 
+      <Alert severity="info" sx={{ mb: 3, mx: 'auto', maxWidth: 800 }}>
+        <strong>Guía rápida:</strong> Esta pantalla muestra el total de platos y tartas que tenés que cocinar, agrupados por día.
+        Usá los botones de <b>Exportar Excel</b> para descargar la lista completa y entregársela al equipo de cocina.
+      </Alert>
+
       {semanaActual.lunes && semanaActual.viernes && (
         <Typography variant="subtitle1" textAlign="center" gutterBottom>
           {`Rango: del ${semanaActual.lunes.toLocaleDateString()} al ${semanaActual.viernes.toLocaleDateString()}`}

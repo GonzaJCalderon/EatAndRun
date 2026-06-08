@@ -134,6 +134,11 @@ const AdminSemanas = () => {
         </Button>
       </Box>
 
+      <Alert severity="info" sx={{ mb: 4 }}>
+        <strong>Guía rápida:</strong> Aquí se configuran las fechas en las que los clientes pueden hacer pedidos.
+        Asegurate de tener siempre una <b>Semana Activa</b> y de usar el botón "Guardar días" si cambiás los días habilitados.
+      </Alert>
+
       {/* SEMANA ACTIVA (LA QUE VEN LOS CLIENTES HOY) */}
       <Typography variant="h5" fontWeight="bold" sx={{ mb: 2, color: '#2e7d32' }}>
         🟢 Semana Activa (Visible para clientes)

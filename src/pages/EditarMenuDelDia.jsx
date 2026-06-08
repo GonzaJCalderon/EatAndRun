@@ -253,6 +253,11 @@ const API_BASE = isLocal
         ✏️ Editar Menú del Día
       </Typography>
 
+      <Alert severity="info" sx={{ mb: 3 }}>
+        <strong>Guía rápida:</strong> Aquí podés administrar los platos especiales o del día que varían según la fecha. 
+        Usá el selector de fecha dentro de cada plato para definir qué día estará disponible en la plataforma.
+      </Alert>
+
       {/* {semanaActiva && !semanaActiva.habilitado && (
         <Alert severity="warning" sx={{ mb: 2 }}>
           🚫 La semana actual está bloqueada. No se pueden agregar o editar platos.

@@ -166,6 +166,11 @@ const AdminTartas = () => {
         🥧 Editor de Tartas
       </Typography>
 
+      <Alert severity="info" sx={{ mt: 2, mb: 2 }}>
+        <strong>Guía rápida:</strong> Las tartas están siempre disponibles en la plataforma como un adicional.
+        Aquí podés agregar nuevas variedades, editar sus nombres, descripciones y actualizar sus fotos.
+      </Alert>
+
       <Box sx={{ display: 'flex', justifyContent: isMobile ? 'center' : 'flex-start', mb: 2, mt: 4 }}>
         <Button startIcon={<AddIcon />} variant="contained" onClick={() => {
           setDialogOpen(true);
