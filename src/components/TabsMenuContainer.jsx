@@ -4,12 +4,13 @@ import { Tabs, Tab, Box, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import UnifiedDayMenuGallery from './UnifiedDayMenuGallery';
 import ExtrasSection from './ExtrasSection';
+import dayjs from '../utils/day';
 
 const diasSemana = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
 
 const prettyName = (key) => key?.charAt(0).toUpperCase() + key.slice(1);
 
-const TabsMenuContainer = ({ menuData, selecciones, onSelect, onFinalizarDias }) => {
+const TabsMenuContainer = ({ menuData, selecciones, onSelect, onFinalizarDias, semanaCerrada }) => {
   const [tabIndex, setTabIndex] = useState(0);
   const [diasDisponibles, setDiasDisponibles] = useState([]);
 
@@ -77,9 +78,18 @@ const TabsMenuContainer = ({ menuData, selecciones, onSelect, onFinalizarDias })
             allowScrollButtonsMobile
             sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}
           >
-            {diasDisponibles.map((dia, i) => (
-              <Tab key={dia} label={prettyName(dia)} id={`tab-${i}`} />
-            ))}
+            {diasDisponibles.map((dia, i) => {
+              const diaData = menuData[dia];
+              const primeraFecha = diaData?.especiales?.[0]?.date || diaData?.fijos?.[0]?.date;
+              const fechaFormateada = primeraFecha ? dayjs.utc(primeraFecha).format('DD/MM') : '';
+              return (
+                <Tab 
+                  key={dia} 
+                  label={`${prettyName(dia)} ${fechaFormateada ? `- ${fechaFormateada}` : ''}`} 
+                  id={`tab-${i}`} 
+                />
+              );
+            })}
           </Tabs>
 
           <motion.div
@@ -93,6 +103,7 @@ const TabsMenuContainer = ({ menuData, selecciones, onSelect, onFinalizarDias })
               especiales={platosEspeciales}
               selected={seleccionDia}
               onChange={handleSelectCambio}
+              disabled={semanaCerrada}
             />
           </motion.div>
 
@@ -100,6 +111,8 @@ const TabsMenuContainer = ({ menuData, selecciones, onSelect, onFinalizarDias })
             dia={diaActual}
             selectedGlobal={selecciones}
             onSelect={onSelect}
+            disabled={semanaCerrada}
+            semanaCerrada={semanaCerrada}
           />
         </>
       )}

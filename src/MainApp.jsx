@@ -605,21 +605,24 @@ return (
             <>
               <Typography variant="body2" sx={{ mb: 2 }}>
                 📅 Pedidos habilitados del{' '}
-                <strong>{new Date(semanaActiva.semana_inicio).toLocaleDateString('es-AR')}</strong> al{' '}
-                <strong>{new Date(semanaActiva.semana_fin).toLocaleDateString('es-AR')}</strong>
+                <strong>{dayjs.utc(semanaActiva.semana_inicio).format('D/M/YYYY')}</strong> al{' '}
+                <strong>{dayjs.utc(semanaActiva.semana_fin).format('D/M/YYYY')}</strong>
               </Typography>
             </>
           )}
 
           {/* 1. MENÚ POR DÍA */}
-          <AccordionMenuContainer
+          <TabsMenuContainer
             menuData={menuData}
             selecciones={activeSelecciones}
             onSelect={setActiveSelecciones}
-            diasHabilitados={Object.fromEntries(
-              Object.entries(menuData).map(([dia, datos]) => [dia, datos.habilitado])
-            )}
             semanaCerrada={semanaCerrada}
+            onFinalizarDias={() => {
+              const target = document.getElementById('confirmar-pedido-btn');
+              if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            }}
           />
 
           {/* 2. TARTAS */}
