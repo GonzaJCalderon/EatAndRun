@@ -241,8 +241,19 @@ const pedidosFiltrados = res.data
     Object.entries(tartas).forEach(([plato, cantidad]) => {
       const cantidadNum = Number(cantidad);
       if (!isNaN(cantidadNum) && cantidadNum > 0) {
-        const nombreReal = dictPlatos[plato] || dictPlatos[`tarta-${plato}`] || plato;
-        const nombreLimpio = nombreReal.replace(/^tarta-tarta-de-/, 'Tarta de ').replace(/^tarta-/, 'Tarta de ').toUpperCase();
+        // Resolver nombre: primero buscar en diccionario, si no limpiar el slug manualmente
+        let nombreReal = dictPlatos[plato] || dictPlatos[`tarta-${plato}`] || null;
+        if (!nombreReal) {
+          // Limpiar slug: "tarta-de-verdura" → "Tarta de verdura"
+          const slug = plato.replace(/^tarta-de-/, '').replace(/^tarta-/, '').replace(/-/g, ' ');
+          nombreReal = `Tarta de ${slug}`;
+        }
+        // Asegurarse que no quede "Tarta de de-xxx"
+        const nombreLimpio = nombreReal
+          .replace(/^Tarta de de-/i, 'Tarta de ')
+          .replace(/^tarta-tarta-de-/i, 'Tarta de ')
+          .replace(/^tarta-/i, 'Tarta de ')
+          .toUpperCase();
         
         if (!resumenTemp["TARTAS"]) resumenTemp["TARTAS"] = {};
         if (!resumenTemp["TARTAS"][nombreLimpio]) {
