@@ -89,8 +89,17 @@ pedidos.forEach(p => {
           const nombreRaw = `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim();
           const empresaNombre = p.empresa_nombre || usuario.empresa_nombre;
           const nombre = empresaNombre ? `${nombreRaw} (${empresaNombre})` : nombreRaw;
-          const platos = p.pedido?.diarios?.[dia] || {};
-          const extras = p.pedido?.extras?.[dia] || {};
+          const diariosKeys = Object.keys(p.pedido?.diarios || {});
+          const extrasKeys = Object.keys(p.pedido?.extras || {});
+          
+          const normalize = str => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          const diaNorm = normalize(dia);
+
+          const keyDiarios = diariosKeys.find(k => normalize(k.split(' ')[0]) === diaNorm) || dia;
+          const keyExtras = extrasKeys.find(k => normalize(k.split(' ')[0]) === diaNorm) || dia;
+
+          const platos = p.pedido?.diarios?.[keyDiarios] || {};
+          const extras = p.pedido?.extras?.[keyExtras] || {};
 
           return (
             <TableRow key={`${id}-${dia}`}>
