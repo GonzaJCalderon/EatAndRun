@@ -80,9 +80,12 @@ const PedidoDetalle = () => {
   const renderItems = (pedidoObj) => {
     if (!pedidoObj.pedido || typeof pedidoObj.pedido !== 'object') return null;
 
-    const { diarios = {}, extras = {}, tartas = {}, FECHA_DIA_POR_DIA = {} } = pedidoObj.pedido;
+    const diariosObj = pedidoObj.pedido.diarios || {};
+    const extrasObj = pedidoObj.pedido.extras || {};
+    const tartasObj = pedidoObj.pedido.tartas || {};
+    const fechasObj = pedidoObj.pedido.FECHA_DIA_POR_DIA || {};
 
-    const daysSet = new Set([...Object.keys(diarios), ...Object.keys(extras)]);
+    const daysSet = new Set([...Object.keys(diariosObj), ...Object.keys(extrasObj)]);
     
     const daysMap = {}; 
 
@@ -92,25 +95,25 @@ const PedidoDetalle = () => {
 
       if (!daysMap[baseDay]) {
          daysMap[baseDay] = {
-           displayDate: FECHA_DIA_POR_DIA[baseDay] || dayKey,
+           displayDate: fechasObj[baseDay] || dayKey,
            items: []
          };
       }
 
-      if (diarios[dayKey] && typeof diarios[dayKey] === 'object') {
-        Object.entries(diarios[dayKey]).forEach(([nombre, cantidad]) => {
+      if (diariosObj[dayKey] && typeof diariosObj[dayKey] === 'object') {
+        Object.entries(diariosObj[dayKey]).forEach(([nombre, cantidad]) => {
           daysMap[baseDay].items.push({ tipo: 'diarios', nombre, cantidad });
         });
       }
 
-      if (extras[dayKey] && typeof extras[dayKey] === 'object') {
-        Object.entries(extras[dayKey]).forEach(([nombre, cantidad]) => {
+      if (extrasObj[dayKey] && typeof extrasObj[dayKey] === 'object') {
+        Object.entries(extrasObj[dayKey]).forEach(([nombre, cantidad]) => {
           daysMap[baseDay].items.push({ tipo: 'extras', nombre, cantidad });
         });
       }
     });
 
-    const hasTartas = tartas && Object.keys(tartas).length > 0;
+    const hasTartas = tartasObj && Object.keys(tartasObj).length > 0;
     const daysArray = Object.values(daysMap).filter(d => d.items.length > 0);
 
     return (
