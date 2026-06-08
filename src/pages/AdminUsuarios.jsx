@@ -1,18 +1,31 @@
 import React, { useEffect, useState } from "react";
 import {
-  Container, Typography, Card, Box, Button, Dialog, DialogTitle, DialogContent, DialogActions,
-  Select, MenuItem, TextField, Snackbar, Alert 
+  Container, Typography, Box, Button, Dialog, DialogTitle, DialogContent, DialogActions,
+  Select, MenuItem, TextField, Snackbar, Alert, Table, TableBody, TableCell, TableContainer, 
+  TableHead, TableRow, TablePagination, IconButton, Chip, Tooltip, Paper
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { ArrowBack, Delete, Visibility, Edit, Group, Add, GetApp } from "@mui/icons-material";
 import api from "../api/api";
-import UserCard from "../components/UserCard";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+
+const rolColors = {
+  admin: 'error',
+  moderador: 'warning',
+  empresa: 'secondary',
+  delivery: 'info',
+  empleado: 'success',
+  usuario: 'default'
+};
 
 const AdminUsuarios = () => {
   const [usuarios, setUsuarios] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [filtroRol, setFiltroRol] = useState("todos");
+  
+  // Paginación
+  const [pagina, setPagina] = useState(0);
+  const [filasPorPagina, setFilasPorPagina] = useState(15);
   
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -150,149 +163,266 @@ const AdminUsuarios = () => {
 
   const usuariosFiltrados = usuarios.filter((u) => {
     const coincideRol = filtroRol === "todos" || u.rol === filtroRol;
-    const coincideBusqueda = `${u.nombre || ""} ${u.email || ""}`.toLowerCase().includes(busqueda.toLowerCase());
+    const coincideBusqueda = `${u.nombre || ""} ${u.apellido || ""} ${u.email || ""}`.toLowerCase().includes(busqueda.toLowerCase());
     return coincideRol && coincideBusqueda;
   });
 
+  // Efecto para resetear paginación si se filtra
+  useEffect(() => {
+    setPagina(0);
+  }, [busqueda, filtroRol]);
+
+  const handleChangePage = (event, newPage) => {
+    setPagina(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setFilasPorPagina(parseInt(event.target.value, 10));
+    setPagina(0);
+  };
+
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, pb: 6 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-        <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => window.location.href = "/admin"} sx={{ mr: 2 }}>
+    <Container maxWidth="xl" sx={{ mt: 4, pb: 6 }}>
+      {/* Header */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
+        <Button startIcon={<ArrowBack />} variant="outlined" onClick={() => window.location.href = "/admin"}>
           Volver
         </Button>
-        <Typography variant="h4" fontWeight="bold">
-          👥 Gestión de Usuarios
-        </Typography>
+        <Box display="flex" alignItems="center" gap={1}>
+          <Group sx={{ color: '#6366f1', fontSize: 32 }} />
+          <Typography variant="h4" fontWeight="bold">Gestión de Usuarios</Typography>
+        </Box>
+        <Box /> {/* Spacer */}
       </Box>
 
-      <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap', alignItems: 'center' }}>
-        <input
-          type="text"
-          placeholder="Buscar por nombre o email..."
+      {/* Guía */}
+      <Alert severity="info" sx={{ mb: 4, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+        <Typography variant="subtitle2" fontWeight="bold" gutterBottom>📖 Guía del Administrador:</Typography>
+        <Typography variant="body2">
+          Desde este panel tenés acceso total a todos los usuarios del sistema. Podés <strong>cambiar roles</strong> rápidamente desde el desplegable en cada fila, crear usuarios de emergencia o <strong>exportar la base de datos</strong> completa a Excel. Utilizá el buscador y los filtros para encontrar fácilmente usuarios específicos.
+        </Typography>
+      </Alert>
+
+      {/* Filtros y Acciones */}
+      <Paper sx={{ p: 2, mb: 4, borderRadius: 2, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', bgcolor: '#f8fafc' }}>
+        <TextField
+          size="small"
+          placeholder="Buscar por nombre, apellido o email..."
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
-          style={{ padding: '10px 14px', flexGrow: 1, minWidth: 250, borderRadius: 8, border: '1px solid #ccc', fontSize: '1rem' }}
+          sx={{ flexGrow: 1, minWidth: 250, bgcolor: 'white', borderRadius: 1 }}
         />
         <Select
           size="small"
           value={filtroRol}
           onChange={(e) => setFiltroRol(e.target.value)}
-          sx={{ minWidth: 160, backgroundColor: '#fff' }}
+          sx={{ minWidth: 160, bgcolor: 'white' }}
         >
           <MenuItem value="todos">Todos los roles</MenuItem>
-          <MenuItem value="usuario">Usuario</MenuItem>
+          <MenuItem value="usuario">Usuario (Base)</MenuItem>
           <MenuItem value="empresa">Empresa</MenuItem>
+          <MenuItem value="empleado">Empleado Corporativo</MenuItem> 
           <MenuItem value="delivery">Delivery</MenuItem>
-          <MenuItem value="admin">Admin</MenuItem>
-          <MenuItem value="empleado">Empleado</MenuItem> 
           <MenuItem value="moderador">Moderador</MenuItem>
+          <MenuItem value="admin">Administrador</MenuItem>
         </Select>
 
-        <Button variant="contained" color="success" onClick={() => setModalCrearUsuario(true)}>
-          ➕ Crear Usuario
+        <Button variant="contained" color="success" onClick={() => setModalCrearUsuario(true)} startIcon={<Add />} sx={{ borderRadius: 2 }}>
+          Crear Usuario
         </Button>
-        <Button variant="outlined" onClick={exportarUsuariosExcel}>
-          📤 Exportar
+        <Button variant="outlined" onClick={exportarUsuariosExcel} startIcon={<GetApp />} sx={{ borderRadius: 2 }}>
+          Exportar
         </Button>
-      </Box>
+      </Paper>
 
-      <Card sx={{ p: 2, mb: 6, backgroundColor: '#fdfdfd' }}>
-        {usuariosFiltrados.length === 0 ? (
-          <Typography textAlign="center" color="text.secondary" sx={{ py: 3 }}>No hay usuarios que coincidan con la búsqueda.</Typography>
-        ) : (
-          usuariosFiltrados.map((usuario) => (
-            <UserCard
-              key={usuario.id}
-              usuario={usuario}
-              onVer={abrirModalUsuario}
-              onEliminar={confirmarEliminarUsuario}
-              onRolChange={cambiarRol}
-              onEditar={abrirModalEdicion}
-            />
-          ))
-        )}
-      </Card>
+      {/* Tabla Compacta (DataGrid alternative) */}
+      <Paper sx={{ borderRadius: 2, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+        <TableContainer sx={{ maxHeight: '65vh' }}>
+          <Table stickyHeader size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f1f5f9' }}>Nombre Completo</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f1f5f9' }}>Email</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f1f5f9' }}>Rol</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 'bold', bgcolor: '#f1f5f9' }}>Acciones</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {usuariosFiltrados.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                    No hay usuarios que coincidan con la búsqueda.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                usuariosFiltrados
+                  .slice(pagina * filasPorPagina, pagina * filasPorPagina + filasPorPagina)
+                  .map((usuario) => (
+                    <TableRow key={usuario.id} hover>
+                      <TableCell>
+                        <Typography variant="body2" fontWeight="bold">
+                          {usuario.nombre || usuario.apellido ? `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim() : '—'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" color="text.secondary">{usuario.email}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          size="small"
+                          value={usuario.rol}
+                          onChange={(e) => cambiarRol(usuario.id, e.target.value)}
+                          sx={{ 
+                            fontSize: '0.8rem', 
+                            height: 30, 
+                            minWidth: 120,
+                            '.MuiSelect-select': { py: 0.5 }
+                          }}
+                        >
+                          <MenuItem value="usuario" sx={{ fontSize: '0.8rem' }}>Usuario</MenuItem>
+                          <MenuItem value="empresa" sx={{ fontSize: '0.8rem' }}>Empresa</MenuItem>
+                          <MenuItem value="empleado" sx={{ fontSize: '0.8rem' }}>Empleado</MenuItem>
+                          <MenuItem value="delivery" sx={{ fontSize: '0.8rem' }}>Delivery</MenuItem>
+                          <MenuItem value="moderador" sx={{ fontSize: '0.8rem' }}>Moderador</MenuItem>
+                          <MenuItem value="admin" sx={{ fontSize: '0.8rem' }}>Admin</MenuItem>
+                        </Select>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Tooltip title="Ver Detalles">
+                          <IconButton size="small" onClick={() => abrirModalUsuario(usuario)} color="primary">
+                            <Visibility fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Editar">
+                          <IconButton size="small" onClick={() => abrirModalEdicion(usuario)} sx={{ color: '#0ea5e9' }}>
+                            <Edit fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Eliminar">
+                          <IconButton size="small" onClick={() => confirmarEliminarUsuario(usuario.id)} color="error">
+                            <Delete fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <TablePagination
+          rowsPerPageOptions={[15, 30, 50, 100]}
+          component="div"
+          count={usuariosFiltrados.length}
+          rowsPerPage={filasPorPagina}
+          page={pagina}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          labelRowsPerPage="Filas por página:"
+          labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+        />
+      </Paper>
 
-      {/* Modales */}
-      <Dialog open={modalAbierto} onClose={cerrarModalUsuario}>
-        <DialogTitle>👤 Información del Usuario</DialogTitle>
+      {/* MODAL: VER USUARIO */}
+      <Dialog open={modalAbierto} onClose={cerrarModalUsuario} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Group color="primary" /> Información del Usuario
+        </DialogTitle>
         <DialogContent dividers>
           {usuarioSeleccionado ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <Typography><strong>ID:</strong> {usuarioSeleccionado.id}</Typography>
-              <Typography><strong>Nombre:</strong> {usuarioSeleccionado.nombre || '—'}</Typography>
-              <Typography><strong>Apellido:</strong> {usuarioSeleccionado.apellido || '—'}</Typography>
-              <Typography><strong>Email:</strong> {usuarioSeleccionado.email}</Typography>
-              <Typography><strong>Rol:</strong> {usuarioSeleccionado.rol}</Typography>
-              <Typography><strong>Teléfono:</strong> {usuarioSeleccionado.telefono || '—'}</Typography>
-              <Typography><strong>Dirección principal:</strong> {usuarioSeleccionado.direccion_principal || '—'}</Typography>
-              <Typography><strong>Dirección secundaria:</strong> {usuarioSeleccionado.direccion_secundaria || '—'}</Typography>
+            <Box display="grid" gridTemplateColumns="1fr 2fr" gap={2}>
+              <Typography fontWeight="bold">ID:</Typography>
+              <Typography>{usuarioSeleccionado.id}</Typography>
+              
+              <Typography fontWeight="bold">Nombre:</Typography>
+              <Typography>{usuarioSeleccionado.nombre || '—'}</Typography>
+              
+              <Typography fontWeight="bold">Apellido:</Typography>
+              <Typography>{usuarioSeleccionado.apellido || '—'}</Typography>
+              
+              <Typography fontWeight="bold">Email:</Typography>
+              <Typography>{usuarioSeleccionado.email}</Typography>
+              
+              <Typography fontWeight="bold">Rol:</Typography>
+              <Chip size="small" label={usuarioSeleccionado.rol} color={rolColors[usuarioSeleccionado.rol] || 'default'} />
+              
+              <Typography fontWeight="bold">Teléfono:</Typography>
+              <Typography>{usuarioSeleccionado.telefono || '—'}</Typography>
+              
+              <Typography fontWeight="bold">Dirección 1:</Typography>
+              <Typography>{usuarioSeleccionado.direccion_principal || '—'}</Typography>
+              
+              <Typography fontWeight="bold">Dirección 2:</Typography>
+              <Typography>{usuarioSeleccionado.direccion_secundaria || '—'}</Typography>
             </Box>
           ) : (
             <Typography>Cargando...</Typography>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={cerrarModalUsuario} color="primary">Cerrar</Button>
+          <Button onClick={cerrarModalUsuario} variant="contained" sx={{ borderRadius: 2 }}>Cerrar</Button>
         </DialogActions>
       </Dialog>
 
+      {/* MODAL: ELIMINAR */}
       <Dialog open={confirmDelete.open} onClose={() => setConfirmDelete({ open: false, userId: null })}>
-        <DialogTitle>¿Eliminar usuario?</DialogTitle>
-        <DialogContent>Esta acción no se puede deshacer. ¿Deseás continuar?</DialogContent>
+        <DialogTitle>⚠️ ¿Eliminar usuario?</DialogTitle>
+        <DialogContent>Esta acción no se puede deshacer y borrará permanentemente sus pedidos asociados si corresponde. ¿Deseás continuar?</DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmDelete({ open: false, userId: null })}>Cancelar</Button>
-          <Button onClick={eliminarUsuario} color="error" variant="contained">Eliminar</Button>
+          <Button onClick={eliminarUsuario} color="error" variant="contained">Eliminar Definitivamente</Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={modalCrearUsuario} onClose={() => setModalCrearUsuario(false)}>
+      {/* MODAL: CREAR */}
+      <Dialog open={modalCrearUsuario} onClose={() => setModalCrearUsuario(false)} maxWidth="sm" fullWidth>
         <DialogTitle>➕ Crear nuevo usuario</DialogTitle>
-        <DialogContent dividers sx={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 300 }}>
-          <TextField label="Nombre" fullWidth value={nuevoUsuario.nombre} onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, nombre: e.target.value })} />
-          <TextField label="Apellido" fullWidth value={nuevoUsuario.apellido} onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, apellido: e.target.value })} />
-          <TextField label="Email" fullWidth value={nuevoUsuario.email} onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, email: e.target.value })} />
-          <TextField label="Contraseña" fullWidth type="password" value={nuevoUsuario.password} onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, password: e.target.value })} />
-          <Select fullWidth value={nuevoUsuario.rol} onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, rol: e.target.value })}>
+        <DialogContent dividers sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <TextField label="Nombre" fullWidth size="small" value={nuevoUsuario.nombre} onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, nombre: e.target.value })} />
+          <TextField label="Apellido" fullWidth size="small" value={nuevoUsuario.apellido} onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, apellido: e.target.value })} />
+          <TextField label="Email" fullWidth size="small" value={nuevoUsuario.email} onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, email: e.target.value })} />
+          <TextField label="Contraseña" fullWidth size="small" type="password" value={nuevoUsuario.password} onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, password: e.target.value })} />
+          <Select size="small" fullWidth value={nuevoUsuario.rol} onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, rol: e.target.value })}>
             <MenuItem value="usuario">Usuario</MenuItem>
             <MenuItem value="empresa">Empresa</MenuItem>
-            <MenuItem value="delivery">Delivery</MenuItem>
-            <MenuItem value="admin">Admin</MenuItem>
             <MenuItem value="empleado">Empleado</MenuItem>
+            <MenuItem value="delivery">Delivery</MenuItem>
             <MenuItem value="moderador">Moderador</MenuItem>
+            <MenuItem value="admin">Admin</MenuItem>
           </Select>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setModalCrearUsuario(false)}>Cancelar</Button>
-          <Button variant="contained" onClick={handleCrearUsuario} disabled={!nuevoUsuario.nombre || !nuevoUsuario.email || !nuevoUsuario.password}>Crear</Button>
+          <Button variant="contained" onClick={handleCrearUsuario} disabled={!nuevoUsuario.nombre || !nuevoUsuario.email || !nuevoUsuario.password}>Crear Usuario</Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={modalEditar} onClose={() => setModalEditar(false)}>
+      {/* MODAL: EDITAR */}
+      <Dialog open={modalEditar} onClose={() => setModalEditar(false)} maxWidth="sm" fullWidth>
         <DialogTitle>✏️ Editar Usuario</DialogTitle>
-        <DialogContent dividers sx={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 300 }}>
-          {usuarioEditando ? (
+        <DialogContent dividers sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {usuarioEditando && (
             <>
-              <TextField label="Nombre" fullWidth value={usuarioEditando.nombre || ''} onChange={(e) => setUsuarioEditando((prev) => ({ ...prev, nombre: e.target.value }))} />
-              <TextField label="Apellido" fullWidth value={usuarioEditando.apellido || ''} onChange={(e) => setUsuarioEditando((prev) => ({ ...prev, apellido: e.target.value }))} />
-              <TextField label="Email" fullWidth value={usuarioEditando.email || ''} onChange={(e) => setUsuarioEditando((prev) => ({ ...prev, email: e.target.value }))} />
-              <TextField label="Teléfono" fullWidth value={usuarioEditando.telefono || ''} onChange={(e) => setUsuarioEditando((prev) => ({ ...prev, telefono: e.target.value }))} />
-              <TextField label="Dirección principal" fullWidth value={usuarioEditando.direccion_principal || ''} onChange={(e) => setUsuarioEditando((prev) => ({ ...prev, direccion_principal: e.target.value }))} />
-              <TextField label="Dirección secundaria" fullWidth value={usuarioEditando.direccion_secundaria || ''} onChange={(e) => setUsuarioEditando((prev) => ({ ...prev, direccion_secundaria: e.target.value }))} />
-              <Select fullWidth value={usuarioEditando.rol} onChange={(e) => setUsuarioEditando((prev) => ({ ...prev, rol: e.target.value }))}>
+              <TextField label="Nombre" fullWidth size="small" value={usuarioEditando.nombre || ''} onChange={(e) => setUsuarioEditando((prev) => ({ ...prev, nombre: e.target.value }))} />
+              <TextField label="Apellido" fullWidth size="small" value={usuarioEditando.apellido || ''} onChange={(e) => setUsuarioEditando((prev) => ({ ...prev, apellido: e.target.value }))} />
+              <TextField label="Email" fullWidth size="small" value={usuarioEditando.email || ''} onChange={(e) => setUsuarioEditando((prev) => ({ ...prev, email: e.target.value }))} />
+              <TextField label="Teléfono" fullWidth size="small" value={usuarioEditando.telefono || ''} onChange={(e) => setUsuarioEditando((prev) => ({ ...prev, telefono: e.target.value }))} />
+              <TextField label="Dirección principal" fullWidth size="small" value={usuarioEditando.direccion_principal || ''} onChange={(e) => setUsuarioEditando((prev) => ({ ...prev, direccion_principal: e.target.value }))} />
+              <TextField label="Dirección secundaria" fullWidth size="small" value={usuarioEditando.direccion_secundaria || ''} onChange={(e) => setUsuarioEditando((prev) => ({ ...prev, direccion_secundaria: e.target.value }))} />
+              <Select size="small" fullWidth value={usuarioEditando.rol} onChange={(e) => setUsuarioEditando((prev) => ({ ...prev, rol: e.target.value }))}>
                 <MenuItem value="usuario">Usuario</MenuItem>
                 <MenuItem value="empresa">Empresa</MenuItem>
-                <MenuItem value="delivery">Delivery</MenuItem>
-                <MenuItem value="admin">Admin</MenuItem>
                 <MenuItem value="empleado">Empleado</MenuItem>
+                <MenuItem value="delivery">Delivery</MenuItem>
                 <MenuItem value="moderador">Moderador</MenuItem>
+                <MenuItem value="admin">Admin</MenuItem>
               </Select>
             </>
-          ) : null}
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setModalEditar(false)}>Cancelar</Button>
-          <Button variant="contained" onClick={handleEditarUsuario}>Guardar</Button>
+          <Button variant="contained" onClick={handleEditarUsuario}>Guardar Cambios</Button>
         </DialogActions>
       </Dialog>
 
