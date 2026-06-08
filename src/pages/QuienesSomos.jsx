@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Box, Typography, Container, Grid, Button, Paper, Link } from '@mui/material';
 import { motion, useAnimation } from 'framer-motion';
-import { FaLeaf, FaWarehouse, FaUserMd, FaHandshake, FaArrowRight } from 'react-icons/fa';
+import { FaLeaf, FaWarehouse, FaUserMd, FaHandshake, FaArrowRight, FaWhatsapp } from 'react-icons/fa';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import { useNavigate } from 'react-router-dom';
 
@@ -129,37 +129,64 @@ const QuienesSomos = () => {
       >
         <Container sx={{ position: 'relative', zIndex: 2, textAlign: 'center', color: '#fff', px: 2 }}>
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-            <Typography variant="h2" sx={{ fontWeight: 800, mb: 2, fontSize: { xs: '2.5rem', md: '4.5rem' }, textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+            <Typography variant="h2" sx={{ fontWeight: 800, mb: 2, fontSize: { xs: '2rem', md: '3.5rem' }, textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
               Eat & Run
             </Typography>
-            <Typography variant="h5" sx={{ fontWeight: 400, mb: 4, maxWidth: '800px', mx: 'auto', opacity: 0.9, lineHeight: 1.5 }}>
+            <Typography variant="h5" sx={{ fontWeight: 400, mb: 4, maxWidth: '800px', mx: 'auto', opacity: 0.9, lineHeight: 1.5, fontSize: { xs: '1rem', md: '1.2rem' } }}>
               Alimentarte bien es quererte mejor. Llevamos menús saludables, frescos y ricos directo a tu mesa.
             </Typography>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={() => navigate('/registro')}
-              endIcon={<FaArrowRight />}
-              sx={{
-                backgroundColor: '#22c55e',
-                color: 'white',
-                px: 5,
-                py: 2,
-                fontSize: '1.1rem',
-                fontWeight: 'bold',
-                borderRadius: 50,
-                textTransform: 'none',
-                boxShadow: '0 8px 25px rgba(34,197,94,0.4)',
-                '&:hover': {
-                  backgroundColor: '#16a34a',
-                  transform: 'scale(1.05)',
-                  boxShadow: '0 12px 30px rgba(34,197,94,0.6)',
-                },
-                transition: 'all 0.3s'
-              }}
-            >
-              Registrarme Ahora
-            </Button>
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Button
+                variant="contained"
+                size="large"
+                onClick={() => navigate('/registro')}
+                endIcon={<FaArrowRight />}
+                sx={{
+                  backgroundColor: '#22c55e',
+                  color: 'white',
+                  px: { xs: 3, md: 5 },
+                  py: 1.5,
+                  fontSize: { xs: '1rem', md: '1.1rem' },
+                  fontWeight: 'bold',
+                  borderRadius: 50,
+                  textTransform: 'none',
+                  boxShadow: '0 8px 25px rgba(34,197,94,0.4)',
+                  '&:hover': {
+                    backgroundColor: '#16a34a',
+                    transform: 'scale(1.05)',
+                    boxShadow: '0 12px 30px rgba(34,197,94,0.6)',
+                  },
+                  transition: 'all 0.3s'
+                }}
+              >
+                Registrarme Ahora
+              </Button>
+              <Button
+                variant="outlined"
+                size="large"
+                href="https://wa.me/5492612089456"
+                target="_blank"
+                startIcon={<FaWhatsapp />}
+                sx={{
+                  color: 'white',
+                  borderColor: 'white',
+                  px: { xs: 3, md: 5 },
+                  py: 1.5,
+                  fontSize: { xs: '1rem', md: '1.1rem' },
+                  fontWeight: 'bold',
+                  borderRadius: 50,
+                  textTransform: 'none',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    borderColor: 'white',
+                    transform: 'scale(1.05)',
+                  },
+                  transition: 'all 0.3s'
+                }}
+              >
+                Contactanos
+              </Button>
+            </Box>
           </motion.div>
         </Container>
       </Box>
@@ -172,10 +199,10 @@ const QuienesSomos = () => {
               <FaLeaf style={{ color: '#16a34a', marginRight: 8 }} />
               <Typography sx={{ color: '#16a34a', fontWeight: 'bold', fontSize: '0.9rem' }}>NUESTRA MISIÓN</Typography>
             </Box>
-            <Typography variant="h3" sx={{ fontWeight: 800, color: '#1e293b', mb: 3, fontSize: { xs: '2rem', md: '3rem' } }}>
+            <Typography variant="h3" sx={{ fontWeight: 800, color: '#1e293b', mb: 3, fontSize: { xs: '1.8rem', md: '2.5rem' } }}>
               Comida saludable, rica y profesional
             </Typography>
-            <Typography variant="h6" sx={{ color: '#64748b', fontWeight: 400, lineHeight: 1.6 }}>
+            <Typography variant="h6" sx={{ color: '#64748b', fontWeight: 400, lineHeight: 1.6, fontSize: { xs: '1rem', md: '1.1rem' } }}>
               Somos una empresa mendocina dedicada a ofrecer soluciones gastronómicas. Elaboramos diariamente menús frescos y nutritivos, pensando en el bienestar de cada persona.
             </Typography>
           </motion.div>
@@ -316,12 +343,12 @@ const QuienesSomos = () => {
       </Container>
 
       {/* CTA Section */}
-      <Box sx={{ backgroundColor: '#1e293b', color: '#fff', py: { xs: 8, md: 10 }, textAlign: 'center' }}>
+      <Box sx={{ backgroundColor: '#1e293b', color: '#fff', py: { xs: 6, md: 8 }, textAlign: 'center' }}>
         <Container maxWidth="md">
-          <Typography variant="h3" sx={{ fontWeight: 800, mb: 3, fontSize: { xs: '2rem', md: '3rem' } }}>
+          <Typography variant="h3" sx={{ fontWeight: 800, mb: 3, fontSize: { xs: '1.8rem', md: '2.5rem' } }}>
             ¿Querés empezar a comer mejor?
           </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 400, color: '#cbd5e1', mb: 5, lineHeight: 1.6 }}>
+          <Typography variant="h6" sx={{ fontWeight: 400, color: '#cbd5e1', mb: 5, lineHeight: 1.6, fontSize: { xs: '1rem', md: '1.1rem' } }}>
             Sumate a nuestra plataforma, mirá nuestros menús semanales y recibí tu almuerzo listo para disfrutar.
           </Typography>
           <Button
