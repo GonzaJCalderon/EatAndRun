@@ -252,7 +252,18 @@ const AdminEmpresaDetalle = () => {
                 </Box>
               </>
             ) : (
-              <Alert severity="warning">No hay link de invitación generado aún.</Alert>
+              <Box>
+                <Alert severity="warning" sx={{ mb: 2 }}>No hay link de invitación generado aún.</Alert>
+                <Button 
+                  variant="contained" 
+                  startIcon={<Refresh />} 
+                  onClick={handleRegenerarLink} 
+                  disabled={loadingLink}
+                  size="small"
+                >
+                  Generar Link Ahora
+                </Button>
+              </Box>
             )}
           </Paper>
         </Grid>
