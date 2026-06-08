@@ -145,6 +145,13 @@ const MisPedidos = () => {
     </Container>
   );
 
+  const formatFecha = (fechaStr) => {
+    if (!fechaStr) return '';
+    const d = new Date(fechaStr);
+    d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
+    return d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+  };
+
   return (
     <Container maxWidth="md" sx={{ mt: 4, mb: 8 }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
@@ -182,7 +189,7 @@ const MisPedidos = () => {
                   <Box>
                     <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 'bold', letterSpacing: 1 }}>PEDIDO #{p.id}</Typography>
                     <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b', mt: 0.5, textTransform: 'capitalize' }}>
-                      {new Date(p.fecha_entrega).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                      {formatFecha(p.fecha_entrega)}
                     </Typography>
                   </Box>
                   <Chip label={(p.estado || p.status || 'Pendiente').toUpperCase()} color={getStatusColor(p.estado || p.status)} size="small" sx={{ fontWeight: 'bold', borderRadius: 2 }} />
