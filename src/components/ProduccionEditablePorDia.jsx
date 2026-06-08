@@ -93,10 +93,10 @@ pedidos.forEach(p => {
           const extrasKeys = Object.keys(p.pedido?.extras || {});
           
           const normalize = str => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-          const diaNorm = normalize(dia);
+          const diaWordNorm = normalize(dia.split(' ')[0]);
 
-          const keyDiarios = diariosKeys.find(k => normalize(k.split(' ')[0]) === diaNorm) || dia;
-          const keyExtras = extrasKeys.find(k => normalize(k.split(' ')[0]) === diaNorm) || dia;
+          const keyDiarios = diariosKeys.find(k => normalize(k.split(' ')[0]) === diaWordNorm) || dia;
+          const keyExtras = extrasKeys.find(k => normalize(k.split(' ')[0]) === diaWordNorm) || dia;
 
           const platos = p.pedido?.diarios?.[keyDiarios] || {};
           const extras = p.pedido?.extras?.[keyExtras] || {};

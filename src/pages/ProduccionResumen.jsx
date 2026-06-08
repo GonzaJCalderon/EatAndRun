@@ -360,17 +360,13 @@ const exportarExcel = async () => {
   });
 
     const getPedidosPorDiaYPlato = (dia, plato) => {
-      const key = normalizeDia(dia);
-      const resumenKeys = Object.keys(resumen);
-      const realKey = resumenKeys.find(k => k.split(' ')[0] === key) || key;
-      return resumen[realKey]?.[plato]?.usuarios || [];
+      const key = normalizeDia(dia).split(' ')[0];
+      return resumen[key]?.[plato]?.usuarios || [];
     };
 
 for (const dia of diasSemana) {
-  const key = normalizeDia(dia); // ahora sí va a ser "MIERCOLES"
-  const resumenKeys = Object.keys(resumen);
-  const realKey = resumenKeys.find(k => k.split(' ')[0] === key) || key;
-  const dataDia = resumen[realKey] || {};
+  const key = normalizeDia(dia).split(' ')[0];
+  const dataDia = resumen[key] || {};
   const fechaDia = fechasDias[dia]?.format('DD/MM') || 'Sin fecha';
   const sheet = workbook.addWorksheet(dia); // conservamos el nombre original con tilde
 
@@ -425,7 +421,67 @@ for (const dia of diasSemana) {
     rowTotal.font = { bold: true };
   }
 
-  // (continúa igual con hoja de TARTAS y RESUMEN SEMANAL...)
+  // --- TARTAS ---
+  if (resumen['TARTAS'] && Object.keys(resumen['TARTAS']).length > 0) {
+    const sheetTartas = workbook.addWorksheet('TARTAS');
+    const dataTartas = resumen['TARTAS'];
+    sheetTartas.columns = Array(10).fill({ width: 25 });
+    sheetTartas.addRow([`🥧 TARTAS - Toda la Semana`]);
+    sheetTartas.getRow(1).font = { bold: true, size: 16 };
+    sheetTartas.getRow(1).alignment = { horizontal: 'center' };
+    sheetTartas.mergeCells('A1:J1');
+    sheetTartas.addRow([]);
+
+    Object.keys(dataTartas).forEach(plato => {
+      sheetTartas.addRow([]);
+      const tituloRow = sheetTartas.addRow([plato.toUpperCase()]);
+      const cell = sheetTartas.getCell(`A${tituloRow.number}`);
+      cell.font = { bold: true, color: { argb: 'FF000000' } };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFFFCC99' },
+      };
+      sheetTartas.mergeCells(tituloRow.number, 1, tituloRow.number, 2);
+
+      const usuarios = dataTartas[plato].usuarios || [];
+      usuarios.forEach(u => {
+        sheetTartas.addRow([u.cantidad > 1 ? `${u.nombre} (x${u.cantidad})` : u.nombre]);
+      });
+
+      const resumenRow = sheetTartas.addRow(['TOTAL', dataTartas[plato].cantidad]);
+      sheetTartas.getCell(`B${resumenRow.number}`).font = { bold: true };
+    });
+  }
+
+  // --- RESUMEN SEMANAL ---
+  const resumenSheet = workbook.addWorksheet("RESUMEN SEMANAL");
+  resumenSheet.columns = [
+    { header: "PLATO", key: "plato", width: 40 },
+    { header: "CANTIDAD", key: "cantidad", width: 15 },
+    { header: "TOTAL", key: "total", width: 15 },
+  ];
+
+  Object.entries(totalProduccion).forEach(([plato, cantidad]) => {
+    resumenSheet.addRow({ plato, cantidad, total: cantidad });
+  });
+
+  // Observaciones generales
+  resumenSheet.addRow([]);
+  resumenSheet.addRow([{ value: "📝 OBSERVACIONES POR CATEGORÍA", font: { bold: true } }]);
+
+  Object.entries(observaciones).forEach(([categoria, obsLista]) => {
+    resumenSheet.addRow([]);
+    resumenSheet.addRow([{ value: `📅 ${categoria}`, font: { bold: true, italic: true } }]);
+
+    if (obsLista.length === 0) {
+      resumenSheet.addRow(["(Sin observaciones)"]);
+    } else {
+      obsLista.forEach(obs => {
+        resumenSheet.addRow([obs]);
+      });
+    }
+  });
 
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], {
