@@ -128,18 +128,15 @@ useEffect(() => {
       let asignados = asignadosRes.data;
       let sinAsignar = sinAsignarRes.data;
 
-      if (filtroFecha === 'hoy') {
-        // Filtrar por día lógico (por contenido de menú)
-        sinAsignar = filtrarPedidosPorDia(sinAsignar, hoy);
+      // Ordenar por fecha_entrega ascendente (los más viejos o los de hoy primero)
+      const sortPorFecha = (a, b) => {
+        const fechaA = dayjs(a.fecha_entrega);
+        const fechaB = dayjs(b.fecha_entrega);
+        return fechaA.diff(fechaB);
+      };
 
-        // Filtrar por fecha exacta
-        asignados = asignados.filter(p =>
-          dayjs(p.fecha_entrega).isSame(hoyStr, 'day')
-        );
-        sinAsignar = sinAsignar.filter(p =>
-          dayjs(p.fecha_entrega).isSame(hoyStr, 'day')
-        );
-      }
+      asignados.sort(sortPorFecha);
+      sinAsignar.sort(sortPorFecha);
 
       setPedidosAsignados(asignados);
       setPedidosSinAsignar(sinAsignar);
@@ -211,40 +208,41 @@ await api.put(`/orders/${pedidoActual.id}/status`, {
 };
 
 
-  const renderContenidoPedidoDeHoy = pedido => {
+  const renderContenidoPedido = pedido => {
     if (pedido.items && Array.isArray(pedido.items)) {
-      const itemsDeHoy = pedido.items.filter(i => i.dia === hoy || i.dia === 'sin_dia' || !i.dia);
-
-      if (itemsDeHoy.length === 0) return <Typography>📭 Sin ítems para hoy</Typography>;
+      if (pedido.items.length === 0) return <Typography>📭 Sin ítems</Typography>;
 
       return (
         <>
-          <Typography variant="subtitle2">📅 {hoy}</Typography>
-          {itemsDeHoy.map((item, i) => (
+          {pedido.items.map((item, i) => (
             <Typography key={i}>
-              {item.item_type === 'extra' && '🧁'}
-              {item.item_name || item.item_id}: {item.quantity}
+              {item.item_type === 'extra' ? '🧁' : '🍽️'}
+              {item.item_name || item.item_id}: {item.quantity} {item.dia && item.dia !== 'sin_dia' ? `(${item.dia})` : ''}
             </Typography>
           ))}
         </>
       );
     }
 
-    const diarios = pedido.pedido?.diarios?.[hoy] || pedido.pedido?.diarios?.['sin_dia'] || {};
-    const extras = pedido.pedido?.extras?.[hoy] || pedido.pedido?.extras?.['sin_dia'] || {};
-    const tartas = pedido.pedido?.tartas || {};
+    const diarios = pedido.pedido?.diarios || pedido.diarios || {};
+    const extras = pedido.pedido?.extras || pedido.extras || {};
+    const tartas = pedido.pedido?.tartas || pedido.tartas || {};
 
     return (
       <>
-        {Object.entries(diarios).map(([nombre, cantidad], i) => (
-          <Typography key={`plato-${i}`}>🍽️ {nombre}: {cantidad}</Typography>
-        ))}
-        {Object.entries(extras).map(([key, cantidad], i) => {
-          const nombre = isNaN(key) ? key : EXTRAS_MAP[Number(key)] || `Extra #${key}`;
-          return (
-            <Typography key={`extra-${i}`}>🧁 {nombre}: {cantidad}</Typography>
-          );
-        })}
+        {Object.entries(diarios).map(([dia, platos]) => 
+          Object.entries(platos).map(([nombre, cantidad], i) => (
+            <Typography key={`plato-${dia}-${i}`}>🍽️ {nombre}: {cantidad} ({dia})</Typography>
+          ))
+        )}
+        {Object.entries(extras).map(([dia, extrasDia]) => 
+          Object.entries(extrasDia).map(([key, cantidad], i) => {
+            const nombre = isNaN(key) ? key : EXTRAS_MAP[Number(key)] || `Extra #${key}`;
+            return (
+              <Typography key={`extra-${dia}-${i}`}>🧁 {nombre}: {cantidad} ({dia})</Typography>
+            );
+          })
+        )}
         {Object.entries(tartas).map(([nombre, cantidad], i) => (
           <Typography key={`tarta-${i}`}>🥧 {nombre}: {cantidad}</Typography>
         ))}
@@ -355,13 +353,16 @@ const pedidosCancelados = pedidosAsignados.filter(
   <Card key={pedido.id} sx={{ mb: 4, boxShadow: 2 }}>
     <CardContent>
       <Typography variant="h6">📦 Pedido #{pedido.id}</Typography>
+      <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 'bold' }}>
+        📅 Fecha a entregar: {dayjs(pedido.fecha_entrega).format('dddd DD/MM/YYYY')}
+      </Typography>
       <Typography>👤 {pedido.usuario?.nombre}</Typography>
       <Typography>📧 {pedido.usuario?.email}</Typography>
       <Typography>📍 Dirección: {pedido.usuario?.direccion || 'No especificada'}</Typography>
       <Typography>📞 {pedido.usuario?.telefono || 'No especificado'}</Typography>
 
       <Divider sx={{ my: 2 }} />
-      {renderContenidoPedidoDeHoy(pedido)}
+      {renderContenidoPedido(pedido)}
 
       <Typography sx={{ mt: 1 }}>
         💬 Observaciones: {pedido.observaciones || '—'}
@@ -438,7 +439,7 @@ const pedidosCancelados = pedidosAsignados.filter(
       <Typography>📍 Dirección: {pedido.usuario?.direccion}</Typography>
 
       <Divider sx={{ my: 1.5 }} />
-      {renderContenidoPedidoDeHoy(pedido)}
+      {renderContenidoPedido(pedido)}
 
       <Button
         variant="outlined"
@@ -470,16 +471,14 @@ const pedidosCancelados = pedidosAsignados.filter(
               <Typography variant="h6">Pedido #{pedido.id}</Typography>
               <Typography>🧍 Cliente: {pedido.usuario?.nombre}</Typography>
               <Typography>📍 Dirección: {pedido.usuario?.direccion}</Typography>
-{dayjs(pedido.fecha_entrega).isSame(dayjs(), 'day') && (
-  <Typography>
-    📅 Fecha de entrega: {dayjs(pedido.fecha_entrega).format('dddd DD/MM/YYYY')}
-  </Typography>
-)}
+              <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 'bold', mt: 1 }}>
+                📅 Fecha de entrega: {dayjs(pedido.fecha_entrega).format('dddd DD/MM/YYYY')}
+              </Typography>
 
               <Typography>💬 Observaciones: {pedido.observaciones || '—'}</Typography>
 
               <Divider sx={{ my: 2 }} />
-              {renderContenidoPedidoDeHoy(pedido)}
+              {renderContenidoPedido(pedido)}
 
               <Button
                 variant="contained"
@@ -496,22 +495,7 @@ const pedidosCancelados = pedidosAsignados.filter(
         ))
       )}
 
-      {menuEspecialHoy.length > 0 && (
-        <>
-          <Typography variant="h5" sx={{ mt: 5 }}>
-            🍽️ Menú Especial de hoy ({hoy})
-          </Typography>
-          {menuEspecialHoy.map((plato, i) => (
-            <Card key={i} sx={{ mb: 2 }}>
-              <CardContent>
-                <Typography variant="h6">{plato.name}</Typography>
-                <Typography>{plato.description || '—'}</Typography>
-                <Typography variant="caption">👥 Para: {plato.for_role}</Typography>
-              </CardContent>
-            </Card>
-          ))}
-        </>
-      )}
+
 
       <Snackbar
         open={mostrarSnackbar}
