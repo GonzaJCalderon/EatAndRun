@@ -287,7 +287,7 @@ const pedidosFiltrados = res.data
       Object.entries(diasOPlatos).forEach(([dia, platos]) => {
         if (!platos || typeof platos !== 'object') return;
 
-        const key = normalizeDia(dia); // ej: miércoles -> MIERCOLES
+        const key = normalizeDia(dia).split(' ')[0]; // ej: miércoles 10/06 -> MIERCOLES
 
         if (!resumenTemp[key]) resumenTemp[key] = {};
         if (!obsTemp[key]) obsTemp[key] = [];
