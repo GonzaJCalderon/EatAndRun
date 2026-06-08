@@ -142,7 +142,7 @@ const PedidoDetalle = () => {
               🥧 Tartas (Toda la semana)
             </Typography>
             <Box sx={{ mt: 1 }}>
-              {Object.entries(tartas).map(([nombre, cantidad], i) => (
+              {Object.entries(tartasObj).map(([nombre, cantidad], i) => (
                 <Typography key={i} variant="body2" sx={{ color: '#334155', mb: 0.5, display: 'flex', alignItems: 'center', gap: 1 }}>
                   🥧 <span><strong style={{ color: '#22c55e' }}>{cantidad}x</strong> {normalizarNombre(nombre, 'tartas')}</span>
                 </Typography>
