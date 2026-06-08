@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Container, Typography, Card, CardContent, Divider, Grid, Box, Button, Avatar } from "@mui/material";
+import { Container, Typography, Card, CardContent, Divider, Grid, Box, Button, Avatar, LinearProgress } from "@mui/material";
 import { motion } from "framer-motion";
 import { Bar, Doughnut } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from "chart.js";
-import { ArrowBack, Assignment, Group, CheckCircle, Cancel, TrendingUp } from "@mui/icons-material";
+import { ArrowBack, Assignment, Group, CheckCircle, Cancel, TrendingUp, AttachMoney, Business, Person } from "@mui/icons-material";
 import api from "../api/api";
 
 ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
@@ -15,14 +15,18 @@ const DashboardAdmin = () => {
     totalPlatos: 0,
     cancelados: 0,
     entregados: 0,
+    ingresos: 0,
     pedidosPorDia: {},
     platosVendidos: {},
+    pedidosPorEmpresa: {},
+    corporativos: 0,
+    particulares: 0,
   });
   const [loading, setLoading] = useState(true);
 
   const formatSlug = (slug) => {
     if (!slug) return '';
-    const clean = slug.replace(/^tarta-/i, ''); // remove prefix if exists
+    const clean = slug.replace(/^tarta-/i, ''); 
     return clean.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   };
 
@@ -59,10 +63,14 @@ const DashboardAdmin = () => {
       totalPedidos: pedidos.length,
       totalUsuarios: new Set(pedidos.map(p => p.usuario?.email)).size,
       totalPlatos: 0,
-      cancelados: pedidos.filter(p => p.estado === "cancelado").length,
-      entregados: pedidos.filter(p => p.estado === "entregado").length,
+      cancelados: 0,
+      entregados: 0,
+      ingresos: 0,
       pedidosPorDia: {},
       platosVendidos: {},
+      pedidosPorEmpresa: {},
+      corporativos: 0,
+      particulares: 0,
     };
 
     diasSemana.forEach(dia => {
@@ -70,6 +78,24 @@ const DashboardAdmin = () => {
     });
 
     pedidos.forEach((pedido) => {
+      if (pedido.estado === "cancelado") {
+        resumenTemp.cancelados++;
+      } else {
+        if (pedido.estado === "entregado") resumenTemp.entregados++;
+        // Ingresos: Solo sumamos pedidos no cancelados
+        if (pedido.total) {
+          resumenTemp.ingresos += Number(pedido.total);
+        }
+      }
+
+      // Distribución Corporativo vs Particular
+      if (pedido.empresa_nombre) {
+        resumenTemp.corporativos++;
+        resumenTemp.pedidosPorEmpresa[pedido.empresa_nombre] = (resumenTemp.pedidosPorEmpresa[pedido.empresa_nombre] || 0) + 1;
+      } else {
+        resumenTemp.particulares++;
+      }
+
       const datosPedido = pedido.pedido || {};
 
       ['diarios', 'extras'].forEach(tipo => {
@@ -82,7 +108,6 @@ const DashboardAdmin = () => {
             const esExtra = tipo === 'extras';
             let nombreReal = esExtra ? (extraMap[nombrePlato] || nombrePlato) : nombrePlato;
             
-            // Normalize names
             if (nombreReal.includes('-')) {
                nombreReal = formatSlug(nombreReal);
             }
@@ -97,8 +122,6 @@ const DashboardAdmin = () => {
         const fecha = new Date(pedido.fecha);
         let diaPedido = fecha.toLocaleDateString('es-ES', { weekday: 'long' }).toLowerCase();
         
-        // tartas might not match perfectly the exact day string if Timezone differs, 
-        // fallback to putting it in total stats
         if (diasSemana.includes(diaPedido)) {
           resumenTemp.pedidosPorDia[diaPedido]++;
         }
@@ -111,16 +134,21 @@ const DashboardAdmin = () => {
       }
     });
 
-    // Ordenar platos más vendidos de mayor a menor
-    const platosOrdenados = Object.entries(resumenTemp.platosVendidos)
+    // Ordenar platos top 10
+    resumenTemp.platosVendidos = Object.entries(resumenTemp.platosVendidos)
       .sort(([, a], [, b]) => b - a)
       .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
 
-    resumenTemp.platosVendidos = platosOrdenados;
+    // Ordenar empresas top 5
+    resumenTemp.pedidosPorEmpresa = Object.entries(resumenTemp.pedidosPorEmpresa)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+
     setResumen(resumenTemp);
   };
 
-  // Tomar el Top 10 para el gráfico
+  // --- Gráficos ---
   const topPlatosLabels = Object.keys(resumen.platosVendidos).slice(0, 10);
   const topPlatosData = Object.values(resumen.platosVendidos).slice(0, 10);
 
@@ -138,10 +166,7 @@ const DashboardAdmin = () => {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        position: 'right',
-        labels: { boxWidth: 12, font: { size: 12, family: 'Inter' } }
-      }
+      legend: { position: 'right', labels: { boxWidth: 12, font: { size: 12, family: 'Inter' } } }
     }
   };
 
@@ -155,11 +180,21 @@ const DashboardAdmin = () => {
     }]
   };
 
+  const datosEmpresasBarras = {
+    labels: Object.keys(resumen.pedidosPorEmpresa).length > 0 ? Object.keys(resumen.pedidosPorEmpresa) : ['Sin datos'],
+    datasets: [{
+      label: "Pedidos",
+      data: Object.values(resumen.pedidosPorEmpresa).length > 0 ? Object.values(resumen.pedidosPorEmpresa) : [0],
+      backgroundColor: "#8b5cf6",
+      borderRadius: 6,
+    }]
+  };
+
   const chartOptionsBar = {
     responsive: true,
     maintainAspectRatio: false,
     scales: {
-      y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
+      y: { beginAtZero: true, grid: { borderDash: [5, 5] }, ticks: { precision: 0 } },
       x: { grid: { display: false } }
     },
     plugins: { legend: { display: false } }
@@ -179,6 +214,10 @@ const DashboardAdmin = () => {
     </Card>
   );
 
+  const totalPedidosCals = resumen.corporativos + resumen.particulares || 1; // avoid /0
+  const pctCorp = Math.round((resumen.corporativos / totalPedidosCals) * 100);
+  const pctPart = Math.round((resumen.particulares / totalPedidosCals) * 100);
+
   return (
     <Container sx={{ mt: 4, pb: 6, maxWidth: '1200px !important' }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
@@ -193,8 +232,11 @@ const DashboardAdmin = () => {
         <Typography textAlign="center" color="text.secondary" mt={10}>Cargando estadísticas...</Typography>
       ) : (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-          {/* Fila de KPIs */}
-          <Grid container spacing={3} mb={4}>
+          {/* Fila 1 de KPIs */}
+          <Grid container spacing={3} mb={3}>
+            <Grid item xs={12} sm={6} md={3}>
+              <KpiCard title="Ingresos Estimados" value={`$${resumen.ingresos.toLocaleString()}`} icon={<AttachMoney fontSize="large" />} color="#10b981" bgcolor="#d1fae5" />
+            </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <KpiCard title="Total Pedidos" value={resumen.totalPedidos} icon={<Assignment fontSize="large" />} color="#4f46e5" bgcolor="#e0e7ff" />
             </Grid>
@@ -202,17 +244,13 @@ const DashboardAdmin = () => {
               <KpiCard title="Usuarios Únicos" value={resumen.totalUsuarios} icon={<Group fontSize="large" />} color="#0ea5e9" bgcolor="#e0f2fe" />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-              <KpiCard title="Entregados" value={resumen.entregados} icon={<CheckCircle fontSize="large" />} color="#10b981" bgcolor="#d1fae5" />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
               <KpiCard title="Cancelados" value={resumen.cancelados} icon={<Cancel fontSize="large" />} color="#ef4444" bgcolor="#fee2e2" />
             </Grid>
           </Grid>
 
-          {/* Gráficos */}
-          <Grid container spacing={3}>
-            {/* Gráfico de Barras */}
-            <Grid item xs={12} md={6}>
+          <Grid container spacing={3} mb={3}>
+            {/* Volumen por día */}
+            <Grid item xs={12} md={8}>
               <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.04)', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <CardContent sx={{ flexGrow: 1, p: 3 }}>
                   <Box display="flex" alignItems="center" mb={3} gap={1}>
@@ -226,7 +264,57 @@ const DashboardAdmin = () => {
               </Card>
             </Grid>
 
-            {/* Gráfico de Torta */}
+            {/* Corporativos vs Particulares */}
+            <Grid item xs={12} md={4}>
+              <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.04)', height: '100%' }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Typography variant="h6" fontWeight="bold" mb={3}>🏢 Origen de Pedidos</Typography>
+                  
+                  <Box mb={4}>
+                    <Box display="flex" justifyContent="space-between" mb={1}>
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <Business fontSize="small" sx={{ color: '#8b5cf6' }} />
+                        <Typography variant="body2" fontWeight="bold">Empresas (B2B)</Typography>
+                      </Box>
+                      <Typography variant="body2" fontWeight="bold">{pctCorp}%</Typography>
+                    </Box>
+                    <LinearProgress variant="determinate" value={pctCorp} sx={{ height: 8, borderRadius: 4, bgcolor: '#ede9fe', '& .MuiLinearProgress-bar': { bgcolor: '#8b5cf6' } }} />
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>{resumen.corporativos} pedidos corporativos</Typography>
+                  </Box>
+
+                  <Box>
+                    <Box display="flex" justifyContent="space-between" mb={1}>
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <Person fontSize="small" sx={{ color: '#f59e0b' }} />
+                        <Typography variant="body2" fontWeight="bold">Particulares (B2C)</Typography>
+                      </Box>
+                      <Typography variant="body2" fontWeight="bold">{pctPart}%</Typography>
+                    </Box>
+                    <LinearProgress variant="determinate" value={pctPart} sx={{ height: 8, borderRadius: 4, bgcolor: '#fef3c7', '& .MuiLinearProgress-bar': { bgcolor: '#f59e0b' } }} />
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>{resumen.particulares} pedidos particulares</Typography>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+
+          <Grid container spacing={3}>
+            {/* Top Empresas */}
+            <Grid item xs={12} md={6}>
+              <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.04)', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <CardContent sx={{ flexGrow: 1, p: 3 }}>
+                  <Box display="flex" alignItems="center" mb={3} gap={1}>
+                    <Business sx={{ color: '#8b5cf6' }} />
+                    <Typography variant="h6" fontWeight="bold">Top Empresas Clientes</Typography>
+                  </Box>
+                  <Box sx={{ height: 300 }}>
+                    <Bar data={datosEmpresasBarras} options={{...chartOptionsBar, indexAxis: 'y'}} />
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Platos más vendidos */}
             <Grid item xs={12} md={6}>
               <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.04)', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <CardContent sx={{ flexGrow: 1, p: 3 }}>
