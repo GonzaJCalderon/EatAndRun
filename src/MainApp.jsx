@@ -44,6 +44,7 @@ import { getPrecios } from './utils/getPrecios';
 import CopyText from './components/CopyText';
 
 import api from './api/api';
+import { getTartaPrecios } from './utils/getTartaPrecios';
 
 const logo = '/assets/eatandrun-logo.jpg';
 
