@@ -115,10 +115,10 @@ export const useAppData = (user, semanaActiva, menuFijosPorRol, setMenuFijosPorR
     const roleName = mapearRoleIdANombre(user.role);
     const fijosRol =
       roleName === 'admin'
-        ? [
+        ? dedupeByContenido([
             ...(menuFijosPorRol.usuario || []).map(p => ({ ...p, rol: 'usuario' })),
             ...(menuFijosPorRol.empresa || []).map(p => ({ ...p, rol: 'empresa' }))
-          ]
+          ])
         : menuFijosPorRol[roleName] || [];
 
     const nuevoMenuData = {};

@@ -32,6 +32,10 @@ const TabsMenuContainer = ({ menuData, selecciones, onSelect, onFinalizarDias, s
   const avanzarAlSiguienteDia = () => {
     if (tabIndex < diasDisponibles.length - 1) {
       setTabIndex((prev) => prev + 1);
+      // Scroll smoothly to the top of the tabs when changing days
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 50);
     } else {
       // 👇 Cuando ya estamos en el último día y hay selección
       if (typeof onFinalizarDias === 'function') {
