@@ -468,11 +468,13 @@ for (const dia of diasSemana) {
 
   // Observaciones generales
   resumenSheet.addRow([]);
-  resumenSheet.addRow([{ value: "📝 OBSERVACIONES POR CATEGORÍA", font: { bold: true } }]);
+  const obsTitleRow = resumenSheet.addRow(["📝 OBSERVACIONES POR CATEGORÍA"]);
+  obsTitleRow.getCell(1).font = { bold: true };
 
   Object.entries(observaciones).forEach(([categoria, obsLista]) => {
     resumenSheet.addRow([]);
-    resumenSheet.addRow([{ value: `📅 ${categoria}`, font: { bold: true, italic: true } }]);
+    const catTitleRow = resumenSheet.addRow([`📅 ${categoria}`]);
+    catTitleRow.getCell(1).font = { bold: true, italic: true };
 
     if (obsLista.length === 0) {
       resumenSheet.addRow(["(Sin observaciones)"]);
@@ -493,10 +495,10 @@ for (const dia of diasSemana) {
 
 const exportarExcelPorEmpresa = async () => {
   const workbook = new ExcelJS.Workbook();
-  const fecha = new Date().toLocaleDateString('es-AR');
+  const fechaHoy = new Date().toLocaleDateString('es-AR');
+  const diasSemana = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES'];
 
   const pedidosPorEmpresa = {};
-
   pedidos.forEach(p => {
     const empresa = p.usuario?.empresa_nombre || 'Sin empresa';
     if (!pedidosPorEmpresa[empresa]) pedidosPorEmpresa[empresa] = [];
@@ -505,96 +507,131 @@ const exportarExcelPorEmpresa = async () => {
 
   Object.entries(pedidosPorEmpresa).forEach(([nombreEmpresa, pedidosEmpresa]) => {
     const sheet = workbook.addWorksheet(nombreEmpresa.slice(0, 31));
-    sheet.columns = [
-      { width: 25 }, // Empleado
-      { width: 15 }, // Fecha
-      { width: 20 }, // Plato
-      { width: 10 }, // Cantidad
-      { width: 15 }, // Tipo
-      { width: 40 }  // Observaciones + Nota Admin
-    ];
+    sheet.columns = Array(10).fill({ width: 25 });
 
-    sheet.addRow([`🍽️ PRODUCCIÓN - ${nombreEmpresa} - ${fecha}`]);
+    sheet.addRow([`🏢 PRODUCCIÓN - ${nombreEmpresa} - ${fechaHoy}`]);
     sheet.getRow(1).font = { bold: true, size: 16 };
-    sheet.mergeCells('A1:F1');
+    sheet.getRow(1).alignment = { horizontal: 'center' };
+    sheet.mergeCells('A1:J1');
     sheet.addRow([]);
 
-    // Header
-    sheet.addRow(['Empleado', 'Fecha Entrega', 'Plato', 'Cantidad', 'Tipo', 'Observaciones']).font = { bold: true };
+    // 1. Calcular el resumen para ESTA empresa
+    const resumenEmpresa = {}; // dia -> plato -> { cantidad, usuarios }
+    const resumenTartas = {}; // plato -> { cantidad, usuarios }
+    let totalPlatosEmpresa = 0;
 
     pedidosEmpresa.forEach(p => {
-      const nombre = getNombreConEmpresa(p.usuario, p.empresa_nombre);
-      const fechaEntrega = new Date(p.fecha_entrega || p.created_at).toLocaleDateString('es-AR');
       const pedido = p.pedido || {};
+      const usuario = `${p.usuario?.nombre || ''} ${p.usuario?.apellido || ''}`.trim();
+      const nombre = `${usuario} - ${p.tipo_menu?.toUpperCase() || ''}`;
 
-      const observacionCompleta = [
-        p.observaciones || '',
-        p.nota_admin ? `Nota admin: ${p.nota_admin}` : ''
-      ].filter(Boolean).join(' — ');
+      // Procesar tartas
+      Object.entries(pedido.tartas || {}).forEach(([plato, cantidad]) => {
+        const cantidadNum = Number(cantidad);
+        if (isNaN(cantidadNum) || cantidadNum <= 0) return;
+        let nombrePlato = dictPlatos[plato] || plato;
+        nombrePlato = nombrePlato.toUpperCase();
 
-      const renderPlatos = (obj, tipo) => {
-        Object.entries(obj || {}).forEach(([key, valor]) => {
-          const cantidad = Number(valor);
-          if (isNaN(cantidad) || cantidad <= 0) return;
+        if (!resumenTartas[nombrePlato]) resumenTartas[nombrePlato] = { cantidad: 0, usuarios: [] };
+        resumenTartas[nombrePlato].cantidad += cantidadNum;
+        resumenTartas[nombrePlato].usuarios.push({ nombre, cantidad: cantidadNum });
+        totalPlatosEmpresa += cantidadNum;
+      });
 
-          let nombrePlato = key;
-          if (tipo === 'extras') {
-            const id = key.replace(/^ID:/, '');
-            nombrePlato = extraMap[id] || `Extra ${id}`;
-          }
+      // Procesar diarios y extras
+      ['diarios', 'extras'].forEach(categoria => {
+        const diasOPlatos = pedido[categoria] || {};
+        Object.entries(diasOPlatos).forEach(([dia, platos]) => {
+           if (!platos || typeof platos !== 'object') return;
+           const keyDia = normalizeDia(dia).split(' ')[0]; // LUNES, MARTES...
+           if (!resumenEmpresa[keyDia]) resumenEmpresa[keyDia] = {};
 
-          sheet.addRow([
-            nombre,
-            fechaEntrega,
-            nombrePlato,
-            cantidad,
-            tipo,
-            observacionCompleta
-          ]);
+           Object.entries(platos).forEach(([plato, cantidad]) => {
+             const cantidadNum = Number(cantidad);
+             if (isNaN(cantidadNum) || cantidadNum <= 0) return;
+
+             let nombrePlato = dictPlatos[plato] || plato;
+             if (categoria === 'extras') {
+               const idNormalizado = plato.replace(/^ID:/, '');
+               nombrePlato = extraMap[idNormalizado] || dictPlatos[plato] || `Extra ${idNormalizado}`;
+             }
+             if (nombrePlato.startsWith('ID:')) nombrePlato = nombrePlato.replace('ID:', '');
+             nombrePlato = nombrePlato.toUpperCase();
+
+             if (!resumenEmpresa[keyDia][nombrePlato]) resumenEmpresa[keyDia][nombrePlato] = { cantidad: 0, usuarios: [] };
+             resumenEmpresa[keyDia][nombrePlato].cantidad += cantidadNum;
+             resumenEmpresa[keyDia][nombrePlato].usuarios.push({ nombre, cantidad: cantidadNum });
+             totalPlatosEmpresa += cantidadNum;
+           });
         });
-      };
-
-      renderPlatos(pedido.tartas, 'tarta');
-      renderPlatos(pedido.diarios?.lunes, 'lunes');
-      renderPlatos(pedido.diarios?.martes, 'martes');
-      renderPlatos(pedido.diarios?.miércoles, 'miércoles');
-      renderPlatos(pedido.diarios?.jueves, 'jueves');
-      renderPlatos(pedido.diarios?.viernes, 'viernes');
-      renderPlatos(pedido.extras?.lunes, 'extras');
-      renderPlatos(pedido.extras?.martes, 'extras');
-      renderPlatos(pedido.extras?.miércoles, 'extras');
-      renderPlatos(pedido.extras?.jueves, 'extras');
-      renderPlatos(pedido.extras?.viernes, 'extras');
+      });
     });
 
-    // Totales por empresa
-    const totalPorEmpresa = {};
+    // 2. Escribir los bloques por día
+    diasSemana.forEach(dia => {
+      const dataDia = resumenEmpresa[dia];
+      if (!dataDia || Object.keys(dataDia).length === 0) return;
+
+      sheet.addRow([]);
+      const diaTitle = sheet.addRow([`📅 ${dia}`]);
+      diaTitle.getCell(1).font = { bold: true, size: 14 };
+      diaTitle.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEEEEE' } };
+      sheet.mergeCells(diaTitle.number, 1, diaTitle.number, 4);
+      sheet.addRow([]);
+
+      const platos = Object.keys(dataDia);
+      platos.forEach(plato => {
+        const tituloRow = sheet.addRow([plato.toUpperCase()]);
+        const cell = sheet.getCell(`A${tituloRow.number}`);
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4CAF50' } };
+        sheet.mergeCells(tituloRow.number, 1, tituloRow.number, 2);
+
+        dataDia[plato].usuarios.forEach(u => {
+          sheet.addRow([u.cantidad > 1 ? `${u.nombre} (x${u.cantidad})` : u.nombre]);
+        });
+
+        const resumenRow = sheet.addRow(['TOTAL', dataDia[plato].cantidad]);
+        sheet.getCell(`B${resumenRow.number}`).font = { bold: true };
+        sheet.addRow([]);
+      });
+    });
+
+    // 3. Escribir Tartas
+    if (Object.keys(resumenTartas).length > 0) {
+      sheet.addRow([]);
+      const tartaTitle = sheet.addRow([`🥧 TARTAS - Toda la Semana`]);
+      tartaTitle.getCell(1).font = { bold: true, size: 14 };
+      tartaTitle.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEEEEE' } };
+      sheet.mergeCells(tartaTitle.number, 1, tartaTitle.number, 4);
+      sheet.addRow([]);
+
+      Object.keys(resumenTartas).forEach(plato => {
+        const tituloRow = sheet.addRow([plato.toUpperCase()]);
+        const cell = sheet.getCell(`A${tituloRow.number}`);
+        cell.font = { bold: true, color: { argb: 'FF000000' } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFCC99' } };
+        sheet.mergeCells(tituloRow.number, 1, tituloRow.number, 2);
+
+        resumenTartas[plato].usuarios.forEach(u => {
+          sheet.addRow([u.cantidad > 1 ? `${u.nombre} (x${u.cantidad})` : u.nombre]);
+        });
+
+        const resumenRow = sheet.addRow(['TOTAL', resumenTartas[plato].cantidad]);
+        sheet.getCell(`B${resumenRow.number}`).font = { bold: true };
+        sheet.addRow([]);
+      });
+    }
+
+    // 4. Resumen Total
     sheet.addRow([]);
-    sheet.addRow(['RESUMEN POR EMPRESA']).font = { bold: true };
-
-    sheet.eachRow((row, rowNum) => {
-      if (rowNum <= 3) return;
-      const plato = row.getCell(3).value;
-      const cantidad = row.getCell(4).value;
-      if (plato && cantidad && !isNaN(cantidad)) {
-        totalPorEmpresa[plato] = (totalPorEmpresa[plato] || 0) + cantidad;
-      }
-    });
-
-    Object.entries(totalPorEmpresa).forEach(([plato, cantidad]) => {
-      sheet.addRow([plato, cantidad]);
-    });
-
-    const totalGeneral = Object.values(totalPorEmpresa).reduce((a, b) => a + b, 0);
-    sheet.addRow(['TOTAL GENERAL', totalGeneral]).font = { bold: true };
+    const totalRow = sheet.addRow(['TOTAL GENERAL EMPRESA', totalPlatosEmpresa]);
+    totalRow.font = { bold: true, size: 14 };
   });
 
-  // Guardar archivo
   const buffer = await workbook.xlsx.writeBuffer();
-  const blob = new Blob([buffer], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  });
-  saveAs(blob, `Produccion-Empresas-${fecha.replaceAll('/', '-')}.xlsx`);
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  saveAs(blob, `Produccion-Empresas-${fechaHoy.replaceAll('/', '-')}.xlsx`);
 };
 
 
