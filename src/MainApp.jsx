@@ -44,7 +44,6 @@ import { getPrecios } from './utils/getPrecios';
 import CopyText from './components/CopyText';
 
 import api from './api/api';
-import { getTartaPrecios } from './utils/getTartaPrecios';
 
 const logo = '/assets/eatandrun-logo.jpg';
 
@@ -84,7 +83,6 @@ function MainApp() {
   const [semanaActiva, setSemanaActiva] = useState(null);
   const [semanaCargada, setSemanaCargada] = useState(false);
  const [pedidoExitoso, setPedidoExitoso] = useState(false);
- const [preciosTartaDB, setPreciosTartaDB] = useState({});
 
  const [selecciones, setSelecciones] = useState({});
  const [pedidoConfirmado, setPedidoConfirmado] = useState(null);
@@ -191,13 +189,7 @@ useEffect(() => {
     if (!cargandoUsuario && !user) navigate('/app');
   }, [cargandoUsuario, user, navigate])
 
-useEffect(() => {
-  const fetchTartas = async () => {
-    const precios = await getTartaPrecios();
-    setPreciosTartaDB(precios);
-  };
-  fetchTartas();
-}, []);
+
 
 
   useEffect(() => {
@@ -310,7 +302,7 @@ const estimarTotal = () => {
 
   const totalTartas = Object.values(tartasSeleccionadas).reduce((sum, val) => sum + val, 0);
 Object.entries(tartasSeleccionadas).forEach(([tipo, cantidad]) => {
-  const precio = preciosTartaDB[tipo] || 0;
+  const precio = precios.tarta || 14500;
   total += cantidad * precio;
 });
 
