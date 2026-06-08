@@ -198,7 +198,7 @@ const PedidoDetalle = () => {
             <Box>
               <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 'bold', letterSpacing: 1 }}>PEDIDO #{pedido.id}</Typography>
               <Typography variant="h5" sx={{ fontWeight: 800, color: '#1e293b', mt: 0.5, textTransform: 'capitalize' }}>
-                {formatFecha(pedido.fecha_entrega)}
+                Semana del {formatFecha(pedido.fecha_entrega).toLowerCase()}
               </Typography>
             </Box>
             <Chip label={(pedido.estado || pedido.status || 'Pendiente').toUpperCase()} color={getStatusColor(pedido.estado || pedido.status)} sx={{ fontWeight: 'bold', borderRadius: 2 }} />

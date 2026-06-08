@@ -203,7 +203,7 @@ const MisPedidos = () => {
                   <Box>
                     <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 'bold', letterSpacing: 1 }}>PEDIDO #{p.id}</Typography>
                     <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b', mt: 0.5, textTransform: 'capitalize' }}>
-                      {formatFecha(p.fecha_entrega)}
+                      Semana del {formatFecha(p.fecha_entrega).toLowerCase()}
                     </Typography>
                   </Box>
                   <Chip label={(p.estado || p.status || 'Pendiente').toUpperCase()} color={getStatusColor(p.estado || p.status)} size="small" sx={{ fontWeight: 'bold', borderRadius: 2 }} />
