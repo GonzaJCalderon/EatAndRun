@@ -442,7 +442,7 @@ const { total } = estimarTotal(); // usa el valor con descuento
 
     if (metodoPago === 'transferencia' && comprobante) {
       const imageUrl = await subirComprobanteCloudinary(comprobante);
- await api.post(`/orders/${orderId}/comprobante`, { comprobanteUrl: imageUrl });
+      await api.post(`/orders/${orderId}/comprobante`, { comprobanteUrl: imageUrl });
     }
 
     enqueueSnackbar('✅ Pedido guardado con éxito', { variant: 'success' });
@@ -451,7 +451,8 @@ const { total } = estimarTotal(); // usa el valor con descuento
     setPedidoExitoso(true);
   } catch (err) {
     console.error('❌ Error al guardar pedido:', err?.response?.data || err);
-    enqueueSnackbar('❌ Error al enviar el pedido', { variant: 'error' });
+    const backendError = err?.response?.data?.error;
+    enqueueSnackbar(backendError ? `❌ ${backendError}` : '❌ Error al enviar el pedido', { variant: 'error' });
   } finally {
     setGuardando(false);
   }
