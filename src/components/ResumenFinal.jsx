@@ -62,7 +62,7 @@ precios,
       <Typography variant="h6" gutterBottom>📋 Resumen del Pedido</Typography>
 
       {resumenDias.map(({ dia, resumen }, idx) => (
-        typeof dia === 'string' && (
+        typeof dia === 'string' && resumen && resumen.trim() !== '' && (
           <Typography key={idx} variant="body2" sx={{ mb: 0.5 }}>
             📅 <strong>{dia.charAt(0).toUpperCase() + dia.slice(1)}:</strong> {resumen}
           </Typography>
