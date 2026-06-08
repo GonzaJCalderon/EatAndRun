@@ -94,6 +94,22 @@ function MainApp() {
   setMenuFijosPorRol
 );
 
+const filteredMenuData = useMemo(() => {
+  if (!menuData) return {};
+  const isUserEmpresa = Boolean(user?.empresa_id);
+  
+  if (!isUserEmpresa) return menuData;
+
+  const filtered = {};
+  for (const [day, data] of Object.entries(menuData)) {
+    filtered[day] = {
+      ...data,
+      especiales: [] // Ocultar menú especial para empresas temporalmente
+    };
+  }
+  return filtered;
+}, [menuData, user]);
+
 
 
 
@@ -666,7 +682,7 @@ return (
 
           {/* 1. MENÚ POR DÍA */}
           <TabsMenuContainer
-            menuData={menuData}
+            menuData={filteredMenuData}
             selecciones={activeSelecciones}
             onSelect={setActiveSelecciones}
             semanaCerrada={semanaCerrada}
