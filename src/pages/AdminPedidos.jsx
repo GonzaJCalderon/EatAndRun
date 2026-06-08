@@ -147,8 +147,9 @@ const agruparPedidosPorFechaConDetalle = (pedidos) => {
 
     if (Object.keys(pedidoObj?.tartas || {}).length > 0) {
       // Tartas van a una pestaña fija '__TARTAS__'
-      const detalle = { ...baseDetalle, platos: [], extras: [], tartas: [] };
-      for (const [tarta, cantidad] of Object.entries(pedidoObj.tartas)) detalle.tartas.push({ nombre: tarta, cantidad });
+      const tartaFecha = pedidoObj.tarta_fecha || p.fecha_entrega_tartas?.toString().split('T')[0] || null;
+      const detalle = { ...baseDetalle, platos: [], extras: [], tartas: [], tartaFecha };
+      for (const [tarta, cantidad] of Object.entries(pedidoObj.tartas)) detalle.tartas.push({ nombre: tarta, cantidad, fecha: tartaFecha });
       addOrMergeDetalle('__TARTAS__', detalle);
     }
   });
@@ -338,9 +339,15 @@ const AdminPedidos = () => {
           {fechasDisponibles.filter(f => f !== '__TARTAS__').map(f => (
             <Tab key={f} label={formatearFechaBonita(f)} value={f} />
           ))}
-          {fechasDisponibles.includes('__TARTAS__') && (
-            <Tab key="__TARTAS__" label="🥧 Tartas" value="__TARTAS__" />
-          )}
+          {fechasDisponibles.includes('__TARTAS__') && (() => {
+            // Buscar la fecha de entrega de tartas del primer pedido que tenga
+            const primerTarta = resumenDetallado['__TARTAS__']?.[0];
+            const fechaTarta = primerTarta?.tartaFecha;
+            const labelTarta = fechaTarta
+              ? `🥧 Tartas · ${formatearFechaBonita(fechaTarta)}`
+              : '🥧 Tartas';
+            return <Tab key="__TARTAS__" label={labelTarta} value="__TARTAS__" />;
+          })()}
           <Tab label="📜 Historial Completo" value="HISTORIAL" sx={{ color: '#d32f2f' }} />
         </Tabs>
       </Box>
@@ -398,7 +405,8 @@ const AdminPedidos = () => {
                         })}
                         {pedido.tartas.map((tarta, j) => (
                           <Typography key={`t${j}`} variant="caption" sx={{ display: 'flex', justifyContent: 'space-between', bgcolor: '#fce7f3', px: 1, borderRadius: 1 }}>
-                            <span>🥧 {tarta.nombre}</span> <strong>x{tarta.cantidad}</strong>
+                            <span>🥧 {tarta.nombre?.replace(/^tarta-de-/, 'Tarta de ').replace(/^tarta-/, 'Tarta de ').replace(/-/g,' ')}</span>
+                            <span><strong>x{tarta.cantidad}</strong>{tarta.fecha ? ` · Entrega: ${formatearFechaBonita(tarta.fecha)}` : ''}</span>
                           </Typography>
                         ))}
                       </Box>
