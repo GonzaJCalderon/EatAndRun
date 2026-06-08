@@ -5,11 +5,9 @@ import {
   Typography,
   IconButton,
   Box,
-  Chip
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
-import StarOutlineIcon from '@mui/icons-material/StarOutline';
 
 const UnifiedMenuCard = ({ plato, cantidad = 0, onChange }) => {
   const aumentar = () => onChange(plato, cantidad + 1);
@@ -25,23 +23,38 @@ const UnifiedMenuCard = ({ plato, cantidad = 0, onChange }) => {
       ? plato.img
       : (esEspecial ? imagenEspecial : null);
 
+  const isSelected = cantidad > 0;
+
   return (
     <Card
       sx={{
-        width: 160,
-        height: 230,
+        width: { xs: 150, sm: 170 }, // Slightly adaptive width
+        height: '100%',
+        minHeight: 240,
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        borderRadius: 2,
-        boxShadow: 3,
+        borderRadius: 4, // Softer corners
+        boxShadow: isSelected 
+          ? '0 8px 20px rgba(34, 197, 94, 0.25)' 
+          : '0 4px 12px rgba(0,0,0,0.06)',
+        border: isSelected ? '2px solid #22c55e' : '2px solid transparent',
+        transition: 'all 0.2s ease-in-out',
         position: 'relative',
         overflow: 'hidden',
+        cursor: 'pointer',
+        '&:active': { transform: 'scale(0.98)' }
+      }}
+      onClick={(e) => {
+        // Allow clicking the card itself to add 1 if not selected
+        if (!isSelected && e.target.tagName !== 'svg' && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'path') {
+          aumentar();
+        }
       }}
     >
       {/* Imagen */}
       {imagenFinal ? (
-        <Box sx={{ position: 'relative', width: '100%', height: 100 }}>
+        <Box sx={{ position: 'relative', width: '100%', height: 110 }}>
           <Box
             component="img"
             src={imagenFinal}
@@ -50,69 +63,37 @@ const UnifiedMenuCard = ({ plato, cantidad = 0, onChange }) => {
               width: '100%',
               height: '100%',
               objectFit: 'cover',
-              borderRadius: '8px 8px 0 0',
+              borderBottom: '1px solid #f1f5f9'
             }}
           />
-          {/* {esEspecial && (
-            <Chip
-              label="Menú Especial"
-              size="small"
-              color="success"
-              icon={<StarOutlineIcon fontSize="small" />}
-              sx={{
-                position: 'absolute',
-                top: 6,
-                left: 6,
-                fontSize: '0.65rem',
-                padding: '0 4px',
-                backgroundColor: '#1ba830ff',
-                color: 'white',
-              }}
-            />
-          )} */}
         </Box>
       ) : (
         <Box
           sx={{
             width: '100%',
-            height: 100,
-            backgroundColor: '#fef4e7',
+            height: 110,
+            backgroundColor: '#f8fafc',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            borderRadius: '8px 8px 0 0',
-            borderBottom: '1px solid #e0e0e0',
-            position: 'relative',
+            borderBottom: '1px solid #e2e8f0',
           }}
-        >
-          {/* <Box sx={{ textAlign: 'center' }}>
-            <StarOutlineIcon fontSize="small" sx={{ color: '#ffff1fff', mb: 0.5 }} />
-            <Typography
-              variant="caption"
-              sx={{
-                color: '#1ba830ff',
-                fontWeight: 600,
-                letterSpacing: 0.3,
-                fontSize: '0.75rem',
-              }}
-            >
-              Menú Especial
-            </Typography>
-          </Box> */}
-        </Box>
+        />
       )}
 
       {/* Contenido del card */}
-      <CardContent sx={{ p: 1, flexGrow: 1 }}>
+      <CardContent sx={{ p: 1.5, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         <Typography
           variant="subtitle2"
           sx={{
-            fontWeight: 600,
+            fontWeight: 700,
             lineHeight: '1.2em',
-            whiteSpace: 'normal',
-            overflowWrap: 'break-word',
-            wordBreak: 'break-word',
+            color: '#1e293b',
             mb: 0.5,
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
           }}
         >
           {plato?.nombre || 'Sin nombre'}
@@ -127,18 +108,54 @@ const UnifiedMenuCard = ({ plato, cantidad = 0, onChange }) => {
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            minHeight: '2.2em',
+            mb: 1,
+            flexGrow: 1
           }}
         >
           {plato?.descripcion || 'Sin descripción'}
         </Typography>
 
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
-          <IconButton size="small" onClick={disminuir} disabled={cantidad === 0}>
+        {/* Counter UI - UberEats Style Pill */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            mt: 'auto',
+            backgroundColor: isSelected ? '#22c55e' : '#f1f5f9',
+            color: isSelected ? '#ffffff' : '#334155',
+            borderRadius: 8,
+            px: 0.5,
+            py: 0.5,
+            transition: 'background-color 0.2s',
+          }}
+          onClick={(e) => e.stopPropagation()} // Prevent card click event here
+        >
+          <IconButton 
+            size="small" 
+            onClick={disminuir} 
+            disabled={!isSelected}
+            sx={{ 
+              color: isSelected ? '#ffffff' : 'inherit',
+              padding: '4px',
+              '&.Mui-disabled': { color: '#94a3b8' }
+            }}
+          >
             <RemoveIcon fontSize="small" />
           </IconButton>
-          <Typography sx={{ mx: 1 }}>{cantidad}</Typography>
-          <IconButton size="small" onClick={aumentar}>
+          
+          <Typography sx={{ fontWeight: 'bold', fontSize: '0.9rem', minWidth: '20px', textAlign: 'center' }}>
+            {cantidad > 0 ? cantidad : 'Add'}
+          </Typography>
+          
+          <IconButton 
+            size="small" 
+            onClick={aumentar}
+            sx={{ 
+              color: isSelected ? '#ffffff' : 'inherit',
+              padding: '4px'
+            }}
+          >
             <AddIcon fontSize="small" />
           </IconButton>
         </Box>
