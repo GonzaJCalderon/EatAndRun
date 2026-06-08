@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Typography, Box, IconButton, Card } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import api from '../api/api';
