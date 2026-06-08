@@ -361,12 +361,16 @@ const exportarExcel = async () => {
 
     const getPedidosPorDiaYPlato = (dia, plato) => {
       const key = normalizeDia(dia);
-      return resumen[key]?.[plato]?.usuarios || [];
+      const resumenKeys = Object.keys(resumen);
+      const realKey = resumenKeys.find(k => k.split(' ')[0] === key) || key;
+      return resumen[realKey]?.[plato]?.usuarios || [];
     };
 
 for (const dia of diasSemana) {
   const key = normalizeDia(dia); // ahora sí va a ser "MIERCOLES"
-  const dataDia = resumen[key] || {};
+  const resumenKeys = Object.keys(resumen);
+  const realKey = resumenKeys.find(k => k.split(' ')[0] === key) || key;
+  const dataDia = resumen[realKey] || {};
   const fechaDia = fechasDias[dia]?.format('DD/MM') || 'Sin fecha';
   const sheet = workbook.addWorksheet(dia); // conservamos el nombre original con tilde
 
