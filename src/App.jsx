@@ -26,7 +26,6 @@ import EditarTartas from './pages/AdminTartas';
 import AdminMenuPreview from './components/AdminMenuPreview';
 import PerfilUsuario from './components/PerfilUsuario';
 import MisPedidos from './components/MisPedidos';
-import PedidoDetalle from './components/PedidoDetalle';
 
 import EmpleadosEmpresa from './pages/EmpleadoEmpresa';
 import AdminEmpresa from './pages/AdminEmpresa';
@@ -98,7 +97,6 @@ const App = () => (
 
     {/* 📦 Mis pedidos (usuario normal) */}
     <Route path="/mis-pedidos" element={<MisPedidos />} />
-    <Route path="/mis-pedidos/:id" element={<PedidoDetalle />} />
 
     {/* 🚚 Delivery */}
     <Route path="/delivery" element={<DeliveryDashboard />} />

@@ -1,13 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/api';
 import {
   Container, Typography, Card, CardContent,
-  Box, List, CircularProgress, Button, Stack, IconButton, Chip, Divider
+  Box, List, CircularProgress, Button, Stack, IconButton, Chip, Divider,
+  Accordion, AccordionSummary, AccordionDetails, Select, MenuItem, FormControl, InputLabel
 } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 const EXTRAS_MAP = {
   1: '🍰 Postre',
@@ -18,6 +20,11 @@ const EXTRAS_MAP = {
 const MisPedidos = () => {
   const [pedidos, setPedidos] = useState([]);
   const [cargando, setCargando] = useState(true);
+  
+  // Filters
+  const [filtroEstado, setFiltroEstado] = useState('Todos');
+  const [filtroMes, setFiltroMes] = useState('Todos');
+  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -37,25 +44,18 @@ const MisPedidos = () => {
   const tieneDetalles = (pedido) => {
     if (!pedido || typeof pedido !== 'object') return false;
     const { diarios = {}, extras = {}, tartas = {} } = pedido;
-
-    const hayDiarios = Object.values(diarios).some(dia =>
-      dia && typeof dia === 'object' && Object.keys(dia).length > 0
-    );
-
-    const hayExtras = Object.values(extras).some(dia =>
-      dia && typeof dia === 'object' && Object.keys(dia).length > 0
-    );
-
-    const hayTartas = tartas && Object.keys(tartas).length > 0;
-
-    return hayDiarios || hayExtras || hayTartas;
+    
+    const hasDiarios = Object.values(diarios || {}).some(val => val && typeof val === 'object' && Object.keys(val).length > 0);
+    const hasExtras = Object.values(extras || {}).some(val => val && typeof val === 'object' && Object.keys(val).length > 0);
+    const hasTartas = (tartas || {}) && Object.keys(tartas || {}).length > 0;
+    
+    return hasDiarios || hasExtras || hasTartas;
   };
 
   const normalizarNombre = (nombre, tipo) => {
-    const idMatch = String(nombre).match(/^ID:(\d+)$/);
-    if (!idMatch) return nombre;
-
-    const id = parseInt(idMatch[1]);
+    const match = nombre.match(/^ID:(\d+)/);
+    const id = match?.[1];
+    if (!id) return nombre;
 
     switch (tipo) {
       case 'extras':
@@ -114,7 +114,6 @@ const MisPedidos = () => {
     });
 
     const hasTartas = tartasObj && Object.keys(tartasObj).length > 0;
-    // sort days by order logic or just use map order (which is usually fine)
     const daysArray = Object.values(daysMap).filter(d => d.items.length > 0);
 
     return (
@@ -155,19 +154,47 @@ const MisPedidos = () => {
     );
   };
 
-  if (cargando) return (
-    <Container sx={{ mt: 10, textAlign: 'center' }}>
-      <CircularProgress color="success" size={50} />
-      <Typography variant="h6" sx={{ mt: 2, color: '#64748b' }}>Obteniendo tus pedidos...</Typography>
-    </Container>
-  );
-
   const formatFecha = (fechaStr) => {
     if (!fechaStr) return '';
     const d = new Date(fechaStr);
     d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
     return d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
   };
+
+  // Generate unique months for the filter dropdown
+  const mesesDisponibles = useMemo(() => {
+    const meses = pedidos.map(p => {
+      const d = new Date(p.fecha_entrega);
+      d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
+      return d.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+    });
+    return [...new Set(meses)];
+  }, [pedidos]);
+
+  // Filter the orders based on selected filters
+  const pedidosFiltrados = useMemo(() => {
+    return pedidos.filter(p => {
+      const d = new Date(p.fecha_entrega);
+      d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
+      const orderMonth = d.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+      const orderStatus = (p.estado || p.status || 'pendiente').toLowerCase();
+
+      const matchMes = filtroMes === 'Todos' || orderMonth === filtroMes;
+      const matchEstado = filtroEstado === 'Todos' ||
+        (filtroEstado === 'Pendiente' && orderStatus.includes('pendiente')) ||
+        (filtroEstado === 'Entregado' && (orderStatus.includes('entregado') || orderStatus.includes('completado'))) ||
+        (filtroEstado === 'Cancelado' && orderStatus.includes('cancelado'));
+
+      return matchMes && matchEstado;
+    });
+  }, [pedidos, filtroMes, filtroEstado]);
+
+  if (cargando) return (
+    <Container sx={{ mt: 10, textAlign: 'center' }}>
+      <CircularProgress color="success" size={50} />
+      <Typography variant="h6" sx={{ mt: 2, color: '#64748b' }}>Obteniendo tus pedidos...</Typography>
+    </Container>
+  );
 
   return (
     <Container maxWidth="md" sx={{ mt: 4, mb: 8 }}>
@@ -190,18 +217,59 @@ const MisPedidos = () => {
         🧾 Mis pedidos
       </Typography>
 
-      {pedidos.length === 0 ? (
+      {/* FILTERS */}
+      {pedidos.length > 0 && (
+        <Card sx={{ mb: 4, borderRadius: 4, p: 2, boxShadow: 'none', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} gap={2}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Estado</InputLabel>
+              <Select
+                value={filtroEstado}
+                label="Estado"
+                onChange={(e) => setFiltroEstado(e.target.value)}
+                sx={{ backgroundColor: 'white', borderRadius: 2 }}
+              >
+                <MenuItem value="Todos">Todos los estados</MenuItem>
+                <MenuItem value="Pendiente">Pendiente</MenuItem>
+                <MenuItem value="Entregado">Entregado</MenuItem>
+                <MenuItem value="Cancelado">Cancelado</MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth size="small">
+              <InputLabel>Mes</InputLabel>
+              <Select
+                value={filtroMes}
+                label="Mes"
+                onChange={(e) => setFiltroMes(e.target.value)}
+                sx={{ backgroundColor: 'white', borderRadius: 2, textTransform: 'capitalize' }}
+              >
+                <MenuItem value="Todos">Cualquier mes</MenuItem>
+                {mesesDisponibles.map(mes => (
+                  <MenuItem key={mes} value={mes} sx={{ textTransform: 'capitalize' }}>{mes}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Stack>
+        </Card>
+      )}
+
+      {pedidosFiltrados.length === 0 ? (
         <Card sx={{ borderRadius: 4, p: 4, textAlign: 'center', backgroundColor: '#f8fafc', boxShadow: 'none', border: '1px dashed #cbd5e1' }}>
-          <Typography variant="h6" sx={{ color: '#64748b' }}>No has realizado pedidos aún.</Typography>
-          <Button variant="contained" color="success" sx={{ mt: 3, borderRadius: 50, textTransform: 'none' }} onClick={() => navigate('/app')}>
-            ¡Hacer mi primer pedido!
-          </Button>
+          <Typography variant="h6" sx={{ color: '#64748b' }}>
+            {pedidos.length === 0 ? "No has realizado pedidos aún." : "No hay pedidos que coincidan con los filtros."}
+          </Typography>
+          {pedidos.length === 0 && (
+            <Button variant="contained" color="success" sx={{ mt: 3, borderRadius: 50, textTransform: 'none' }} onClick={() => navigate('/app')}>
+              ¡Hacer mi primer pedido!
+            </Button>
+          )}
         </Card>
       ) : (
         <List sx={{ p: 0 }}>
-          {pedidos.map(p => (
+          {pedidosFiltrados.map(p => (
             <Card key={p.id} sx={{ mb: 3, borderRadius: 4, boxShadow: '0 4px 12px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', transition: 'transform 0.2s', '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 20px rgba(0,0,0,0.08)' } }}>
-              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+              <CardContent sx={{ p: { xs: 2, sm: 3 }, pb: '16px !important' }}>
                 <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
                   <Box>
                     <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 'bold', letterSpacing: 1 }}>PEDIDO #{p.id}</Typography>
@@ -226,19 +294,38 @@ const MisPedidos = () => {
 
                 <Divider sx={{ my: 2 }} />
 
-                <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2} sx={{ mb: 2 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#1e293b' }}>
-                    Total: <span style={{ color: '#22c55e', fontSize: '1.2rem' }}>${Number(p.total).toLocaleString()}</span>
+                    Total estimado: <span style={{ color: '#22c55e', fontSize: '1.2rem' }}>${Number(p.total).toLocaleString()}</span>
                   </Typography>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={() => navigate(`/mis-pedidos/${p.id}`)}
-                    sx={{ backgroundColor: '#1e293b', color: 'white', borderRadius: 50, textTransform: 'none', px: 3, py: 1, '&:hover': { backgroundColor: '#334155' } }}
-                  >
-                    Seguimiento y Comprobante
-                  </Button>
                 </Stack>
+                
+                <Accordion sx={{ boxShadow: 'none', border: '1px solid #e2e8f0', borderRadius: '12px !important', '&:before': { display: 'none' } }}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ backgroundColor: '#f8fafc', borderRadius: 3 }}>
+                    <Typography variant="subtitle2" sx={{ color: '#475569', fontWeight: 'bold' }}>Seguimiento y Comprobante</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails sx={{ p: 2 }}>
+                    {/* Observaciones */}
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase' }}>Observaciones del pedido:</Typography>
+                      <Typography variant="body2" sx={{ color: '#1e293b', fontStyle: p.observaciones ? 'normal' : 'italic', mt: 0.5 }}>
+                        {p.observaciones || 'No se registraron observaciones.'}
+                      </Typography>
+                    </Box>
+
+                    {/* Comprobante */}
+                    <Box>
+                      <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase' }}>Comprobante de pago:</Typography>
+                      {p.comprobante_url ? (
+                        <Box sx={{ mt: 1, borderRadius: 2, overflow: 'hidden', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'center', backgroundColor: '#f1f5f9' }}>
+                           <img src={p.comprobante_url} alt="Comprobante" style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }} />
+                        </Box>
+                      ) : (
+                        <Typography variant="body2" sx={{ color: '#94a3b8', fontStyle: 'italic', mt: 0.5 }}>No hay comprobante adjunto.</Typography>
+                      )}
+                    </Box>
+                  </AccordionDetails>
+                </Accordion>
               </CardContent>
             </Card>
           ))}
