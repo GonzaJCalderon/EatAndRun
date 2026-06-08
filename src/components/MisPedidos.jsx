@@ -73,42 +73,49 @@ const MisPedidos = () => {
   const renderItems = (pedido) => {
     if (!pedido.pedido || typeof pedido.pedido !== 'object') return null;
 
-    return Object.entries(pedido.pedido).map(([tipo, grupo]) => (
-      <Box key={tipo} sx={{ mt: 1 }}>
-        <Typography variant="subtitle2"><em>{tipo.toUpperCase()}</em></Typography>
+    return Object.entries(pedido.pedido).map(([tipo, grupo]) => {
+      if (!grupo) return null;
 
-        {tipo === 'tartas' ? (
-          Object.keys(grupo).length > 0 ? (
-            Object.entries(grupo).map(([nombre, cantidad]) => (
-              <Typography key={nombre} sx={{ ml: 2 }}>
-                • {normalizarNombre(nombre, tipo)}: {cantidad}
-              </Typography>
-            ))
-          ) : (
-            <Typography sx={{ ml: 2 }} color="text.secondary">
-              (Sin ítems registrados)
-            </Typography>
-          )
-        ) : (
-          typeof grupo === 'object' && Object.entries(grupo).map(([subkey, value]) => (
-            <Box key={subkey} sx={{ ml: 2 }}>
-              <Typography variant="body2">{subkey}</Typography>
-              {value && typeof value === 'object' && Object.keys(value).length > 0 ? (
-                Object.entries(value).map(([nombre, cantidad]) => (
-                  <Typography key={nombre} sx={{ ml: 2 }}>
-                    • {normalizarNombre(nombre, tipo)}: {cantidad}
-                  </Typography>
-                ))
-              ) : (
-                <Typography sx={{ ml: 2 }} color="text.secondary">
-                  (Sin ítems registrados)
+      return (
+        <Box key={tipo} sx={{ mt: 1 }}>
+          <Typography variant="subtitle2"><em>{tipo.toUpperCase()}</em></Typography>
+
+          {tipo === 'tartas' ? (
+            Object.keys(grupo).length > 0 ? (
+              Object.entries(grupo).map(([nombre, cantidad]) => (
+                <Typography key={nombre} sx={{ ml: 2 }}>
+                  • {normalizarNombre(nombre, tipo)}: {cantidad}
                 </Typography>
-              )}
-            </Box>
-          ))
-        )}
-      </Box>
-    ));
+              ))
+            ) : (
+              <Typography sx={{ ml: 2 }} color="text.secondary">
+                (Sin ítems registrados)
+              </Typography>
+            )
+          ) : (
+            typeof grupo === 'object' && Object.entries(grupo).map(([subkey, value]) => {
+              if (!value) return null;
+              return (
+                <Box key={subkey} sx={{ ml: 2 }}>
+                  <Typography variant="body2">{subkey}</Typography>
+                  {typeof value === 'object' && Object.keys(value).length > 0 ? (
+                    Object.entries(value).map(([nombre, cantidad]) => (
+                      <Typography key={nombre} sx={{ ml: 2 }}>
+                        • {normalizarNombre(nombre, tipo)}: {cantidad}
+                      </Typography>
+                    ))
+                  ) : (
+                    <Typography sx={{ ml: 2 }} color="text.secondary">
+                      (Sin ítems registrados)
+                    </Typography>
+                  )}
+                </Box>
+              );
+            })
+          )}
+        </Box>
+      );
+    });
   };
 
   if (cargando) return (
