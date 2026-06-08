@@ -280,9 +280,13 @@ const pedidosFiltrados = res.data
 
     // ✅ PLATOS diarios y extras
     Object.entries(pedido).forEach(([categoria, diasOPlatos]) => {
-      if (categoria === 'tartas') return;
+      if (categoria === 'tartas' || categoria === 'fecha_dia_por_dia') return;
+
+      if (!diasOPlatos || typeof diasOPlatos !== 'object') return;
 
       Object.entries(diasOPlatos).forEach(([dia, platos]) => {
+        if (!platos || typeof platos !== 'object') return;
+
         const key = normalizeDia(dia); // ej: miércoles -> MIERCOLES
 
         if (!resumenTemp[key]) resumenTemp[key] = {};

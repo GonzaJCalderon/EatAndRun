@@ -52,7 +52,8 @@ pedidos.forEach(p => {
 
     // Si no hay fechaStr en la base de datos, la calculamos usando semanaActual
     if (!fechaStr && semanaActual?.lunes) {
-      const idx = diasOrdenados.indexOf(dia.toLowerCase());
+      const normalize = str => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const idx = diasOrdenados.map(normalize).indexOf(normalize(dia));
       if (idx !== -1) {
         fechaStr = dayjs(semanaActual.lunes).add(idx, 'day').toISOString();
       }
@@ -85,7 +86,9 @@ pedidos.forEach(p => {
         {listaPedidos.map(p => {
           const id = p.id || p._id;
           const usuario = p.usuario || {};
-          const nombre = `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim();
+          const nombreRaw = `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim();
+          const empresaNombre = p.empresa_nombre || usuario.empresa_nombre;
+          const nombre = empresaNombre ? `${nombreRaw} (${empresaNombre})` : nombreRaw;
           const platos = p.pedido?.diarios?.[dia] || {};
           const extras = p.pedido?.extras?.[dia] || {};
 
