@@ -159,11 +159,11 @@ const API_BASE = isLocal
       name: '',
       description: '',
       price: '',
-      date: fechaFiltro || new Date().toISOString().split('T')[0],
+      date: '', // Empieza vacío para que no se asigne a ningún día automáticamente
       image_url: '',
-  tipo: 'daily' 
+      tipo: 'daily' 
     };
-    setPlatos((prev) => [...prev, nuevo]);
+    setPlatos((prev) => [nuevo, ...prev]); // Se agrega al principio de la lista
   };
 
   const showSnackbar = (message, severity = 'success') => {
@@ -187,20 +187,23 @@ const API_BASE = isLocal
   const agruparPorFecha = (platosArray) => {
     const grupos = {};
     platosArray.forEach(plato => {
-      const fecha = formatDateForInput(plato.date);
+      const fecha = plato.date ? formatDateForInput(plato.date) : 'UNASSIGNED';
       if (!grupos[fecha]) grupos[fecha] = [];
       grupos[fecha].push(plato);
     });
-    // Ordenar las fechas cronológicamente
-    return Object.keys(grupos).sort().map(key => ({
+    // Ordenar las fechas cronológicamente, pero mantener UNASSIGNED al principio
+    return Object.keys(grupos).sort((a, b) => {
+      if (a === 'UNASSIGNED') return -1;
+      if (b === 'UNASSIGNED') return 1;
+      return a.localeCompare(b);
+    }).map(key => ({
       fecha: key,
       platos: grupos[key]
     }));
   };
 
   const formatearFechaLarga = (fechaStr) => {
-  console.log('🧪 plato.date recibido:', fechaStr);
-
+  if (fechaStr === 'UNASSIGNED') return '🆕 Platos Nuevos (Sin asignar)';
   if (!fechaStr || typeof fechaStr !== 'string') return '📅 Fecha no disponible';
 
   let fecha;
