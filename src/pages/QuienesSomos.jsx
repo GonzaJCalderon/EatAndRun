@@ -28,7 +28,7 @@ const hitos = [
   { año: '2020', titulo: 'Planta propia', descripcion: 'Abrimos nuestra planta en Carrodilla con procesos certificados.' },
   { año: '2021', titulo: 'Asesoramiento nutricional', descripcion: 'Sumamos nutricionistas para armar menús balanceados.' },
   { año: '2022', titulo: 'Crecimiento', descripcion: 'Grandes instituciones comienzan a confiar en Eat & Run.' },
-  { año: '2023', titulo: 'Plataforma online', descripcion: 'Lanzamos pedidos digitales y autogestión para nuestros usuarios.' }
+  { año: '2026', titulo: 'Plataforma online', descripcion: 'Lanzamos pedidos digitales y autogestión para nuestros usuarios.' }
 ];
 
 const Timeline = () => (
@@ -164,7 +164,7 @@ const QuienesSomos = () => {
               <Button
                 variant="outlined"
                 size="large"
-                href="https://wa.me/5492612089456"
+                href="https://wa.me/5492614601788"
                 target="_blank"
                 startIcon={<FaWhatsapp />}
                 sx={{
