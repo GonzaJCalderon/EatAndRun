@@ -176,7 +176,7 @@ const AdminEmpresaDetalle = () => {
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1100, mx: 'auto' }}>
       {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Button variant="outlined" startIcon={<ArrowBack />} onClick={() => navigate('/admin/empresas')}>
           Volver
         </Button>
@@ -188,6 +188,18 @@ const AdminEmpresaDetalle = () => {
           Cerrar sesión
         </Button>
       </Box>
+
+      {/* Guía */}
+      <Alert severity="info" sx={{ mb: 4, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+        <Typography variant="subtitle2" fontWeight="bold" gutterBottom>📖 Guía de Gestión Corporativa:</Typography>
+        <Typography variant="body2" component="div">
+          <ul style={{ margin: 0, paddingLeft: '20px' }}>
+            <li><strong>Responsable:</strong> Al editar su nombre o email en <em>"Datos de la Empresa"</em>, se actualizan sus datos de acceso instantáneamente.</li>
+            <li><strong>Link de Invitación:</strong> Compartilo con la empresa (ej. por WhatsApp) para que sus empleados puedan registrarse solos como parte de este equipo.</li>
+            <li><strong>Pedidos:</strong> Todo lo que pidan los empleados vinculados a esta empresa aparecerá automáticamente agrupado en la tabla inferior.</li>
+          </ul>
+        </Typography>
+      </Alert>
 
       <Grid container spacing={3}>
         {/* Info empresa */}

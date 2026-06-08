@@ -103,7 +103,7 @@ const EmpresasList = () => {
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1200, mx: 'auto' }}>
       {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4} flexWrap="wrap" gap={2}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
         <Button startIcon={<ArrowBack />} variant="outlined" onClick={() => navigate('/admin')}>
           Volver
         </Button>
@@ -116,11 +116,16 @@ const EmpresasList = () => {
         </Button>
       </Box>
 
-      {/* Acciones */}
-      <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
-        <Typography variant="body1" color="text.secondary">
-          Gestioná las empresas registradas, sus responsables y empleados.
+      {/* Guía */}
+      <Alert severity="info" sx={{ mb: 4, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+        <Typography variant="subtitle2" fontWeight="bold" gutterBottom>📖 Guía de uso:</Typography>
+        <Typography variant="body2">
+          Aquí podés dar de alta nuevas empresas clientes. Al crear una empresa, el sistema genera automáticamente un usuario <strong>Responsable</strong> asociado a ese email. Entrá a "Gestionar" para compartirle a la empresa su Link de Invitación, con el cual sus empleados podrán registrarse y cargar pedidos.
         </Typography>
+      </Alert>
+
+      {/* Acciones */}
+      <Box mb={4} display="flex" justifyContent="flex-end" alignItems="center">
         <Button variant="contained" startIcon={<Add />} onClick={() => setOpenCrear(true)} sx={{ borderRadius: 2 }}>
           Nueva Empresa
         </Button>
