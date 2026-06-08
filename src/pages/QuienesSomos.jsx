@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
-import { Box, Typography, Container, Grid, Divider, Paper, Link } from '@mui/material';
+import { Box, Typography, Container, Grid, Button, Paper, Link } from '@mui/material';
 import { motion, useAnimation } from 'framer-motion';
-import { FaLeaf, FaWarehouse, FaUserMd, FaHandshake } from 'react-icons/fa';
+import { FaLeaf, FaWarehouse, FaUserMd, FaHandshake, FaArrowRight } from 'react-icons/fa';
 import InstagramIcon from '@mui/icons-material/Instagram';
+import { useNavigate } from 'react-router-dom';
 
 import empresaImg from '../assets/imgs/empresaImg.png';
 import plantaImg from '../assets/imgs/planta-elaboradora.png';
@@ -23,28 +24,49 @@ import nav from '../assets/logos/nav.jpg';
 const logos = [acsa, allianz, blogo, chitza, sanJorge, goldstein, hidroplas, inap, ciudad, nav];
 
 const hitos = [
-  { año: '2019', titulo: 'Fundación', descripcion: 'Nacemos con el objetivo de llevar salud y sabor a empresas.' },
+  { año: '2019', titulo: 'Fundación', descripcion: 'Nacemos con el objetivo de llevar salud y sabor a tu mesa.' },
   { año: '2020', titulo: 'Planta propia', descripcion: 'Abrimos nuestra planta en Carrodilla con procesos certificados.' },
   { año: '2021', titulo: 'Asesoramiento nutricional', descripcion: 'Sumamos nutricionistas para armar menús balanceados.' },
-  { año: '2022', titulo: 'Crecimiento corporativo', descripcion: 'Grandes empresas comienzan a confiar en Eat & Run.' },
-  { año: '2023', titulo: 'Plataforma online', descripcion: 'Lanzamos pedidos digitales y autogestión para usuarios.' }
+  { año: '2022', titulo: 'Crecimiento', descripcion: 'Grandes instituciones comienzan a confiar en Eat & Run.' },
+  { año: '2023', titulo: 'Plataforma online', descripcion: 'Lanzamos pedidos digitales y autogestión para nuestros usuarios.' }
 ];
 
 const Timeline = () => (
-  <Box sx={{ borderLeft: '4px solid #81c784', pl: 3, mt: 6 }}>
+  <Box sx={{ borderLeft: '4px solid #22c55e', pl: 4, mt: 4, ml: { xs: 2, md: 0 } }}>
     {hitos.map((h, i) => (
       <motion.div
         key={i}
         initial={{ opacity: 0, x: -40 }}
         whileInView={{ opacity: 1, x: 0 }}
-        transition={{ delay: i * 0.2 }}
-        viewport={{ once: true }}
+        transition={{ delay: i * 0.15, duration: 0.5 }}
+        viewport={{ once: true, margin: "-50px" }}
+        style={{ position: 'relative', marginBottom: '3rem' }}
       >
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="overline" color="success.main">{h.año}</Typography>
-          <Typography variant="h6" fontWeight="bold">{h.titulo}</Typography>
-          <Typography variant="body2" color="text.secondary">{h.descripcion}</Typography>
-          <Divider sx={{ mt: 2, opacity: 0.3 }} />
+        <Box 
+          sx={{ 
+            position: 'absolute', 
+            left: '-41px', 
+            top: 0, 
+            width: 18, 
+            height: 18, 
+            borderRadius: '50%', 
+            backgroundColor: '#22c55e',
+            border: '4px solid #f8fcf9'
+          }} 
+        />
+        <Box 
+          sx={{ 
+            backgroundColor: '#ffffff', 
+            p: 3, 
+            borderRadius: 4, 
+            boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+            transition: 'transform 0.3s',
+            '&:hover': { transform: 'translateY(-5px)', boxShadow: '0 8px 30px rgba(34,197,94,0.15)' }
+          }}
+        >
+          <Typography variant="overline" sx={{ color: '#16a34a', fontWeight: 'bold', fontSize: '0.9rem' }}>{h.año}</Typography>
+          <Typography variant="h6" fontWeight="bold" sx={{ color: '#1e293b', mt: 0.5 }}>{h.titulo}</Typography>
+          <Typography variant="body2" sx={{ color: '#64748b', mt: 1, fontSize: '1rem' }}>{h.descripcion}</Typography>
         </Box>
       </motion.div>
     ))}
@@ -52,6 +74,7 @@ const Timeline = () => (
 );
 
 const QuienesSomos = () => {
+  const navigate = useNavigate();
   const controls = useAnimation();
 
   const startScroll = () => {
@@ -75,104 +98,182 @@ const QuienesSomos = () => {
   }, []);
 
   return (
-    <Box sx={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#f8fcf9' }}>
-      {/* Hero */}
+    <Box sx={{ fontFamily: 'Poppins, sans-serif', backgroundColor: '#f8fcf9', minHeight: '100vh', pb: 0 }}>
+      {/* Hero Premium */}
       <Box
         sx={{
-          backgroundImage: `url(${empresaImg})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          height: 320,
+          position: 'relative',
+          height: { xs: '60vh', md: '75vh' },
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          textAlign: 'center',
-          color: '#fff',
-          textShadow: '0 0 15px rgba(0,0,0,0.7)'
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0, left: 0, right: 0, bottom: 0,
+            backgroundImage: `url(${empresaImg})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundAttachment: 'fixed',
+            zIndex: 0,
+          },
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'linear-gradient(to bottom, rgba(15,23,42,0.7), rgba(15,23,42,0.4))',
+            zIndex: 1,
+          }
         }}
       >
-        <Typography variant="h3" fontWeight="bold">¿Quiénes somos?</Typography>
+        <Container sx={{ position: 'relative', zIndex: 2, textAlign: 'center', color: '#fff', px: 2 }}>
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
+            <Typography variant="h2" sx={{ fontWeight: 800, mb: 2, fontSize: { xs: '2.5rem', md: '4.5rem' }, textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+              Eat & Run
+            </Typography>
+            <Typography variant="h5" sx={{ fontWeight: 400, mb: 4, maxWidth: '800px', mx: 'auto', opacity: 0.9, lineHeight: 1.5 }}>
+              Alimentarte bien es quererte mejor. Llevamos menús saludables, frescos y ricos directo a tu mesa.
+            </Typography>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={() => navigate('/registro')}
+              endIcon={<FaArrowRight />}
+              sx={{
+                backgroundColor: '#22c55e',
+                color: 'white',
+                px: 5,
+                py: 2,
+                fontSize: '1.1rem',
+                fontWeight: 'bold',
+                borderRadius: 50,
+                textTransform: 'none',
+                boxShadow: '0 8px 25px rgba(34,197,94,0.4)',
+                '&:hover': {
+                  backgroundColor: '#16a34a',
+                  transform: 'scale(1.05)',
+                  boxShadow: '0 12px 30px rgba(34,197,94,0.6)',
+                },
+                transition: 'all 0.3s'
+              }}
+            >
+              Registrarme Ahora
+            </Button>
+          </motion.div>
+        </Container>
       </Box>
 
-      <Container sx={{ py: 6 }}>
+      <Container sx={{ py: { xs: 8, md: 12 } }}>
         {/* Presentación */}
-        <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 0.8 }} viewport={{ once: true }}>
-          <Typography variant="h5" fontWeight="bold" gutterBottom>
-            <FaLeaf style={{ color: '#66bb6a', marginRight: 8 }} />
-            Comida saludable, rica y profesional
-          </Typography>
-          <Typography variant="body1" color="text.secondary" paragraph>
-            Somos una empresa mendocina que ofrece soluciones gastronómicas a empresas e instituciones. Elaboramos diariamente menús ricos, frescos y saludables.
-          </Typography>
-        </motion.div>
+        <Box sx={{ textAlign: 'center', mb: { xs: 8, md: 12 }, maxWidth: '800px', mx: 'auto' }}>
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} viewport={{ once: true }}>
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#dcfce7', px: 2, py: 1, borderRadius: 50, mb: 3 }}>
+              <FaLeaf style={{ color: '#16a34a', marginRight: 8 }} />
+              <Typography sx={{ color: '#16a34a', fontWeight: 'bold', fontSize: '0.9rem' }}>NUESTRA MISIÓN</Typography>
+            </Box>
+            <Typography variant="h3" sx={{ fontWeight: 800, color: '#1e293b', mb: 3, fontSize: { xs: '2rem', md: '3rem' } }}>
+              Comida saludable, rica y profesional
+            </Typography>
+            <Typography variant="h6" sx={{ color: '#64748b', fontWeight: 400, lineHeight: 1.6 }}>
+              Somos una empresa mendocina dedicada a ofrecer soluciones gastronómicas. Elaboramos diariamente menús frescos y nutritivos, pensando en el bienestar de cada persona.
+            </Typography>
+          </motion.div>
+        </Box>
 
-        {/* Planta */}
-        <Grid container spacing={4} alignItems="center" sx={{ my: 6 }}>
+        {/* Planta Elaboradora */}
+        <Grid container spacing={6} alignItems="center" sx={{ mb: { xs: 10, md: 15 } }}>
           <Grid item xs={12} md={6}>
-            <motion.img
-              src={plantaImg}
-              alt="Planta"
-              style={{ width: '100%', borderRadius: 16 }}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              viewport={{ once: true }}
-            />
+            <motion.div initial={{ opacity: 0, x: -40 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }} viewport={{ once: true }}>
+              <Box sx={{ position: 'relative', borderRadius: 6, overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
+                <Box component="img" src={plantaImg} alt="Planta Elaboradora" sx={{ width: '100%', display: 'block', transition: 'transform 0.5s', '&:hover': { transform: 'scale(1.05)' } }} />
+                <Box sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)', height: '40%' }} />
+              </Box>
+            </motion.div>
           </Grid>
           <Grid item xs={12} md={6}>
-            <Typography variant="h6" fontWeight="bold">
-              <FaWarehouse style={{ marginRight: 8, color: '#66bb6a' }} />
-              Planta elaboradora propia
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              En Luján de Cuyo, equipada con cámaras de frío y logística propia. Nos aseguramos que todo llegue fresco y puntual.
-            </Typography>
+            <motion.div initial={{ opacity: 0, x: 40 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }} viewport={{ once: true }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Box sx={{ backgroundColor: '#f0fdf4', p: 1.5, borderRadius: 3, mr: 2 }}>
+                  <FaWarehouse size={24} color="#22c55e" />
+                </Box>
+                <Typography variant="h4" sx={{ fontWeight: 800, color: '#1e293b' }}>Planta propia</Typography>
+              </Box>
+              <Typography variant="body1" sx={{ color: '#475569', fontSize: '1.1rem', lineHeight: 1.7, mb: 3 }}>
+                Ubicada en Luján de Cuyo, nuestra planta está equipada con tecnología de punta, cámaras de frío y un sistema de logística propia. Controlamos cada paso del proceso para asegurarnos de que todo llegue a tus manos fresco y puntual.
+              </Typography>
+            </motion.div>
           </Grid>
         </Grid>
 
-        {/* Nutrición */}
-        <Grid container spacing={4} alignItems="center" sx={{ my: 6, flexDirection: { xs: 'column-reverse', md: 'row' } }}>
-          <Grid item xs={12} md={6} sx={{ display: 'flex', justifyContent: 'center' }}>
-            <motion.img
-              src={nutricionImg}
-              alt="Nutrición"
-              style={{ width: '100%', maxWidth: '100%', borderRadius: 16 }}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              viewport={{ once: true }}
-            />
+        {/* Supervisión Nutricional */}
+        <Grid container spacing={6} alignItems="center" sx={{ mb: { xs: 10, md: 15 }, flexDirection: { xs: 'column-reverse', md: 'row' } }}>
+          <Grid item xs={12} md={6}>
+            <motion.div initial={{ opacity: 0, x: -40 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }} viewport={{ once: true }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Box sx={{ backgroundColor: '#eff6ff', p: 1.5, borderRadius: 3, mr: 2 }}>
+                  <FaUserMd size={24} color="#3b82f6" />
+                </Box>
+                <Typography variant="h4" sx={{ fontWeight: 800, color: '#1e293b' }}>Supervisión nutricional</Typography>
+              </Box>
+              <Typography variant="body1" sx={{ color: '#475569', fontSize: '1.1rem', lineHeight: 1.7, mb: 3 }}>
+                No solo cocinamos, planificamos. Todos nuestros menús son diseñados y supervisados por profesionales de la nutrición para garantizar un balance perfecto, un aporte calórico ideal y la mejor calidad de ingredientes.
+              </Typography>
+            </motion.div>
           </Grid>
           <Grid item xs={12} md={6}>
-            <Typography variant="h6" fontWeight="bold">
-              <FaUserMd style={{ marginRight: 8, color: '#66bb6a' }} />
-              Supervisión nutricional
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Todos los menús son supervisados por profesionales para asegurar balance y aporte calórico ideal.
-            </Typography>
+            <motion.div initial={{ opacity: 0, x: 40 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }} viewport={{ once: true }}>
+              <Box sx={{ position: 'relative', borderRadius: 6, overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
+                <Box component="img" src={nutricionImg} alt="Nutrición" sx={{ width: '100%', display: 'block', transition: 'transform 0.5s', '&:hover': { transform: 'scale(1.05)' } }} />
+              </Box>
+            </motion.div>
           </Grid>
         </Grid>
 
         {/* Timeline */}
-        <Timeline />
+        <Box sx={{ mb: { xs: 10, md: 15 } }}>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#1e293b', textAlign: 'center', mb: 6 }}>
+            Nuestra Historia
+          </Typography>
+          <Box sx={{ maxWidth: '800px', mx: 'auto' }}>
+            <Timeline />
+          </Box>
+        </Box>
 
         {/* Logos animados */}
-        <Box sx={{ mt: 8, overflow: 'hidden' }}>
-          <Typography variant="h6" fontWeight="bold" textAlign="center" gutterBottom>
-            <FaHandshake style={{ color: '#66bb6a', marginRight: 8 }} />
-            Empresas que confían en nosotros
+        <Box sx={{ overflow: 'hidden', mb: { xs: 8, md: 12 } }}>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#1e293b', textAlign: 'center', mb: 2 }}>
+            Empresas que confían
+          </Typography>
+          <Typography variant="body1" sx={{ color: '#64748b', textAlign: 'center', mb: 6, maxWidth: '600px', mx: 'auto' }}>
+            Acompañamos el día a día de decenas de instituciones y empresas con nuestra gastronomía.
           </Typography>
           <Box
             onMouseEnter={stopScroll}
             onMouseLeave={startScroll}
             sx={{
-              mt: 4,
+              position: 'relative',
               overflow: 'hidden',
               whiteSpace: 'nowrap',
               width: '100%',
               display: 'flex',
               alignItems: 'center',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                left: 0, top: 0, bottom: 0,
+                width: '100px',
+                background: 'linear-gradient(to right, #f8fcf9, transparent)',
+                zIndex: 2,
+              },
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                right: 0, top: 0, bottom: 0,
+                width: '100px',
+                background: 'linear-gradient(to left, #f8fcf9, transparent)',
+                zIndex: 2,
+              }
             }}
           >
             <motion.div
@@ -180,26 +281,33 @@ const QuienesSomos = () => {
               style={{
                 display: 'inline-flex',
                 gap: '40px',
-                padding: '10px 0',
+                padding: '20px 0',
                 alignItems: 'center',
               }}
             >
               {[...logos, ...logos].map((logo, i) => (
                 <Paper
                   key={i}
-                  elevation={2}
+                  elevation={0}
                   sx={{
-                    p: 1,
-                    borderRadius: 2,
+                    p: 2,
+                    borderRadius: 4,
                     backgroundColor: '#fff',
-                    minWidth: 120,
+                    border: '1px solid #e2e8f0',
+                    minWidth: 150,
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    height: 70,
+                    height: 90,
+                    transition: 'all 0.3s',
+                    '&:hover': {
+                      transform: 'scale(1.05)',
+                      boxShadow: '0 10px 25px rgba(0,0,0,0.05)',
+                      borderColor: '#cbd5e1'
+                    }
                   }}
                 >
-                  <img src={logo} alt={`logo-${i}`} style={{ height: 50, objectFit: 'contain' }} />
+                  <img src={logo} alt={`logo-${i}`} style={{ height: 60, maxWidth: 120, objectFit: 'contain' }} />
                 </Paper>
               ))}
             </motion.div>
@@ -207,25 +315,60 @@ const QuienesSomos = () => {
         </Box>
       </Container>
 
-      {/* Footer */}
-      <Box sx={{ textAlign: 'center', py: 4, mt: 6, backgroundColor: '#f1f1f1' }}>
+      {/* CTA Section */}
+      <Box sx={{ backgroundColor: '#1e293b', color: '#fff', py: { xs: 8, md: 10 }, textAlign: 'center' }}>
+        <Container maxWidth="md">
+          <Typography variant="h3" sx={{ fontWeight: 800, mb: 3, fontSize: { xs: '2rem', md: '3rem' } }}>
+            ¿Querés empezar a comer mejor?
+          </Typography>
+          <Typography variant="h6" sx={{ fontWeight: 400, color: '#cbd5e1', mb: 5, lineHeight: 1.6 }}>
+            Sumate a nuestra plataforma, mirá nuestros menús semanales y recibí tu almuerzo listo para disfrutar.
+          </Typography>
+          <Button
+            variant="contained"
+            size="large"
+            onClick={() => navigate('/registro')}
+            sx={{
+              backgroundColor: '#22c55e',
+              color: 'white',
+              px: 6,
+              py: 2,
+              fontSize: '1.2rem',
+              fontWeight: 'bold',
+              borderRadius: 50,
+              textTransform: 'none',
+              boxShadow: '0 8px 25px rgba(34,197,94,0.3)',
+              '&:hover': {
+                backgroundColor: '#16a34a',
+                transform: 'scale(1.05)',
+                boxShadow: '0 12px 30px rgba(34,197,94,0.5)',
+              },
+              transition: 'all 0.3s'
+            }}
+          >
+            Crear mi Cuenta Gratis
+          </Button>
+        </Container>
+      </Box>
+
+      {/* Footer minimalista extra (si querés dejarlo) */}
+      <Box sx={{ textAlign: 'center', py: 4, backgroundColor: '#0f172a' }}>
         <img
           src="/assets/eatandrun-logo.jpg"
           alt="Logo Footer"
-          style={{ width: '60px', borderRadius: '50%', marginBottom: 8 }}
+          style={{ width: '50px', borderRadius: '50%', marginBottom: 12 }}
         />
-        <Typography variant="body2" color="text.secondary" gutterBottom>
+        <Typography variant="body2" sx={{ color: '#94a3b8', mb: 1 }}>
           Eat & Run - Healthy Food 🍃
         </Typography>
-        <Box sx={{ mt: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
-          <InstagramIcon sx={{ color: '#E1306C' }} />
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
+          <InstagramIcon sx={{ color: '#E1306C', fontSize: '1.2rem' }} />
           <Link
             href="https://www.instagram.com/eatandrun.mza/"
             target="_blank"
             rel="noopener noreferrer"
             underline="hover"
-            variant="body2"
-            sx={{ fontWeight: 500, color: 'text.secondary' }}
+            sx={{ fontWeight: 500, color: '#94a3b8', fontSize: '0.9rem', '&:hover': { color: '#fff' } }}
           >
             @eatandrun.mza
           </Link>
