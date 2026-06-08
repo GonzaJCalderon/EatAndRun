@@ -25,7 +25,7 @@ const logos = [acsa, allianz, blogo, chitza, sanJorge, goldstein, hidroplas, ina
 
 const hitos = [
   { año: '2019', titulo: 'Fundación', descripcion: 'Nacemos con el objetivo de llevar salud y sabor a tu mesa.' },
-  { año: '2020', titulo: 'Planta propia', descripcion: 'Abrimos nuestra planta en Carrodilla con procesos certificados.' },
+  { año: '2020', titulo: 'Planta propia', descripcion: 'Abrimos nuestra planta en Paso de los Andes 25, Ciudad, con procesos certificados.' },
   { año: '2021', titulo: 'Asesoramiento nutricional', descripcion: 'Sumamos nutricionistas para armar menús balanceados.' },
   { año: '2022', titulo: 'Crecimiento', descripcion: 'Grandes instituciones comienzan a confiar en Eat & Run.' },
   { año: '2026', titulo: 'Plataforma online', descripcion: 'Lanzamos pedidos digitales y autogestión para nuestros usuarios.' }
@@ -203,7 +203,7 @@ const QuienesSomos = () => {
               Comida saludable, rica y profesional
             </Typography>
             <Typography variant="h6" sx={{ color: '#64748b', fontWeight: 400, lineHeight: 1.6, fontSize: { xs: '1rem', md: '1.1rem' } }}>
-              Somos una empresa mendocina dedicada a ofrecer soluciones gastronómicas. Elaboramos diariamente menús frescos y nutritivos, pensando en el bienestar de cada persona.
+              Somos una empresa mendocina dedicada a ofrecer soluciones gastronómicas. Nuestro objetivo es mejorar la calidad de vida de las personas a través de la alimentación consciente y constante.
             </Typography>
           </motion.div>
         </Box>
@@ -219,7 +219,7 @@ const QuienesSomos = () => {
                 <Typography variant="h4" sx={{ fontWeight: 800, color: '#1e293b' }}>Planta propia</Typography>
               </Box>
               <Typography variant="body1" sx={{ color: '#475569', fontSize: '1.1rem', lineHeight: 1.7, mb: 3 }}>
-                Ubicada en Luján de Cuyo, nuestra planta está equipada con tecnología de punta, cámaras de frío y un sistema de logística propia. Controlamos cada paso del proceso para asegurarnos de que todo llegue a tus manos fresco y puntual.
+                Ubicada en Paso de los Andes 25, Ciudad, nuestra planta está equipada con tecnología de punta, cámaras de frío y un sistema de logística propia. Controlamos cada paso del proceso para asegurarnos de que todo llegue a tus manos fresco y puntual.
               </Typography>
             </motion.div>
           </Box>
