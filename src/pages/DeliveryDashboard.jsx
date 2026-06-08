@@ -125,8 +125,16 @@ useEffect(() => {
       const asignadosRes = await api.get(`/delivery/my-orders${query}`);
       const sinAsignarRes = await api.get('/delivery/unassigned-orders');
 
-      let asignados = asignadosRes.data;
-      let sinAsignar = sinAsignarRes.data;
+      // Filtrar items especiales y eliminar pedidos que queden vacíos
+      let asignados = asignadosRes.data.map(p => ({
+        ...p,
+        items: (p.items || []).filter(i => i.item_type !== 'especial')
+      })).filter(p => p.items.length > 0);
+
+      let sinAsignar = sinAsignarRes.data.map(p => ({
+        ...p,
+        items: (p.items || []).filter(i => i.item_type !== 'especial')
+      })).filter(p => p.items.length > 0);
 
       // Ordenar por fecha_entrega ascendente (los más viejos o los de hoy primero)
       const sortPorFecha = (a, b) => {
@@ -271,7 +279,7 @@ const pedidosCancelados = pedidosAsignados.filter(
       👋 ¡Bienvenido{user?.nombre ? `, ${user.nombre}` : ''}!
     </Typography>
     <Typography variant="subtitle1">
-      Estos son tus pedidos asignados para hoy.
+      Estos son tus pedidos asignados.
     </Typography>
   </Box>
   <Button
@@ -459,11 +467,11 @@ const pedidosCancelados = pedidosAsignados.filter(
 
 
       <Typography variant="h5" gutterBottom sx={{ mt: 5 }}>
-        📥 Pedidos disponibles para hoy ({hoy})
+        📥 Pedidos disponibles sin asignar
       </Typography>
 
       {pedidosSinAsignar.length === 0 ? (
-        <Typography>No hay pedidos disponibles para hoy</Typography>
+        <Typography>No hay pedidos disponibles</Typography>
       ) : (
         pedidosSinAsignar.map(pedido => (
           <Card key={pedido.id} sx={{ mb: 3 }}>
