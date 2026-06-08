@@ -3,10 +3,10 @@ import {
   Box,
   Typography,
   Paper,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
+  Grid,
+  Card,
+  CardContent,
+  CardActions,
   IconButton,
   Button,
   Dialog,
@@ -16,8 +16,12 @@ import {
   TextField,
   CircularProgress,
   Pagination,
+  Avatar,
+  Tooltip,
+  Divider,
+  Chip
 } from '@mui/material';
-import { Delete, Add, ArrowBack, Logout } from '@mui/icons-material';
+import { Delete, Add, ArrowBack, Logout, Business, Edit, Mail, Assignment } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useNavigate } from 'react-router-dom';
 import axios from '../api/api';
@@ -33,7 +37,7 @@ const EmpresasList = () => {
   });
 
   const [pagina, setPagina] = useState(1);
-  const itemsPorPagina = 10;
+  const itemsPorPagina = 9; // 3x3 grid
 
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
@@ -51,13 +55,13 @@ const EmpresasList = () => {
   };
 
   const eliminarEmpresa = async (id) => {
-    if (!window.confirm('¿Estás seguro de eliminar esta empresa?')) return;
+    if (!window.confirm('¿Estás seguro de eliminar esta empresa? Todos sus datos y relaciones se perderán.')) return;
     try {
       await axios.delete(`/admin/empresas/${id}`);
       enqueueSnackbar('✅ Empresa eliminada', { variant: 'success' });
       fetchEmpresas();
     } catch (err) {
-      enqueueSnackbar('❌ No se pudo eliminar', { variant: 'error' });
+      enqueueSnackbar('❌ No se pudo eliminar la empresa', { variant: 'error' });
     }
   };
 
@@ -91,117 +95,171 @@ const EmpresasList = () => {
     navigate('/login');
   };
 
-  const handleVolver = () => navigate('/admin');
-
   useEffect(() => {
     fetchEmpresas();
+    // eslint-disable-next-line
   }, []);
 
   return (
-    <Box p={4}>
-      {/* 🔙 Volver y Logout */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Button startIcon={<ArrowBack />} variant="outlined" onClick={handleVolver}>
+    <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1200, mx: 'auto' }}>
+      {/* Header */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4} flexWrap="wrap" gap={2}>
+        <Button startIcon={<ArrowBack />} variant="outlined" onClick={() => navigate('/admin')}>
           Volver
         </Button>
-        <Typography variant="h4" fontWeight="bold">🏢 Empresas registradas</Typography>
+        <Box display="flex" alignItems="center" gap={1}>
+          <Business sx={{ color: '#6366f1', fontSize: 32 }} />
+          <Typography variant="h4" fontWeight="bold">Directorio de Empresas</Typography>
+        </Box>
         <Button color="error" variant="outlined" startIcon={<Logout />} onClick={handleLogout}>
           Cerrar sesión
         </Button>
       </Box>
 
-      {/* ➕ Crear nueva empresa */}
-      <Box mb={2}>
-        <Button variant="contained" startIcon={<Add />} onClick={() => setOpenCrear(true)}>
+      {/* Acciones */}
+      <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
+        <Typography variant="body1" color="text.secondary">
+          Gestioná las empresas registradas, sus responsables y empleados.
+        </Typography>
+        <Button variant="contained" startIcon={<Add />} onClick={() => setOpenCrear(true)} sx={{ borderRadius: 2 }}>
           Nueva Empresa
         </Button>
       </Box>
 
+      {/* Grid de Empresas */}
       {loading ? (
-        <CircularProgress />
+        <Box display="flex" justifyContent="center" my={5}>
+          <CircularProgress />
+        </Box>
+      ) : empresas.length === 0 ? (
+        <Paper sx={{ p: 5, textAlign: 'center', borderRadius: 3, bgcolor: '#f8fafc' }}>
+          <Business sx={{ fontSize: 60, color: '#cbd5e1', mb: 2 }} />
+          <Typography variant="h6" color="text.secondary">No hay empresas registradas aún</Typography>
+          <Button variant="contained" startIcon={<Add />} onClick={() => setOpenCrear(true)} sx={{ mt: 2 }}>
+            Crear la primera
+          </Button>
+        </Paper>
       ) : (
-        <List>
-          {empresasPaginadas.map((empresa) => (
-            <Paper
-              key={empresa.id}
-              sx={{
-                mb: 2,
-                px: 2,
-                py: 1,
-                transition: 'all 0.3s',
-                cursor: 'pointer',
-                '&:hover': {
-                  backgroundColor: '#e3f2fd',
-                  transform: 'scale(1.01)',
-                }
-              }}
-              elevation={3}
-              onClick={() => navigate(`/admin/empresa/${empresa.id}`)}
-            >
-              <ListItem
-                secondaryAction={
-                  <IconButton edge="end" onClick={(e) => {
-                    e.stopPropagation(); // Para que no haga navigate
-                    eliminarEmpresa(empresa.id);
-                  }}>
-                    <Delete />
-                  </IconButton>
-                }
-              >
-                <ListItemText
-                  primary={empresa.nombre}
-                  secondary={`CUIT: ${empresa.cuit || 'N/A'} | Responsable: ${empresa.responsable_email}`}
-                />
-              </ListItem>
-            </Paper>
-          ))}
-        </List>
+        <>
+          <Grid container spacing={3}>
+            {empresasPaginadas.map((empresa) => (
+              <Grid item xs={12} sm={6} md={4} key={empresa.id}>
+                <Card 
+                  sx={{ 
+                    height: '100%', 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    borderRadius: 3,
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+                    transition: 'transform 0.2s',
+                    '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 8px 25px rgba(0,0,0,0.1)' }
+                  }}
+                >
+                  <CardContent sx={{ flexGrow: 1, pb: 1 }}>
+                    <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
+                      <Avatar sx={{ bgcolor: '#e0e7ff', color: '#4f46e5', width: 48, height: 48, fontWeight: 'bold' }}>
+                        {empresa.nombre.charAt(0).toUpperCase()}
+                      </Avatar>
+                      <Chip 
+                        size="small" 
+                        label={empresa.cuit ? `CUIT: ${empresa.cuit}` : 'Sin CUIT'} 
+                        variant="outlined" 
+                        color={empresa.cuit ? 'primary' : 'default'}
+                      />
+                    </Box>
+                    <Typography variant="h6" fontWeight="bold" gutterBottom noWrap title={empresa.nombre}>
+                      {empresa.nombre}
+                    </Typography>
+                    <Box display="flex" alignItems="center" gap={1} mb={1} color="text.secondary">
+                      <Mail fontSize="small" />
+                      <Typography variant="body2" noWrap title={empresa.responsable_email}>
+                        {empresa.responsable_email}
+                      </Typography>
+                    </Box>
+                  </CardContent>
+                  <Divider />
+                  <CardActions sx={{ justifyContent: 'space-between', px: 2, py: 1.5, bgcolor: '#f8fafc' }}>
+                    <Button 
+                      size="small" 
+                      variant="contained" 
+                      startIcon={<Edit />} 
+                      onClick={() => navigate(`/admin/empresa/${empresa.id}`)}
+                      sx={{ borderRadius: 2 }}
+                      disableElevation
+                    >
+                      Gestionar
+                    </Button>
+                    <Tooltip title="Eliminar empresa">
+                      <IconButton size="small" color="error" onClick={() => eliminarEmpresa(empresa.id)}>
+                        <Delete />
+                      </IconButton>
+                    </Tooltip>
+                  </CardActions>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+
+          {/* PAGINADO */}
+          {empresas.length > itemsPorPagina && (
+            <Box mt={5} display="flex" justifyContent="center">
+              <Pagination
+                count={Math.ceil(empresas.length / itemsPorPagina)}
+                page={pagina}
+                onChange={(e, value) => setPagina(value)}
+                color="primary"
+                size="large"
+                shape="rounded"
+              />
+            </Box>
+          )}
+        </>
       )}
 
-      {/* PAGINADO */}
-      <Box mt={3} display="flex" justifyContent="center">
-        <Pagination
-          count={Math.ceil(empresas.length / itemsPorPagina)}
-          page={pagina}
-          onChange={(e, value) => setPagina(value)}
-          color="primary"
-        />
-      </Box>
-
       {/* MODAL CREAR EMPRESA */}
-      <Dialog open={openCrear} onClose={() => setOpenCrear(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>➕ Crear nueva empresa</DialogTitle>
+      <Dialog open={openCrear} onClose={() => setOpenCrear(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+        <DialogTitle sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Business color="primary" /> 
+          Crear nueva empresa
+        </DialogTitle>
+        <Divider />
         <DialogContent>
+          <Typography variant="body2" color="text.secondary" mb={3}>
+            Al crear una empresa, se generará automáticamente un usuario Responsable con el email provisto.
+          </Typography>
           <TextField
             fullWidth
-            margin="dense"
+            margin="normal"
             name="nombre"
-            label="Nombre de la empresa"
+            label="Razón Social / Nombre de la empresa"
             value={nuevaEmpresa.nombre}
             onChange={handleChange}
+            required
           />
           <TextField
             fullWidth
-            margin="dense"
+            margin="normal"
             name="responsable_email"
             label="Email del responsable"
             type="email"
             value={nuevaEmpresa.responsable_email}
             onChange={handleChange}
+            required
+            helperText="Este email se usará para iniciar sesión como administrador de la empresa."
           />
           <TextField
             fullWidth
-            margin="dense"
+            margin="normal"
             name="cuit"
             label="CUIT (opcional)"
             value={nuevaEmpresa.cuit}
             onChange={handleChange}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenCrear(false)}>Cancelar</Button>
-          <Button variant="contained" onClick={crearEmpresa}>
-            Crear
+        <DialogActions sx={{ p: 3, pt: 0 }}>
+          <Button onClick={() => setOpenCrear(false)} color="inherit">Cancelar</Button>
+          <Button variant="contained" onClick={crearEmpresa} sx={{ borderRadius: 2, px: 3 }}>
+            Crear Empresa
           </Button>
         </DialogActions>
       </Dialog>
