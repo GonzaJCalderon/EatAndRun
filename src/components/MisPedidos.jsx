@@ -77,65 +77,79 @@ const MisPedidos = () => {
     return 'default';
   };
 
-  const renderItems = (pedido) => {
-    if (!pedido.pedido || typeof pedido.pedido !== 'object') return null;
+  const renderItems = (pedidoObj) => {
+    if (!pedidoObj.pedido || typeof pedidoObj.pedido !== 'object') return null;
 
-    const allowedTypes = ['diarios', 'extras', 'tartas'];
+    const { diarios = {}, extras = {}, tartas = {}, FECHA_DIA_POR_DIA = {} } = pedidoObj.pedido;
+
+    const daysSet = new Set([...Object.keys(diarios), ...Object.keys(extras)]);
     
-    return Object.entries(pedido.pedido)
-      .filter(([tipo]) => allowedTypes.includes(tipo.toLowerCase()))
-      .map(([tipo, grupo]) => {
-        if (!grupo) return null;
+    const daysMap = {}; 
 
-        // Prevent rendering empty categories
-        if (tipo === 'tartas') {
-          if (Object.keys(grupo).length === 0) return null;
-        } else {
-          const hasItems = Object.values(grupo).some(val => val && typeof val === 'object' && Object.keys(val).length > 0);
-          if (!hasItems) return null;
-        }
+    daysSet.forEach(dayKey => {
+      const baseDayMatch = dayKey.match(/^(lunes|martes|mi[eé]rcoles|jueves|viernes)/i);
+      const baseDay = baseDayMatch ? baseDayMatch[1].toLowerCase() : dayKey;
 
-        const Icon = tipo === 'tartas' ? '🥧' : tipo === 'extras' ? '🥗' : '🍽️';
-        const Title = tipo.charAt(0).toUpperCase() + tipo.slice(1);
+      if (!daysMap[baseDay]) {
+         daysMap[baseDay] = {
+           displayDate: FECHA_DIA_POR_DIA[baseDay] || dayKey,
+           items: []
+         };
+      }
 
-        return (
-          <Box key={tipo} sx={{ mt: 2 }}>
-            <Typography variant="subtitle2" sx={{ color: '#475569', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}>
-              {Icon} {Title}
+      if (diarios[dayKey] && typeof diarios[dayKey] === 'object') {
+        Object.entries(diarios[dayKey]).forEach(([nombre, cantidad]) => {
+          daysMap[baseDay].items.push({ tipo: 'diarios', nombre, cantidad });
+        });
+      }
+
+      if (extras[dayKey] && typeof extras[dayKey] === 'object') {
+        Object.entries(extras[dayKey]).forEach(([nombre, cantidad]) => {
+          daysMap[baseDay].items.push({ tipo: 'extras', nombre, cantidad });
+        });
+      }
+    });
+
+    const hasTartas = tartas && Object.keys(tartas).length > 0;
+    // sort days by order logic or just use map order (which is usually fine)
+    const daysArray = Object.values(daysMap).filter(d => d.items.length > 0);
+
+    return (
+      <Box sx={{ mt: 2 }}>
+        {daysArray.map((dayData, idx) => (
+          <Box key={idx} sx={{ mb: 2, p: 1.5, backgroundColor: '#f8fafc', borderRadius: 2, borderLeft: '3px solid #3b82f6' }}>
+            <Typography variant="caption" sx={{ fontWeight: 'bold', textTransform: 'uppercase', color: '#1e293b' }}>
+              📅 {dayData.displayDate}
             </Typography>
-
-            {tipo === 'tartas' ? (
-              <Box sx={{ ml: 3, mt: 1 }}>
-                {Object.entries(grupo).map(([nombre, cantidad]) => (
-                  <Typography key={nombre} variant="body2" sx={{ color: '#1e293b', mb: 0.5 }}>
-                    <strong style={{ color: '#22c55e' }}>{cantidad}x</strong> {normalizarNombre(nombre, tipo)}
+            <Box sx={{ mt: 1 }}>
+              {dayData.items.map((item, i) => {
+                const Icon = item.tipo === 'extras' ? '🥗' : '🍽️';
+                return (
+                  <Typography key={i} variant="body2" sx={{ color: '#334155', mb: 0.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {Icon} <span><strong style={{ color: '#22c55e' }}>{item.cantidad}x</strong> {normalizarNombre(item.nombre, item.tipo)}</span>
                   </Typography>
-                ))}
-              </Box>
-            ) : (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 1 }}>
-                {Object.entries(grupo).map(([subkey, value]) => {
-                  if (!value || typeof value !== 'object' || Object.keys(value).length === 0) return null;
-                  return (
-                    <Box key={subkey} sx={{ ml: 3, p: 1.5, backgroundColor: '#f8fafc', borderRadius: 2, borderLeft: '3px solid #e2e8f0' }}>
-                      <Typography variant="caption" sx={{ fontWeight: 'bold', textTransform: 'uppercase', color: '#64748b' }}>
-                        📅 {subkey}
-                      </Typography>
-                      <Box sx={{ mt: 0.5 }}>
-                        {Object.entries(value).map(([nombre, cantidad]) => (
-                          <Typography key={nombre} variant="body2" sx={{ color: '#1e293b', mt: 0.5 }}>
-                            <strong style={{ color: '#22c55e' }}>{cantidad}x</strong> {normalizarNombre(nombre, tipo)}
-                          </Typography>
-                        ))}
-                      </Box>
-                    </Box>
-                  );
-                })}
-              </Box>
-            )}
+                );
+              })}
+            </Box>
           </Box>
-        );
-      });
+        ))}
+
+        {hasTartas && (
+          <Box sx={{ mb: 2, p: 1.5, backgroundColor: '#fff7ed', borderRadius: 2, borderLeft: '3px solid #f97316' }}>
+            <Typography variant="caption" sx={{ fontWeight: 'bold', textTransform: 'uppercase', color: '#1e293b' }}>
+              🥧 Tartas (Toda la semana)
+            </Typography>
+            <Box sx={{ mt: 1 }}>
+              {Object.entries(tartas).map(([nombre, cantidad], i) => (
+                <Typography key={i} variant="body2" sx={{ color: '#334155', mb: 0.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  🥧 <span><strong style={{ color: '#22c55e' }}>{cantidad}x</strong> {normalizarNombre(nombre, 'tartas')}</span>
+                </Typography>
+              ))}
+            </Box>
+          </Box>
+        )}
+      </Box>
+    );
   };
 
   if (cargando) return (
