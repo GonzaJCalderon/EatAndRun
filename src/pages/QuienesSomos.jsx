@@ -209,17 +209,9 @@ const QuienesSomos = () => {
         </Box>
 
         {/* Planta Elaboradora */}
-        <Grid container spacing={6} alignItems="center" sx={{ mb: { xs: 10, md: 15 } }}>
-          <Grid item xs={12} md={6}>
+        <Grid container spacing={6} alignItems="center" sx={{ mb: { xs: 10, md: 15 }, flexDirection: { xs: 'column-reverse', md: 'row' } }}>
+          <Grid item xs={12} md={7}>
             <motion.div initial={{ opacity: 0, x: -40 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }} viewport={{ once: true }}>
-              <Box sx={{ position: 'relative', borderRadius: 6, overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
-                <Box component="img" src={plantaImg} alt="Planta Elaboradora" sx={{ width: '100%', display: 'block', transition: 'transform 0.5s', '&:hover': { transform: 'scale(1.05)' } }} />
-                <Box sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)', height: '40%' }} />
-              </Box>
-            </motion.div>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <motion.div initial={{ opacity: 0, x: 40 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }} viewport={{ once: true }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <Box sx={{ backgroundColor: '#f0fdf4', p: 1.5, borderRadius: 3, mr: 2 }}>
                   <FaWarehouse size={24} color="#22c55e" />
@@ -231,12 +223,27 @@ const QuienesSomos = () => {
               </Typography>
             </motion.div>
           </Grid>
+          <Grid item xs={12} md={5}>
+            <motion.div initial={{ opacity: 0, x: 40 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }} viewport={{ once: true }}>
+              <Box sx={{ position: 'relative', borderRadius: 6, overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.1)', maxWidth: '450px', mx: 'auto' }}>
+                <Box component="img" src={plantaImg} alt="Planta Elaboradora" sx={{ width: '100%', display: 'block', transition: 'transform 0.5s', '&:hover': { transform: 'scale(1.05)' } }} />
+                <Box sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)', height: '40%' }} />
+              </Box>
+            </motion.div>
+          </Grid>
         </Grid>
 
         {/* Supervisión Nutricional */}
-        <Grid container spacing={6} alignItems="center" sx={{ mb: { xs: 10, md: 15 }, flexDirection: { xs: 'column-reverse', md: 'row' } }}>
-          <Grid item xs={12} md={6}>
+        <Grid container spacing={6} alignItems="center" sx={{ mb: { xs: 10, md: 15 } }}>
+          <Grid item xs={12} md={5}>
             <motion.div initial={{ opacity: 0, x: -40 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }} viewport={{ once: true }}>
+              <Box sx={{ position: 'relative', borderRadius: 6, overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.1)', maxWidth: '450px', mx: 'auto' }}>
+                <Box component="img" src={nutricionImg} alt="Nutrición" sx={{ width: '100%', display: 'block', transition: 'transform 0.5s', '&:hover': { transform: 'scale(1.05)' } }} />
+              </Box>
+            </motion.div>
+          </Grid>
+          <Grid item xs={12} md={7}>
+            <motion.div initial={{ opacity: 0, x: 40 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }} viewport={{ once: true }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <Box sx={{ backgroundColor: '#eff6ff', p: 1.5, borderRadius: 3, mr: 2 }}>
                   <FaUserMd size={24} color="#3b82f6" />
@@ -246,13 +253,6 @@ const QuienesSomos = () => {
               <Typography variant="body1" sx={{ color: '#475569', fontSize: '1.1rem', lineHeight: 1.7, mb: 3 }}>
                 No solo cocinamos, planificamos. Todos nuestros menús son diseñados y supervisados por profesionales de la nutrición para garantizar un balance perfecto, un aporte calórico ideal y la mejor calidad de ingredientes.
               </Typography>
-            </motion.div>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <motion.div initial={{ opacity: 0, x: 40 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }} viewport={{ once: true }}>
-              <Box sx={{ position: 'relative', borderRadius: 6, overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
-                <Box component="img" src={nutricionImg} alt="Nutrición" sx={{ width: '100%', display: 'block', transition: 'transform 0.5s', '&:hover': { transform: 'scale(1.05)' } }} />
-              </Box>
             </motion.div>
           </Grid>
         </Grid>
