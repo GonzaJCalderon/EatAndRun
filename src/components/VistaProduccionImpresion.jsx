@@ -26,7 +26,9 @@ const VistaProduccionImpresion = ({ pedidos, resumen, semanaActual }) => {
     <Box className="vista-impresion" sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 6 }}>
       {diasSemana.map((dia, index) => {
         const key = normalizeDia(dia);
-        const dataDia = resumen[key] || {};
+        const resumenKeys = Object.keys(resumen);
+        const realKey = resumenKeys.find(k => k.split(' ')[0] === key) || key;
+        const dataDia = resumen[realKey] || {};
         const fechaDia = lunes.add(index, 'day').format('DD/MM');
         
         if (Object.keys(dataDia).length === 0) return null;
