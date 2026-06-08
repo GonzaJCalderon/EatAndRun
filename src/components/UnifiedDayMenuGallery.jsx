@@ -56,6 +56,28 @@ const UnifiedDayMenuGallery = ({
 
 
 
+  const handleNoDeseaMenuChange = (event) => {
+    if (disabled) return;
+
+    const deseaOmitir = event.target.checked;
+
+    if (deseaOmitir) {
+      onChange({
+        ...selected,
+        noDeseaMenu: {
+          tipo: 'skip',
+          cantidad: 1
+        }
+      });
+    } else {
+      const nuevaSeleccion = { ...selected };
+      delete nuevaSeleccion.noDeseaMenu;
+      onChange(nuevaSeleccion);
+    }
+  };
+
+  const estaOmitido = selected.noDeseaMenu?.tipo === 'skip';
+
   // ✅ Dedupe: fijos
 const fijosSinDuplicados = useMemo(() => {
   const vistos = new Set();
@@ -130,21 +152,38 @@ const fijosSinDuplicados = useMemo(() => {
 
   return (
     <Card variant="outlined" sx={{ p: 2, mb: 4 }}>
-      {especialesSinDuplicados.length > 0 && (
-        <>
-          <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
-            ⭐ Menú especial del día
-          </Typography>
-          {renderGrid(especialesSinDuplicados, true)}
-        </>
-      )}
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={estaOmitido}
+            onChange={handleNoDeseaMenuChange}
+            color="error"
+            disabled={disabled}
+          />
+        }
+        label="❌ No deseo menú este día"
+        sx={{ mb: 2 }}
+      />
 
-      {fijosSinDuplicados.length > 0 && (
+      {!estaOmitido && (
         <>
-          <Typography variant="subtitle1" fontWeight="bold" sx={{ mt: 2, mb: 1 }}>
-            📦 Platos fijos
-          </Typography>
-          {renderGrid(fijosSinDuplicados, false)}
+          {especialesSinDuplicados.length > 0 && (
+            <>
+              <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
+                ⭐ Menú especial del día
+              </Typography>
+              {renderGrid(especialesSinDuplicados, true)}
+            </>
+          )}
+
+          {fijosSinDuplicados.length > 0 && (
+            <>
+              <Typography variant="subtitle1" fontWeight="bold" sx={{ mt: 2, mb: 1 }}>
+                📦 Nuestros Clásicos
+              </Typography>
+              {renderGrid(fijosSinDuplicados, false)}
+            </>
+          )}
         </>
       )}
     </Card>
