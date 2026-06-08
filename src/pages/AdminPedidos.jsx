@@ -125,8 +125,8 @@ const agruparPedidosPorFechaConDetalle = (pedidos) => {
     };
 
     for (const [dia, items] of Object.entries(pedidoObj?.diarios || {})) {
-      const fechaReal = pedidoObj.fecha_dia_por_dia?.[dia.toLowerCase()]
-        || dayjs(p.fecha).startOf('week').add(diaMap[dia.toLowerCase()] - 1, 'day').format('YYYY-MM-DD');
+      const fallbackDate = dayjs(p.fecha ? p.fecha.toString().split('T')[0] : undefined).day(diaMap[dia.toLowerCase()] || 1).format('YYYY-MM-DD');
+      const fechaReal = pedidoObj.fecha_dia_por_dia?.[dia.toLowerCase()] || fallbackDate;
 
       if (!fechaReal || fechaReal === 'Invalid Date') continue;
       const detalle = { ...baseDetalle, platos: [], extras: [], tartas: [] };
@@ -145,7 +145,11 @@ const agruparPedidosPorFechaConDetalle = (pedidos) => {
     if (Object.keys(pedidoObj?.tartas || {}).length > 0) {
       let fechaKey = 'Fecha desconocida';
       try {
-        if (fecha) fechaKey = new Date(fecha).toISOString().slice(0, 10);
+        if (p.fecha_entrega_tartas) {
+           fechaKey = p.fecha_entrega_tartas.toString().split('T')[0];
+        } else if (fecha) {
+           fechaKey = fecha.toString().split('T')[0];
+        }
       } catch (e) { }
       const detalle = { ...baseDetalle, platos: [], extras: [], tartas: [] };
       for (const [tarta, cantidad] of Object.entries(pedidoObj.tartas)) detalle.tartas.push({ nombre: tarta, cantidad });
@@ -165,11 +169,11 @@ const agruparPedidosPorFechaConDetalle = (pedidos) => {
 const formatearFechaBonita = (isoDate) => {
   if (!isoDate || isoDate === 'Fecha desconocida' || isoDate === 'Invalid Date') return '📦 Especiales / Sin Fecha';
   try {
-    const fecha = new Date(isoDate);
-    if (isNaN(fecha.getTime())) return '📦 Especiales / Sin Fecha';
-    return new Intl.DateTimeFormat('es-AR', {
-      weekday: 'long', day: '2-digit', month: '2-digit'
-    }).format(fecha);
+    // Si isoDate es "YYYY-MM-DD", dayjs lo asume como medianoche local y NO lo mueve de día
+    const fecha = dayjs(isoDate);
+    if (!fecha.isValid()) return '📦 Especiales / Sin Fecha';
+    const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
+    return `${capitalize(fecha.format('dddd'))} ${fecha.format('DD-MM')}`;
   } catch (e) {
     return '📦 Especiales / Sin Fecha';
   }
