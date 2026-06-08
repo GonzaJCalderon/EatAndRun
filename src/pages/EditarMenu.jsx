@@ -204,7 +204,7 @@ const endpointBase = isProd
 
   // Crea un plato vacío y lo pone al principio del array
   const agregarPlato = () => {
-    setPlatosMenu(prev => [{ name: '', description: '', price: '', image_url: '', available_days: ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'] }, ...prev]);
+    setPlatosMenu(prev => [{ name: '', description: '', price: '', image_url: '', available_days: ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'] }, ...prev]);
   };
 
   const showSnackbar = (message, severity = 'success') => {
@@ -282,7 +282,7 @@ const endpointBase = isProd
                             Días disponibles:
                           </Typography>
                           <FormGroup row sx={{ gap: 0 }}>
-                            {['lunes', 'martes', 'miércoles', 'jueves', 'viernes'].map(dia => (
+                            {['lunes', 'martes', 'miercoles', 'jueves', 'viernes'].map(dia => (
                               <FormControlLabel
                                 key={dia}
                                 control={
@@ -292,7 +292,7 @@ const endpointBase = isProd
                                     onChange={(e) => {
                                       const currentDays = Array.isArray(plato.available_days) 
                                         ? [...plato.available_days] 
-                                        : ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
+                                        : ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
                                       
                                       let newDays;
                                       if (e.target.checked) {
@@ -304,7 +304,7 @@ const endpointBase = isProd
                                     }}
                                   />
                                 }
-                                label={<Typography variant="caption" sx={{textTransform: 'capitalize'}}>{dia.slice(0,3)}</Typography>}
+                                label={<Typography variant="caption" sx={{textTransform: 'capitalize'}}>{dia === 'miercoles' ? 'Mié' : dia.slice(0,3)}</Typography>}
                                 sx={{ ml: 0, mr: 1 }}
                               />
                             ))}
