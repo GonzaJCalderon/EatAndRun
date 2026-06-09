@@ -64,8 +64,8 @@ const DeliveryDashboard = () => {
           query = `?desde=${hoyStr}&hasta=${hoyStr}`;
         }
 
-        const asignadosRes = await api.get(`/delivery/my-orders${query}`);
-        const sinAsignarRes = await api.get('/delivery/unassigned-orders');
+        const asignadosRes = await api.get(`/delivery/daily-tasks${query}`);
+        const sinAsignarRes = await api.get(`/delivery/daily-tasks/unassigned${query}`);
 
         // Filtrar 'especial' del objeto agrupado si existe, sin depender de p.items que no viene en getPedidosConItems
         const limpiarEspeciales = (p) => {
@@ -80,10 +80,40 @@ const DeliveryDashboard = () => {
           return p;
         };
 
-        let asignados = asignadosRes.data.map(limpiarEspeciales);
-        let sinAsignar = sinAsignarRes.data.map(limpiarEspeciales);
+        const flattenToDailyTasks = (pedidos) => {
+          const tasks = [];
+          pedidos.forEach(p => {
+            const fechasMap = p.pedido?.fecha_dia_por_dia || {};
+            const fechas = Object.values(fechasMap);
+            if (p.pedido?.tarta_fecha) fechas.push(p.pedido.tarta_fecha);
+            
+            let uniqueFechas = [...new Set(fechas)];
+            // Filtrar por el rango actual
+            uniqueFechas = uniqueFechas.filter(f => dayjs(f).isBetween(desdeFecha, hastaFecha, 'day', '[]'));
 
-        const sortPorFecha = (a, b) => dayjs(a.fecha_entrega).diff(dayjs(b.fecha_entrega));
+            if (uniqueFechas.length === 0) {
+              uniqueFechas = [desdeFecha]; // fallback
+            }
+
+            uniqueFechas.forEach(fechaStr => {
+              // Buscar los días (ej: "lunes") que correspondan a esta fechaStr
+              const diasCorrespondientes = Object.keys(fechasMap).filter(k => fechasMap[k] === fechaStr);
+              tasks.push({
+                 ...p,
+                 task_date: fechaStr,
+                 task_status: p.pedido?.daily_status?.[fechaStr] || 'pendiente',
+                 task_dias: diasCorrespondientes,
+                 es_tarta_date: p.pedido?.tarta_fecha === fechaStr
+              });
+            });
+          });
+          return tasks;
+        };
+
+        let asignados = flattenToDailyTasks(asignadosRes.data.map(limpiarEspeciales));
+        let sinAsignar = flattenToDailyTasks(sinAsignarRes.data.map(limpiarEspeciales));
+
+        const sortPorFecha = (a, b) => dayjs(a.task_date).diff(dayjs(b.task_date));
 
         asignados.sort(sortPorFecha);
         sinAsignar.sort(sortPorFecha);
@@ -99,11 +129,26 @@ const DeliveryDashboard = () => {
     fetchData();
   }, [hoy, filtroFecha, desdeFecha, hastaFecha]);
 
-  const cambiarEstado = async (id, nuevoEstado) => {
+  const cambiarEstado = async (id, nuevoEstado, fechaTask) => {
     try {
-      await api.put(`/orders/${id}/status`, { status: nuevoEstado });
-      setPedidosAsignados(prev => prev.map(p => (p.id === id ? { ...p, estado: nuevoEstado } : p)));
-      setMensajeExito(`Pedido #${id} marcado como "${nuevoEstado}"`);
+      const fechaParaActualizar = fechaTask || desdeFecha; // Fallback to current filter if missing
+      await api.put(`/delivery/daily-tasks/${id}/${fechaParaActualizar}/status`, { status: nuevoEstado });
+      setPedidosAsignados(prev => prev.map(p => {
+        if (p.id === id) {
+          return {
+            ...p,
+            pedido: {
+              ...p.pedido,
+              daily_status: {
+                ...(p.pedido?.daily_status || {}),
+                [fechaParaActualizar]: nuevoEstado
+              }
+            }
+          };
+        }
+        return p;
+      }));
+      setMensajeExito(`Entrega marcada como "${nuevoEstado}"`);
       setMostrarSnackbar(true);
     } catch (err) {
       console.error('❌ Error actualizando estado', err);
@@ -129,13 +174,28 @@ const DeliveryDashboard = () => {
       return;
     }
     try {
-      await api.put(`/orders/${pedidoActual.id}/status`, {
+      const fechaParaActualizar = pedidoActual.task_date || desdeFecha;
+      await api.put(`/delivery/daily-tasks/${pedidoActual.id}/${fechaParaActualizar}/status`, {
         status: 'no_entregado',
         motivo: motivoNoEntrega
       });
-      setPedidosAsignados(prev => prev.map(p => p.id === pedidoActual.id ? { ...p, estado: 'no_entregado' } : p));
+      setPedidosAsignados(prev => prev.map(p => {
+        if (p.id === pedidoActual.id) {
+          return {
+            ...p,
+            pedido: {
+              ...p.pedido,
+              daily_status: {
+                ...(p.pedido?.daily_status || {}),
+                [fechaParaActualizar]: 'no_entregado'
+              }
+            }
+          };
+        }
+        return p;
+      }));
       setMostrarSnackbar(true);
-      setMensajeExito(`Pedido #${pedidoActual.id} marcado como no entregado`);
+      setMensajeExito(`Entrega marcada como no entregada`);
       setMostrarModalMotivo(false);
       setMotivoNoEntrega('');
     } catch (err) {
@@ -145,14 +205,27 @@ const DeliveryDashboard = () => {
   };
 
   const renderContenidoPedido = pedido => {
+    const diarios = pedido.pedido?.diarios || {};
+    const extras = pedido.pedido?.extras || {};
+    const tartas = pedido.pedido?.tartas || {};
 
-    const diarios = pedido.pedido?.diarios || pedido.diarios || {};
-    const extras = pedido.pedido?.extras || pedido.extras || {};
-    const tartas = pedido.pedido?.tartas || pedido.tartas || {};
+    const filterByDay = (itemsMap) => {
+      if (!pedido.task_dias || pedido.task_dias.length === 0) return itemsMap;
+      const filtered = {};
+      pedido.task_dias.forEach(diaKey => {
+        // Find matching keys since itemsMap keys might be "lunes 23/10" and diaKey is "lunes"
+        const matchedKeys = Object.keys(itemsMap).filter(k => k.toLowerCase().startsWith(diaKey.toLowerCase()));
+        matchedKeys.forEach(k => { filtered[k] = itemsMap[k]; });
+      });
+      return filtered;
+    };
+
+    const diariosFiltrados = filterByDay(diarios);
+    const extrasFiltrados = filterByDay(extras);
 
     return (
       <Box display="flex" flexDirection="column" gap={1}>
-        {Object.entries(diarios).map(([dia, platos]) => 
+        {Object.entries(diariosFiltrados).map(([dia, platos]) => 
           Object.entries(platos).map(([nombre, cantidad], i) => (
             <Box key={`plato-${dia}-${i}`} display="flex" alignItems="center" gap={1}>
               <Chip size="small" color="primary" label={`${cantidad}x`} sx={{ fontWeight: 'bold' }} />
@@ -161,7 +234,7 @@ const DeliveryDashboard = () => {
             </Box>
           ))
         )}
-        {Object.entries(extras).map(([dia, extrasDia]) => 
+        {Object.entries(extrasFiltrados).map(([dia, extrasDia]) => 
           Object.entries(extrasDia).map(([key, cantidad], i) => {
             const nombre = isNaN(key) ? key : EXTRAS_MAP[Number(key)] || `Extra #${key}`;
             return (
@@ -173,20 +246,23 @@ const DeliveryDashboard = () => {
             );
           })
         )}
-        {Object.entries(tartas).map(([nombre, cantidad], i) => (
+        {pedido.es_tarta_date && Object.entries(tartas).map(([nombre, cantidad], i) => (
           <Box key={`tarta-${i}`} display="flex" alignItems="center" gap={1}>
             <Chip size="small" color="error" label={`${cantidad}x`} sx={{ fontWeight: 'bold' }} />
             <Typography variant="body2" fontWeight="500">{nombre}</Typography>
             <Chip size="small" variant="outlined" label="Tarta" sx={{ ml: 'auto' }} />
           </Box>
         ))}
+        {Object.keys(diariosFiltrados).length === 0 && Object.keys(extrasFiltrados).length === 0 && !pedido.es_tarta_date && (
+          <Typography variant="body2" color="text.secondary">No hay ítems para entregar en esta fecha.</Typography>
+        )}
       </Box>
     );
   };
 
-  const pedidosEntregados = pedidosAsignados.filter(p => p.estado === 'entregado');
-  const pedidosPendientes = pedidosAsignados.filter(p => p.estado !== 'entregado' && p.estado !== 'cancelado' && p.estado !== 'no_entregado');
-  const pedidosCancelados = pedidosAsignados.filter(p => p.estado === 'cancelado' || p.estado === 'no_entregado');
+  const pedidosEntregados = pedidosAsignados.filter(p => p.task_status === 'entregado');
+  const pedidosPendientes = pedidosAsignados.filter(p => p.task_status !== 'entregado' && p.task_status !== 'cancelado' && p.task_status !== 'no_entregado');
+  const pedidosCancelados = pedidosAsignados.filter(p => p.task_status === 'cancelado' || p.task_status === 'no_entregado');
 
   return (
     <Container sx={{ mt: { xs: 2, md: 4 }, pb: 10, maxWidth: '800px !important' }}>
@@ -257,10 +333,10 @@ const DeliveryDashboard = () => {
           {tabIndex === 0 && (
             pedidosPendientes.length === 0 ? <Typography textAlign="center" color="text.secondary">No tenés entregas pendientes hoy</Typography> :
             pedidosPendientes.map(pedido => (
-              <Card key={pedido.id} sx={cardStyle}>
+              <Card key={`${pedido.id}-${pedido.task_date}`} sx={cardStyle}>
                 <Box sx={{ bgcolor: '#f8fafc', p: 2, borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Typography variant="h6" fontWeight="bold">📦 Pedido #{pedido.id}</Typography>
-                  <Chip size="small" color="primary" label={dayjs(pedido.fecha_entrega).format('dddd DD/MM')} sx={{ fontWeight: 'bold', textTransform: 'capitalize' }} />
+                  <Chip size="small" color="primary" label={dayjs(pedido.task_date).format('dddd DD/MM')} sx={{ fontWeight: 'bold', textTransform: 'capitalize' }} />
                 </Box>
                 <CardContent sx={{ p: 3 }}>
                   <Box display="flex" alignItems="center" gap={1} mb={1}>
@@ -294,12 +370,12 @@ const DeliveryDashboard = () => {
                   </Box>
 
                   <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
-                    {pedido.estado !== 'en camino' && (
-                      <Button variant="outlined" startIcon={<LocalShippingIcon />} onClick={() => cambiarEstado(pedido.id, 'en camino')} sx={{ borderRadius: 2, flex: 1, fontWeight: 'bold' }}>
+                    {pedido.task_status !== 'en camino' && (
+                      <Button variant="outlined" startIcon={<LocalShippingIcon />} onClick={() => cambiarEstado(pedido.id, 'en camino', pedido.task_date)} sx={{ borderRadius: 2, flex: 1, fontWeight: 'bold' }}>
                         En camino
                       </Button>
                     )}
-                    <Button variant="contained" color="success" startIcon={<DoneIcon />} onClick={() => cambiarEstado(pedido.id, 'entregado')} sx={{ borderRadius: 2, flex: 1, fontWeight: 'bold', boxShadow: '0 4px 14px rgba(76, 175, 80, 0.4)' }}>
+                    <Button variant="contained" color="success" startIcon={<DoneIcon />} onClick={() => cambiarEstado(pedido.id, 'entregado', pedido.task_date)} sx={{ borderRadius: 2, flex: 1, fontWeight: 'bold', boxShadow: '0 4px 14px rgba(76, 175, 80, 0.4)' }}>
                       Entregado
                     </Button>
                     <Button variant="text" color="error" onClick={() => { setPedidoActual(pedido); setMostrarModalMotivo(true); }} sx={{ fontWeight: 'bold' }}>
@@ -312,9 +388,9 @@ const DeliveryDashboard = () => {
           )}
 
           {tabIndex === 1 && pedidosEntregados.map(pedido => (
-            <Card key={pedido.id} sx={{ mb: 3, bgcolor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 4 }}>
+            <Card key={`${pedido.id}-${pedido.task_date}`} sx={{ mb: 3, bgcolor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 4 }}>
               <CardContent>
-                <Typography variant="h6" color="#166534" fontWeight="bold">✅ Pedido #{pedido.id} (Entregado)</Typography>
+                <Typography variant="h6" color="#166534" fontWeight="bold">✅ Pedido #{pedido.id} ({dayjs(pedido.task_date).format('DD/MM')})</Typography>
                 <Typography mt={1}>👤 {pedido.usuario?.nombre}</Typography>
                 <Typography>📍 {pedido.usuario?.direccion}</Typography>
               </CardContent>
@@ -322,14 +398,14 @@ const DeliveryDashboard = () => {
           ))}
 
           {tabIndex === 2 && pedidosCancelados.map(pedido => (
-            <Card key={pedido.id} sx={{ mb: 3, bgcolor: '#fef2f2', border: '1px solid #fecaca', borderRadius: 4 }}>
+            <Card key={`${pedido.id}-${pedido.task_date}`} sx={{ mb: 3, bgcolor: '#fef2f2', border: '1px solid #fecaca', borderRadius: 4 }}>
               <CardContent>
-                <Typography variant="h6" color="#991b1b" fontWeight="bold">❌ Pedido #{pedido.id} ({pedido.estado})</Typography>
+                <Typography variant="h6" color="#991b1b" fontWeight="bold">❌ Pedido #{pedido.id} ({pedido.task_status}) - {dayjs(pedido.task_date).format('DD/MM')}</Typography>
                 <Typography mt={1}>👤 {pedido.usuario?.nombre}</Typography>
                 <Typography>📍 {pedido.usuario?.direccion}</Typography>
                 <Divider sx={{ my: 1.5 }} />
                 {renderContenidoPedido(pedido)}
-                <Button variant="outlined" color="success" sx={{ mt: 2, borderRadius: 2, fontWeight: 'bold' }} onClick={() => cambiarEstado(pedido.id, 'entregado')}>
+                <Button variant="outlined" color="success" sx={{ mt: 2, borderRadius: 2, fontWeight: 'bold' }} onClick={() => cambiarEstado(pedido.id, 'entregado', pedido.task_date)}>
                   ✅ Marcar como entregado
                 </Button>
               </CardContent>
@@ -347,11 +423,11 @@ const DeliveryDashboard = () => {
         <Alert severity="success" sx={{ borderRadius: 3 }}>¡Todo al día! No hay pedidos sueltos por ahora.</Alert>
       ) : (
         pedidosSinAsignar.map(pedido => (
-          <Card key={pedido.id} sx={{ mb: 3, borderRadius: 4, borderLeft: '6px solid #3b82f6', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+          <Card key={`${pedido.id}-${pedido.task_date}`} sx={{ mb: 3, borderRadius: 4, borderLeft: '6px solid #3b82f6', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
             <CardContent>
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
                 <Typography variant="h6" fontWeight="bold">Pedido #{pedido.id}</Typography>
-                <Chip size="small" color="primary" label={dayjs(pedido.fecha_entrega).format('dddd DD/MM')} sx={{ fontWeight: 'bold', textTransform: 'capitalize' }} />
+                <Chip size="small" color="primary" label={dayjs(pedido.task_date).format('dddd DD/MM')} sx={{ fontWeight: 'bold', textTransform: 'capitalize' }} />
               </Box>
               <Typography>🧍 <strong>Cliente:</strong> {pedido.usuario?.nombre}</Typography>
               <Typography>📍 <strong>Dirección:</strong> {pedido.usuario?.direccion}</Typography>

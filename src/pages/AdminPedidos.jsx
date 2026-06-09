@@ -130,7 +130,8 @@ const agruparPedidosPorFechaConDetalle = (pedidos) => {
       const fechaReal = pedidoObj.fecha_dia_por_dia?.[diaKey] || fallbackDate;
 
       if (!fechaReal || fechaReal === 'Invalid Date') continue;
-      const detalle = { ...baseDetalle, platos: [], extras: [], tartas: [] };
+      const estadoDiario = p.pedido?.daily_status?.[fechaReal] || 'pendiente';
+      const detalle = { ...baseDetalle, estado: estadoDiario, platos: [], extras: [], tartas: [] };
       for (const [plato, cantidad] of Object.entries(items)) detalle.platos.push({ nombre: plato, cantidad });
       addOrMergeDetalle(fechaReal, detalle);
     }
@@ -140,7 +141,8 @@ const agruparPedidosPorFechaConDetalle = (pedidos) => {
       const fallbackDate = dayjs(p.fecha ? p.fecha.toString().split('T')[0] : undefined).day(diaMap[diaKey] || 4).format('YYYY-MM-DD');
       const fechaReal = pedidoObj.fecha_dia_por_dia?.[diaKey] || fallbackDate;
       if (!fechaReal || fechaReal === 'Invalid Date') continue;
-      const detalle = { ...baseDetalle, platos: [], extras: [], tartas: [] };
+      const estadoDiario = p.pedido?.daily_status?.[fechaReal] || 'pendiente';
+      const detalle = { ...baseDetalle, estado: estadoDiario, platos: [], extras: [], tartas: [] };
       for (const [extra, cantidad] of Object.entries(items)) detalle.extras.push({ nombre: extra, cantidad });
       addOrMergeDetalle(fechaReal, detalle);
     }
@@ -148,7 +150,8 @@ const agruparPedidosPorFechaConDetalle = (pedidos) => {
     if (Object.keys(pedidoObj?.tartas || {}).length > 0) {
       // Tartas van a una pestaña fija '__TARTAS__'
       const tartaFecha = pedidoObj.tarta_fecha || p.fecha_entrega_tartas?.toString().split('T')[0] || null;
-      const detalle = { ...baseDetalle, platos: [], extras: [], tartas: [], tartaFecha };
+      const estadoDiario = p.pedido?.daily_status?.[tartaFecha] || 'pendiente';
+      const detalle = { ...baseDetalle, estado: estadoDiario, platos: [], extras: [], tartas: [], tartaFecha };
       for (const [tarta, cantidad] of Object.entries(pedidoObj.tartas)) detalle.tartas.push({ nombre: tarta, cantidad, fecha: tartaFecha });
       addOrMergeDetalle('__TARTAS__', detalle);
     }
@@ -279,11 +282,35 @@ const AdminPedidos = () => {
   const fechasDisponibles = Object.keys(resumenDetallado);
   const historialCompletoAgrupado = agruparPedidosPorFechaConDetalle(pedidos);
 
-  const cambiarEstadoPedido = (ids, estado) => {
+  const cambiarEstadoPedido = (ids, estado, fechaReal) => {
     const idsArray = Array.isArray(ids) ? ids : [ids];
-    Promise.all(idsArray.map(orderId => api.put(`/orders/${orderId}`, { status: estado })))
+    if (!fechaReal || fechaReal === '__TARTAS__' || fechaReal === 'HISTORIAL') {
+        // Fallback to old global status update if no specific date
+        Promise.all(idsArray.map(orderId => api.put(`/orders/${orderId}/status`, { status: estado })))
+          .then(() => {
+            const updated = pedidos.map(p => idsArray.includes(p.id) ? { ...p, estado } : p);
+            setPedidos(updated);
+          });
+        return;
+    }
+
+    Promise.all(idsArray.map(orderId => api.put(`/delivery/daily-tasks/${orderId}/${fechaReal}/status`, { status: estado })))
       .then(() => {
-        const updated = pedidos.map(p => idsArray.includes(p.id) ? { ...p, estado } : p);
+        const updated = pedidos.map(p => {
+          if (idsArray.includes(p.id)) {
+             return {
+               ...p,
+               pedido: {
+                 ...p.pedido,
+                 daily_status: {
+                   ...(p.pedido?.daily_status || {}),
+                   [fechaReal]: estado
+                 }
+               }
+             };
+          }
+          return p;
+        });
         setPedidos(updated);
       });
   };
@@ -450,7 +477,7 @@ const AdminPedidos = () => {
                       <FormControl fullWidth size="small" variant="standard">
                         <Select
                           value={pedido.estado}
-                          onChange={e => cambiarEstadoPedido(pedido.ids, e.target.value)}
+                          onChange={e => cambiarEstadoPedido(pedido.ids, e.target.value, tabDia === '__TARTAS__' ? pedido.tartaFecha : tabDia)}
                           disableUnderline
                           sx={{
                             bgcolor: getEstadoColor(pedido.estado),
