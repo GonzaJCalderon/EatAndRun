@@ -145,24 +145,6 @@ const DeliveryDashboard = () => {
   };
 
   const renderContenidoPedido = pedido => {
-    if (pedido.items && Array.isArray(pedido.items)) {
-      if (pedido.items.length === 0) return <Typography>📭 Sin ítems</Typography>;
-      return (
-        <Box display="flex" flexDirection="column" gap={1}>
-          {pedido.items.map((item, i) => (
-            <Box key={i} display="flex" alignItems="center" gap={1}>
-              <Chip size="small" color={item.item_type === 'extra' ? 'warning' : 'primary'} label={`${item.quantity}x`} sx={{ fontWeight: 'bold' }} />
-              <Typography variant="body2" fontWeight="500">
-                {item.item_name || item.item_id}
-              </Typography>
-              {item.dia && item.dia !== 'sin_dia' && (
-                <Chip size="small" variant="outlined" label={item.dia} sx={{ ml: 'auto' }} />
-              )}
-            </Box>
-          ))}
-        </Box>
-      );
-    }
 
     const diarios = pedido.pedido?.diarios || pedido.diarios || {};
     const extras = pedido.pedido?.extras || pedido.extras || {};
