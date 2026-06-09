@@ -193,7 +193,7 @@ const AdminPedidos = () => {
   const [busqueda, setBusqueda] = useState('');
   const [semanaActiva, setSemanaActiva] = useState(null);
   const [tabDia, setTabDia] = useState('');
-  const [opcionesDelivery, setOpcionesDelivery] = useState({});
+  const [deliveries, setDeliveries] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [comprobanteUrl, setComprobanteUrl] = useState(null);
   const [filtroDesde, setFiltroDesde] = useState(null);
@@ -220,6 +220,11 @@ const AdminPedidos = () => {
         dict[`${p.id}`] = p.name;
       });
       setDictPlatos(dict);
+    }).catch(() => {});
+
+    // Cargar todos los deliveries disponibles
+    api.get('/deliveries/search?q=').then(res => {
+      setDeliveries(res.data || []);
     }).catch(() => {});
   }, []);
 
@@ -422,17 +427,22 @@ const AdminPedidos = () => {
                           </Button>
                         </Box>
                       ) : (
-                        <Autocomplete
-                          freeSolo size="small"
-                          onInputChange={async (e, value) => {
-                            const res = await api.get('/deliveries/search?q=' + value);
-                            setOpcionesDelivery(prev => ({ ...prev, [pedido.ids[0]]: res.data }));
-                          }}
-                          onChange={(e, selected) => { if (selected) asignarDelivery(pedido.ids, selected); }}
-                          options={opcionesDelivery[pedido.ids[0]] || []}
-                          getOptionLabel={(option) => typeof option === 'string' ? option : `${option.name}`}
-                          renderInput={(params) => <TextField {...params} label="Asignar..." variant="standard" />}
-                        />
+                        <FormControl fullWidth size="small" variant="standard">
+                          <Select
+                            displayEmpty
+                            value={pedido.delivery?.id || ''}
+                            onChange={(e) => {
+                              const selected = deliveries.find(d => d.id === e.target.value);
+                              if (selected) asignarDelivery(pedido.ids, selected);
+                            }}
+                            sx={{ fontSize: '0.85rem' }}
+                          >
+                            <MenuItem value="" disabled>Asignar...</MenuItem>
+                            {deliveries.map(d => (
+                              <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
                       )}
                     </TableCell>
 
