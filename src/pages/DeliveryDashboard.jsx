@@ -137,6 +137,7 @@ const DeliveryDashboard = () => {
         if (p.id === id) {
           return {
             ...p,
+            task_status: p.task_date === fechaParaActualizar ? nuevoEstado : p.task_status,
             pedido: {
               ...p.pedido,
               daily_status: {
@@ -183,6 +184,7 @@ const DeliveryDashboard = () => {
         if (p.id === pedidoActual.id) {
           return {
             ...p,
+            task_status: p.task_date === fechaParaActualizar ? 'no_entregado' : p.task_status,
             pedido: {
               ...p.pedido,
               daily_status: {
