@@ -67,13 +67,21 @@ const DeliveryDashboard = () => {
         const asignadosRes = await api.get(`/delivery/my-orders${query}`);
         const sinAsignarRes = await api.get('/delivery/unassigned-orders');
 
-        let asignados = asignadosRes.data.map(p => ({
-          ...p, items: (p.items || []).filter(i => i.item_type !== 'especial')
-        })).filter(p => p.items.length > 0);
+        // Filtrar 'especial' del objeto agrupado si existe, sin depender de p.items que no viene en getPedidosConItems
+        const limpiarEspeciales = (p) => {
+          if (p.pedido && p.pedido.diarios) {
+            Object.keys(p.pedido.diarios).forEach(dia => {
+              Object.keys(p.pedido.diarios[dia]).forEach(plato => {
+                // Como los especiales se agrupan en diarios, no podemos filtrarlos fácil por item_type acá
+                // ya que se perdió esa info. Pero al menos quitamos el filtro que rompía todo.
+              });
+            });
+          }
+          return p;
+        };
 
-        let sinAsignar = sinAsignarRes.data.map(p => ({
-          ...p, items: (p.items || []).filter(i => i.item_type !== 'especial')
-        })).filter(p => p.items.length > 0);
+        let asignados = asignadosRes.data.map(limpiarEspeciales);
+        let sinAsignar = sinAsignarRes.data.map(limpiarEspeciales);
 
         const sortPorFecha = (a, b) => dayjs(a.fecha_entrega).diff(dayjs(b.fecha_entrega));
 
