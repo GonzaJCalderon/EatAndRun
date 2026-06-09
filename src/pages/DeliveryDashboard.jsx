@@ -304,11 +304,15 @@ const DeliveryDashboard = () => {
             } else if (value === 'hoy') {
               setDesdeFecha(hoy.format('YYYY-MM-DD'));
               setHastaFecha(hoy.format('YYYY-MM-DD'));
+            } else if (value === 'historial') {
+              setDesdeFecha('2024-01-01');
+              setHastaFecha(hoy.format('YYYY-MM-DD'));
             }
           }} size="small" sx={{ minWidth: 150, bgcolor: 'white', borderRadius: 2 }}>
             <MenuItem value="hoy">📅 Hoy</MenuItem>
             <MenuItem value="semana_actual">🗓️ Semana actual</MenuItem>
             <MenuItem value="semana_pasada">📆 Semana pasada</MenuItem>
+            <MenuItem value="historial">📜 Historial completo</MenuItem>
             <MenuItem value="personalizado">⚙️ Personalizado</MenuItem>
           </Select>
           {filtroFecha === 'personalizado' && (
