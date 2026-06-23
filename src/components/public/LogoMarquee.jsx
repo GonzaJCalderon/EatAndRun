@@ -36,7 +36,7 @@ export default function LogoMarquee() {
         <div className="lmarquee__track">
           {track.map((logo, i) => (
             <div className="lmarquee__item" key={i}>
-              <img src={logo.src} alt={logo.alt}  decoding="async" loading="lazy" />
+              <img />
             </div>
           ))}
         </div>

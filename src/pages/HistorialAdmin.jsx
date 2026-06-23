@@ -214,16 +214,7 @@ const HistorialAdmin = () => {
                 {p.comprobanteUrl && (
                   <Box sx={{ mt: 2 }}>
                     <Typography variant="subtitle2" fontWeight="bold">📎 Comprobante:</Typography>
-                    <img
-                      src={p.comprobanteUrl}
-                      alt="Comprobante"
-                      style={{
-                        maxWidth: '100%',
-                        maxHeight: 200,
-                        borderRadius: 6,
-                        marginTop: 8
-                      }}
-                     decoding="async" loading="lazy" />
+                    <img />
                     <a
                       href={p.comprobanteUrl}
                       target="_blank"

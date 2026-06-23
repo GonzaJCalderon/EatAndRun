@@ -214,7 +214,7 @@ const AdminTartas = () => {
           </Button>
           {form.img && (
             <Box sx={{ mt: 2 }}>
-              <img src={form.img} alt="Preview" style={{ width: '100%', maxHeight: 200, objectFit: 'cover', borderRadius: 8 }}  decoding="async" loading="lazy" />
+              <img />
               <Button onClick={handleEliminarImagen} variant="outlined" color="error" size="small" sx={{ mt: 1 }}>
                 🗑️ Quitar imagen
               </Button>

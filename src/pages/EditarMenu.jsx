@@ -319,11 +319,7 @@ const endpointBase = isProd
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1, mb: 1 }}>
                           {plato.image_url ? (
                             <>
-                              <img
-                                src={plato.image_url}
-                                alt="plato"
-                                style={{ width: 60, height: 60, borderRadius: 6, objectFit: 'cover' }}
-                               decoding="async" loading="lazy" />
+                              <img />
                               <Tooltip title="Quitar imagen">
                                 <IconButton size="small" color="error" onClick={() => handleQuitarImagen(index)}>
                                   <DeleteIcon fontSize="small" />
