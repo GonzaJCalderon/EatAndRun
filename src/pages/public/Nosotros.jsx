@@ -80,7 +80,7 @@ export default function Nosotros() {
               </p>
             </div>
             <div className="nos-img-wrap">
-              <img src="/fotos/cocina.png" alt="Nuestra filosofía" />
+              <img src="/fotos/cocina.png" alt="Nuestra filosofía" loading="lazy" />
             </div>
           </div>
         </div>
