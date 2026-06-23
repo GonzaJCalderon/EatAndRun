@@ -180,7 +180,7 @@ export default function Home() {
       {/* ── Testimonios ── */}
       <section className="home-testi">
         <div className="home-testi__inner">
-          <span className="section-label">Lo que dicen</span>
+
           <h2 className="section-title">Testimonios</h2>
           <div className="home-testi__list">
             {[
