@@ -51,7 +51,11 @@ const ListaPlatos = ({
                   <Grid container spacing={2}>
                     <Grid item xs={12} md={3}>
                       {plato.image_url && (
-                        <img />
+                        <img
+                          src={plato.image_url}
+                          alt={plato.name}
+                          style={{ width: '100%', height: 100, objectFit: 'cover', borderRadius: 8 }}
+                         decoding="async" loading="lazy" />
                       )}
                     </Grid>
                     <Grid item xs={12} md={6}>

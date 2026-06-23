@@ -7,10 +7,10 @@ const LogoAnimado = () => {
     <Wrapper>
       <div className="coin">
         <div className="side front">
-          <img />
+          <img src=" assets/eatandrun-logo.jpg" alt="Eat and Run Logo" / decoding="async" loading="lazy" />
         </div>
         <div className="side back">
-          <img />
+          <img src=" assets/eatandrun-logo.jpg" alt="Eat and Run Logo Back" / decoding="async" loading="lazy" />
         </div>
       </div>
     </Wrapper>

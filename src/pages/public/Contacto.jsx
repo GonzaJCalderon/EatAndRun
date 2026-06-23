@@ -51,7 +51,7 @@ export default function Contacto() {
 
       {/* Hero */}
       <section className="page-hero">
-        <img />
+        <img src=" fotos/Principal2.png" alt="Contacto" className="page-hero__img" / decoding="async" />
         <div className="page-hero__overlay" />
         <div className="page-hero__content">
           <span className="page-hero__tag"><IcoContacto size={14} /> Contacto</span>

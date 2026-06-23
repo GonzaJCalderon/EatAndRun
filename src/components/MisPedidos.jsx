@@ -329,7 +329,7 @@ const MisPedidos = () => {
                       <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase' }}>Comprobante de pago:</Typography>
                       {p.comprobante_url ? (
                         <Box sx={{ mt: 1, borderRadius: 2, overflow: 'hidden', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'center', backgroundColor: '#f1f5f9' }}>
-                           <img />
+                           <img src={p.comprobante_url} alt="Comprobante" style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }}  decoding="async" loading="lazy" />
                         </Box>
                       ) : (
                         <Typography variant="body2" sx={{ color: '#94a3b8', fontStyle: 'italic', mt: 0.5 }}>No hay comprobante adjunto.</Typography>

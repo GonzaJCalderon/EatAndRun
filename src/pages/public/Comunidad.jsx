@@ -20,7 +20,7 @@ export default function Comunidad() {
 
       {/* Hero */}
       <section className="page-hero">
-        <img />
+        <img src=" fotos/comunidad.png" alt="Comunidad" className="page-hero__img" / decoding="async" />
         <div className="page-hero__overlay" />
         <div className="page-hero__content">
           <span className="page-hero__tag">
@@ -74,7 +74,7 @@ export default function Comunidad() {
               </div>
             </div>
             <div className="com-img-wrap">
-              <img />
+              <img src=" assets/comunidad.png" alt="Comunidad eat & run" / decoding="async" loading="lazy" />
             </div>
           </div>
         </div>
