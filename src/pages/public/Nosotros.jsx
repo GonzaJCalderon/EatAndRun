@@ -31,6 +31,8 @@ export default function Nosotros() {
           alt="Nosotros" 
           className="page-hero__img"
           fetchpriority="high"
+          loading="eager"
+          decoding="async"
         />
         <div className="page-hero__overlay" />
         <div className="page-hero__content">

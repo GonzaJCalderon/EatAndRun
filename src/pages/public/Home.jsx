@@ -110,6 +110,8 @@ export default function Home() {
           alt="Eat & Run — alimentación semanal" 
           className="home-hero__bg" 
           fetchpriority="high"
+          loading="eager"
+          decoding="async"
         />
         <div className="home-hero__overlay" />
         <div className="home-hero__content">
