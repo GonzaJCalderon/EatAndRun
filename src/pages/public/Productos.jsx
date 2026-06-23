@@ -31,7 +31,7 @@ export default function Productos() {
 
       {/* Hero */}
       <section className="page-hero">
-        <img src=" fotos/granola.png" alt="Productos" className="page-hero__img" / decoding="async" />
+        <img src="/fotos/granola.png" alt="Productos" className="page-hero__img" decoding="async" />
         <div className="page-hero__overlay" />
         <div className="page-hero__content">
           <span className="page-hero__tag"><IcoProductos size={14} /> Productos</span>

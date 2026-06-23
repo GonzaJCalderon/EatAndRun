@@ -106,7 +106,7 @@ export default function Home() {
       {/* ── Hero ── */}
       <section className="home-hero">
         <img 
-          src=" fotos/sin-frase.webp" 
+          src="/fotos/sin-frase.webp" 
           alt="Eat & Run — alimentación semanal" 
           className="home-hero__bg" 
           fetchPriority="high"

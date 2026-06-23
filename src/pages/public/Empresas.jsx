@@ -13,7 +13,7 @@ export default function Empresas() {
 
       {/* Hero */}
       <section className="page-hero">
-        <img src=" fotos/empresas2.png" alt="Empresas" className="page-hero__img" / decoding="async" />
+        <img src="/fotos/empresas2.png" alt="Empresas" className="page-hero__img" decoding="async" />
         <div className="page-hero__overlay" />
         <div className="page-hero__content">
           <span className="page-hero__tag"><IcoEmpresas size={14} /> Empresas</span>
@@ -35,7 +35,7 @@ export default function Empresas() {
             </a>
           </div>
           <div className="emp-img-wrap">
-            <img src=" fotos/Principal2.png" alt="Menús corporativos" / decoding="async" loading="lazy" />
+            <img src="/fotos/Principal2.png" alt="Menús corporativos" decoding="async" loading="lazy" />
           </div>
         </div>
       </section>
@@ -54,7 +54,7 @@ export default function Empresas() {
               </a>
             </div>
             <div className="emp-img-wrap">
-              <img src=" fotos/disfruta.png" alt="Sandwiches para eventos" / decoding="async" loading="lazy" />
+              <img src="/fotos/disfruta.png" alt="Sandwiches para eventos" decoding="async" loading="lazy" />
             </div>
           </div>
         </div>

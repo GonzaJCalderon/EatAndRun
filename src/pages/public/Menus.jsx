@@ -35,7 +35,7 @@ export default function Menus() {
 
       {/* Hero */}
       <section className="page-hero">
-        <img src=" fotos/menus.png" alt="Menús Saludables" className="page-hero__img" / decoding="async" />
+        <img src="/fotos/menus.png" alt="Menús Saludables" className="page-hero__img" decoding="async" />
         <div className="page-hero__overlay" />
         <div className="page-hero__content">
           <span className="page-hero__tag"><IcoMenus size={14} /> Menús Saludables</span>
@@ -61,7 +61,7 @@ export default function Menus() {
             </div>
           </div>
           <div className="menus-img-wrap">
-            <img src=" fotos/disfruta.png" alt="Menú semanal" / decoding="async" loading="lazy" />
+            <img src="/fotos/disfruta.png" alt="Menú semanal" decoding="async" loading="lazy" />
           </div>
         </div>
       </section>
