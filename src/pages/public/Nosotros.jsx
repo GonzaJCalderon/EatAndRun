@@ -88,11 +88,13 @@ export default function Nosotros() {
 
       {/* Equipo */}
       <section className="pub-section">
-        <p className="section-label" style={{ textAlign: 'center' }}>Las personas detrás</p>
-        <h2 className="section-title" style={{ textAlign: 'center' }}>Nuestro equipo</h2>
-        <p className="section-body" style={{ textAlign: 'center', margin: '0 auto 48px' }}>
-          Un equipo comprometido con tu bienestar y con la calidad de cada plato.
-        </p>
+        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+          <p className="section-label">Las personas detrás</p>
+          <h2 className="section-title">Nuestro equipo</h2>
+          <p className="section-body" style={{ margin: '0 auto' }}>
+            Un equipo comprometido con tu bienestar y con la calidad de cada plato.
+          </p>
+        </div>
         <div className="nos-team">
           {TEAM.map((m, i) => (
             <div className="nos-team-card" key={i}>
