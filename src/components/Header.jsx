@@ -55,7 +55,7 @@ const Header = () => {
               alt="Logo"
               style={{ height: 40, borderRadius: '50%', marginRight: 8 }}
             decoding="async" loading="lazy" />
-            <Typography variant="h6" fontWeight="bold">Eat & Run</Typography>
+
           </Box>
 
           {/* Botones Desktop */}
