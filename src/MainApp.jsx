@@ -45,7 +45,7 @@ import CopyText from './components/CopyText';
 
 import api from './api/api';
 
-const logo = '/assets/eatandrun-logo.jpg';
+
 
 
 const mapearRoleIdANombre = (roleId) => {

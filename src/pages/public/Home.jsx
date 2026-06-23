@@ -116,8 +116,10 @@ export default function Home() {
         <div className="home-hero__overlay" />
         <div className="home-hero__content">
           <h1 className="home-hero__title" style={{ color: '#1e3a1f', fontWeight: 800 }}>
-            Tu alimentación<br />
-            semanal, resuelta.
+            Tu<br />
+            alimentación<br />
+            semanal,<br />
+            resuelta.
           </h1>
           <p className="home-hero__sub" style={{ color: '#1e3a1f', fontWeight: 500, fontSize: '1.2rem', marginBottom: '10px' }}>
             Menús saludables listos<br />

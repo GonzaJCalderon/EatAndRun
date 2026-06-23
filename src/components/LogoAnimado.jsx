@@ -6,11 +6,11 @@ const LogoAnimado = () => {
   return (
     <Wrapper>
       <div className="coin">
-        <div className="side front">
-          <img src="/assets/eatandrun-logo.jpg" alt="Eat and Run Logo" decoding="async" loading="lazy" />
+        <div className="side front" style={{ background: '#4a7c42', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ color: '#fff', fontWeight: 800, fontSize: '1.2rem', fontFamily: 'Inter, sans-serif' }}>eat<b>&amp;</b>run</span>
         </div>
-        <div className="side back">
-          <img src="/assets/eatandrun-logo.jpg" alt="Eat and Run Logo Back" decoding="async" loading="lazy" />
+        <div className="side back" style={{ background: '#4a7c42', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ color: '#fff', fontWeight: 800, fontSize: '1.2rem', fontFamily: 'Inter, sans-serif' }}>eat<b>&amp;</b>run</span>
         </div>
       </div>
     </Wrapper>

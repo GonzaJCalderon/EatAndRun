@@ -50,12 +50,9 @@ const Header = () => {
         <Toolbar sx={{ justifyContent: 'space-between' }}>
           {/* Logo */}
           <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => navigate('/')}>
-            <img
-              src="/assets/eatandrun-logo.jpg"
-              alt="Logo"
-              style={{ height: 40, borderRadius: '50%', marginRight: 8 }}
-            decoding="async" loading="lazy" />
-
+            <Typography variant="h6" component="span" sx={{ fontWeight: 700, fontFamily: 'Inter, sans-serif', color: '#fff' }}>
+              eat<b style={{ fontWeight: 900 }}>&amp;</b>run
+            </Typography>
           </Box>
 
           {/* Botones Desktop */}

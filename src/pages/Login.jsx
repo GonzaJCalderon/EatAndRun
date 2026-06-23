@@ -69,7 +69,7 @@ const Login = () => {
     }
   };
 
-  const bgImage = 'https://res.cloudinary.com/dwiga4jg8/image/upload/w_1600,q_auto,f_auto/Fondo_APLICACION_EAR_1_nxvzab.png';
+  const bgImage = '/fotos/elegi.webp';
 
   return (
     <>

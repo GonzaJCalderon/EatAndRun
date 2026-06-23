@@ -13,7 +13,6 @@ export default function PublicFooter() {
 
         {/* Brand */}
         <div className="pfooter__brand">
-          <img src={logo} alt="Eat & Run"  decoding="async" loading="lazy" />
           <span className="pfooter__name">eat<b>&amp;</b>run</span>
           <p className="pfooter__tagline">Tu alimentación semanal, resuelta.</p>
           <div className="pfooter__socials">
