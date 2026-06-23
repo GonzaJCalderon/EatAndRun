@@ -223,7 +223,7 @@ const HistorialAdmin = () => {
                         borderRadius: 6,
                         marginTop: 8
                       }}
-                    / decoding="async" loading="lazy">
+                     decoding="async" loading="lazy" />
                     <a
                       href={p.comprobanteUrl}
                       target="_blank"

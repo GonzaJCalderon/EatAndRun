@@ -106,13 +106,13 @@ export default function Home() {
       {/* ── Hero ── */}
       <section className="home-hero">
         <img 
-          src="/fotos/sin-frase.webp" 
+          src=" fotos/sin-frase.webp" 
           alt="Eat & Run — alimentación semanal" 
           className="home-hero__bg" 
           fetchPriority="high"
           loading="eager"
           decoding="async"
-        />
+        / />
         <div className="home-hero__overlay" />
         <div className="home-hero__content">
           <h2 className="home-hero__badge" style={{ margin: 0, fontWeight: 500, fontSize: '0.9rem' }}>
@@ -148,7 +148,7 @@ export default function Home() {
 
             {/* Card destacada — Menús */}
             <Link to={featured.path} className="home-feat">
-              <img src={featured.img} alt={featured.title} className="home-feat__img" loading="lazy" / decoding="async">
+              <img src={featured.img} alt={featured.title} className="home-feat__img" loading="lazy"  decoding="async" />
               <div className="home-feat__overlay" />
               <div className="home-feat__body">
                 <span className="home-feat__tag">{featured.tag}</span>

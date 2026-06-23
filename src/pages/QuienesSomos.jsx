@@ -334,7 +334,7 @@ const QuienesSomos = () => {
                     }
                   }}
                 >
-                  <img src={logo} alt={`logo-${i}`} style={{ height: 60, maxWidth: 120, objectFit: 'contain' }} / decoding="async" loading="lazy">
+                  <img src={logo} alt={`logo-${i}`} style={{ height: 60, maxWidth: 120, objectFit: 'contain' }}  decoding="async" loading="lazy" />
                 </Paper>
               ))}
             </motion.div>
@@ -381,10 +381,10 @@ const QuienesSomos = () => {
       {/* Footer minimalista extra (si querés dejarlo) */}
       <Box sx={{ textAlign: 'center', py: 4, backgroundColor: '#0f172a' }}>
         <img
-          src="/assets/eatandrun-logo.jpg"
+          src=" assets/eatandrun-logo.jpg"
           alt="Logo Footer"
           style={{ width: '50px', borderRadius: '50%', marginBottom: 12 }}
-        / decoding="async" loading="lazy">
+        / decoding="async" loading="lazy" />
         <Typography variant="body2" sx={{ color: '#94a3b8', mb: 1 }}>
           Eat & Run - Healthy Food 🍃
         </Typography>

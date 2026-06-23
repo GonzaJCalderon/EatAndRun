@@ -141,7 +141,7 @@ const VerMenuDelDia = () => {
                           objectFit: 'cover',
                           borderRadius: 8
                         }}
-                      / decoding="async" loading="lazy">
+                       decoding="async" loading="lazy" />
                     ) : (
                       <Box sx={{ width: '100%', height: 120, backgroundColor: '#eee', borderRadius: 2 }} />
                     )}

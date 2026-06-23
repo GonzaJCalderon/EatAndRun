@@ -27,13 +27,13 @@ export default function Nosotros() {
       {/* Hero */}
       <section className="page-hero">
         <img 
-          src="/fotos/actividad.webp" 
+          src=" fotos/actividad.webp" 
           alt="Nosotros" 
           className="page-hero__img"
           fetchPriority="high"
           loading="eager"
           decoding="async"
-        />
+        / />
         <div className="page-hero__overlay" />
         <div className="page-hero__content">
           <span className="page-hero__tag"><IcoNosotros size={14} /> Nosotros</span>
@@ -63,7 +63,7 @@ export default function Nosotros() {
             </p>
           </div>
           <div className="nos-img-wrap">
-            <img src="/fotos/actividad.png" alt="Nuestra historia" / decoding="async" loading="lazy">
+            <img src=" fotos/actividad.png" alt="Nuestra historia" / decoding="async" loading="lazy" />
           </div>
         </div>
       </section>
@@ -87,7 +87,7 @@ export default function Nosotros() {
               </p>
             </div>
             <div className="nos-img-wrap">
-              <img src="/fotos/cocina.png" alt="Nuestra filosofía" loading="lazy" / decoding="async">
+              <img src=" fotos/cocina.png" alt="Nuestra filosofía" loading="lazy" / decoding="async" />
             </div>
           </div>
         </div>

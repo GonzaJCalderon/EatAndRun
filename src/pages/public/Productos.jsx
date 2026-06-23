@@ -31,7 +31,7 @@ export default function Productos() {
 
       {/* Hero */}
       <section className="page-hero">
-        <img src="/fotos/granola.png" alt="Productos" className="page-hero__img" / decoding="async">
+        <img src=" fotos/granola.png" alt="Productos" className="page-hero__img" / decoding="async" />
         <div className="page-hero__overlay" />
         <div className="page-hero__content">
           <span className="page-hero__tag"><IcoProductos size={14} /> Productos</span>
@@ -49,7 +49,7 @@ export default function Productos() {
             <div className={`prod-card ${p.soon ? 'prod-card--soon' : ''}`} key={i}>
               {p.img ? (
                 <div className="prod-card__img">
-                  <img src={p.img} alt={p.name} / decoding="async" loading="lazy">
+                  <img src={p.img} alt={p.name}  decoding="async" loading="lazy" />
                 </div>
               ) : (
                 <div className="prod-card__img prod-card__img--empty">

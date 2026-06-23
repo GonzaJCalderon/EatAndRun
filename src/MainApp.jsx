@@ -784,7 +784,7 @@ return (
 
     {/* FOOTER */}
     <Box sx={{ textAlign: 'center', py: 3, backgroundColor: '#f9f9f9' }}>
-      <img src={logo} alt="Logo Footer" style={{ width: '60px', borderRadius: '50%' }} / decoding="async" loading="lazy">
+      <img src={logo} alt="Logo Footer" style={{ width: '60px', borderRadius: '50%' }}  decoding="async" loading="lazy" />
       <Typography variant="body2" color="text.secondary">Eat & Run - Healthy Food 🍃</Typography>
       <Box sx={{ mt: 1, display: 'flex', justifyContent: 'center', gap: 1 }}>
         <InstagramIcon sx={{ color: '#E1306C' }} />

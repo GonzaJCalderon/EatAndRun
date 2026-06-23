@@ -35,7 +35,7 @@ export default function Menus() {
 
       {/* Hero */}
       <section className="page-hero">
-        <img src="/fotos/menus.png" alt="Menús Saludables" className="page-hero__img" / decoding="async">
+        <img src=" fotos/menus.png" alt="Menús Saludables" className="page-hero__img" / decoding="async" />
         <div className="page-hero__overlay" />
         <div className="page-hero__content">
           <span className="page-hero__tag"><IcoMenus size={14} /> Menús Saludables</span>
@@ -61,7 +61,7 @@ export default function Menus() {
             </div>
           </div>
           <div className="menus-img-wrap">
-            <img src="/fotos/disfruta.png" alt="Menú semanal" / decoding="async" loading="lazy">
+            <img src=" fotos/disfruta.png" alt="Menú semanal" / decoding="async" loading="lazy" />
           </div>
         </div>
       </section>
@@ -76,7 +76,7 @@ export default function Menus() {
               <div className="menus-step" key={i}>
                 {s.img ? (
                   <div className="menus-step__img-wrap">
-                    <img src={s.img} alt={s.title} / decoding="async" loading="lazy">
+                    <img src={s.img} alt={s.title}  decoding="async" loading="lazy" />
                   </div>
                 ) : (
                   <div className="menus-step__icon-wrap">
