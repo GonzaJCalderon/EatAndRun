@@ -11,6 +11,7 @@
   display: flex;
   align-items: flex-end;
   padding-bottom: 48px;
+  background-color: #152512;
 }
 .home-hero__bg {
   position: absolute;
@@ -19,6 +20,12 @@
   height: 100%;
   object-fit: cover;
   object-position: center 25%;
+  opacity: 0;
+  animation: heroBgFade 0.8s ease-out forwards;
+}
+@keyframes heroBgFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 .home-hero__overlay {
   position: absolute;
