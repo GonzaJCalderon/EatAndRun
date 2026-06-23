@@ -115,22 +115,17 @@ export default function Home() {
         />
         <div className="home-hero__overlay" />
         <div className="home-hero__content">
-          <h2 className="home-hero__badge" style={{ margin: 0, fontWeight: 500, fontSize: '0.9rem' }}>
-            🌱 Menús y comida saludable en Mendoza
-          </h2>
-          <h1 className="home-hero__title">
+          <h1 className="home-hero__title" style={{ color: '#1e3a1f', fontWeight: 800 }}>
             Tu alimentación<br />
-            <em>semanal, resuelta.</em>
+            semanal, resuelta.
           </h1>
-          <p className="home-hero__sub">
-            Menús semanales listos para disfrutar donde estés.
-          </p>
-          <p className="home-hero__quote">
-            "Si no lo estás cambiando, lo estás eligiendo."
+          <p className="home-hero__sub" style={{ color: '#1e3a1f', fontWeight: 500, fontSize: '1.2rem', marginBottom: '30px' }}>
+            Menús saludables listos<br />
+            para disfrutar donde estés.
           </p>
           <div className="home-hero__btns">
-            <Link to="/menus" className="btn-primary">Ver Menús</Link>
-            <Link to="/registro" className="btn-white">Crear cuenta</Link>
+            <Link to="/menus" className="btn-primary" style={{ backgroundColor: '#1e3a1f' }}>Ver Menús</Link>
+            <Link to="/registro" className="btn-white" style={{ color: '#1e3a1f' }}>Crear cuenta</Link>
           </div>
         </div>
         <div className="home-hero__mouse"><span /></div>
