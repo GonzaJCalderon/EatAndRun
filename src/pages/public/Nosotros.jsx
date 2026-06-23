@@ -26,7 +26,7 @@ export default function Nosotros() {
 
       {/* Hero */}
       <section className="page-hero">
-        <img src="/fotos/actividad.png" alt="Nosotros" className="page-hero__img" />
+        <img src="/fotos/actividad.webp" alt="Nosotros" className="page-hero__img" />
         <div className="page-hero__overlay" />
         <div className="page-hero__content">
           <span className="page-hero__tag"><IcoNosotros size={14} /> Nosotros</span>

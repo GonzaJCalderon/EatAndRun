@@ -102,10 +102,11 @@
 /* ── Page hero ── */
 .page-hero {
   position: relative;
-  height: 380px;
+  height: 260px;
   display: flex;
   align-items: center;
   overflow: hidden;
+  background-color: var(--g900, #1a3a17);
 }
 .page-hero__img {
   position: absolute;
@@ -114,6 +115,8 @@
   height: 100%;
   object-fit: cover;
   object-position: center;
+  opacity: 0;
+  animation: heroBgFade 0.8s ease-out forwards;
 }
 .page-hero__overlay {
   position: absolute;
