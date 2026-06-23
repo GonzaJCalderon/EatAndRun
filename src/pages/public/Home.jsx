@@ -106,29 +106,15 @@ export default function Home() {
       {/* ── Hero ── */}
       <section className="home-hero">
         <img 
-          src="/fotos/sin-frase.webp" 
+          src="/fotos/Principal.webp" 
           alt="Eat & Run — alimentación semanal" 
           className="home-hero__bg" 
           fetchPriority="high"
           loading="eager"
           decoding="async"
         />
-        <div className="home-hero__overlay" />
         <div className="home-hero__content">
-          <h2 className="home-hero__badge" style={{ margin: 0, fontWeight: 500, fontSize: '0.9rem' }}>
-            🌱 Menús y comida saludable en Mendoza
-          </h2>
-          <h1 className="home-hero__title">
-            Tu alimentación<br />
-            <em>semanal, resuelta.</em>
-          </h1>
-          <p className="home-hero__sub">
-            Menús semanales listos para disfrutar donde estés.
-          </p>
-          <p className="home-hero__quote">
-            "Si no lo estás cambiando, lo estás eligiendo."
-          </p>
-          <div className="home-hero__btns">
+          <div className="home-hero__btns" style={{ marginTop: 'auto', paddingBottom: '40px' }}>
             <Link to="/menus" className="btn-primary">Ver Menús</Link>
             <Link to="/registro" className="btn-white">Crear cuenta</Link>
           </div>
