@@ -112,7 +112,7 @@ export default function Home() {
           fetchPriority="high"
           loading="eager"
           decoding="async"
-        / />
+        />
         <div className="home-hero__overlay" />
         <div className="home-hero__content">
           <h2 className="home-hero__badge" style={{ margin: 0, fontWeight: 500, fontSize: '0.9rem' }}>
