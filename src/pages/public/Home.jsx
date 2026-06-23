@@ -97,15 +97,24 @@ const SECTIONS = [
   },
 ];
 
+import { useState } from 'react';
+
 export default function Home() {
   const [featured, ...rest] = SECTIONS;
+  const [loaded, setLoaded] = useState(false);
 
   return (
     <div className="pub-page home">
 
       {/* ── Hero ── */}
       <section className="home-hero">
-        <img src="/fotos/sin-frase.webp" alt="Eat & Run — alimentación semanal" className="home-hero__bg" />
+        <img 
+          src="/fotos/sin-frase.webp" 
+          alt="Eat & Run — alimentación semanal" 
+          className="home-hero__bg" 
+          style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.8s ease-out' }}
+          onLoad={() => setLoaded(true)}
+        />
         <div className="home-hero__overlay" />
         <div className="home-hero__content">
           <h2 className="home-hero__badge" style={{ margin: 0, fontWeight: 500, fontSize: '0.9rem' }}>
