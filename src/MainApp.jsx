@@ -600,7 +600,6 @@ return (
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)'
         }}
       >
-        <LogoAnimado />
         <Typography 
           variant="h4" 
           fontWeight="800" 
