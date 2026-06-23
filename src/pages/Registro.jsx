@@ -133,8 +133,8 @@ const Registro = ({ onRegister }) => {
     fetchEmpresa();
   }, [codigoEmpresa]);
 
-  // Misma imagen que usaba la Landing
-  const bgImage = '/fotos/elegi.webp';
+  // Imagen de registro
+  const bgImage = '/assets/elegi.png';
 
   return (
     <>
