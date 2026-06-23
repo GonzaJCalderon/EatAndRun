@@ -133,7 +133,7 @@ const Registro = ({ onRegister }) => {
   }, [codigoEmpresa]);
 
   // Misma imagen que usaba la Landing
-  const bgImage = heroRegistro;
+  const bgImage = '/fotos/elegi.webp';
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
