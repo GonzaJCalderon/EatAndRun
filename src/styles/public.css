@@ -101,10 +101,6 @@
 
 /* ── Page hero ── */
 .page-hero {
-  background-image: url("data:image/webp;base64,UklGRkwAAABXRUJQVlA4IEAAAACQAwCdASoUAA0APm0skkWkIqGYBABABsSxgE6ZQZWyJMapnL2AAP6OaV8U9hCvnr/fyzS2D4PI8j663J3SrgAA");
-  background-size: cover;
-  background-position: center;
-
   position: relative;
   height: 260px;
   display: flex;
@@ -228,11 +224,4 @@
   .pub-section { padding: 80px 24px; }
 
   .page-hero { height: 380px; }
-}
-.home-hero__bg, .page-hero__img {
-  animation: blurUp 1.5s ease-out forwards;
-}
-@keyframes blurUp {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
 }

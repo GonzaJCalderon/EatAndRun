@@ -6,10 +6,6 @@
 
 /* ── Hero ── */
 .home-hero {
-  background-image: url("data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAADwAwCdASoUAA8APm0skkWkIqGYBABABsSgCdMoADUF8J9vAJNpbbIAAP738DlwAbZVklzZ+cMoYnufAPTuWSWfvXZNVm5G3bfY+EQA");
-  background-size: cover;
-  background-position: center;
-
   position: relative;
   min-height: 100svh;
   display: flex;
