@@ -23,6 +23,7 @@ import BusinessIcon from '@mui/icons-material/Business';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import heroRegistro from '../assets/imgs/hero-registro.png';
+import PublicNavbar from '../components/public/PublicNavbar';
 
 const Registro = ({ onRegister }) => {
   const [searchParams] = useSearchParams();
@@ -136,7 +137,9 @@ const Registro = ({ onRegister }) => {
   const bgImage = '/fotos/elegi.webp';
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
+    <>
+      <PublicNavbar />
+      <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: { xs: 'column', md: 'row' }, pt: { xs: '64px', md: '72px' } }}>
 
       {/* ── Imagen arriba en mobile, izquierda en desktop ── */}
       <Box
@@ -328,6 +331,7 @@ const Registro = ({ onRegister }) => {
         </Box>
       </Box>
     </Box>
+    </>
   );
 };
 

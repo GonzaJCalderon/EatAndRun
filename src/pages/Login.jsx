@@ -14,6 +14,7 @@ import {
 import { motion } from 'framer-motion';
 import { useSnackbar } from 'notistack';
 import api from '../api/api';
+import PublicNavbar from '../components/public/PublicNavbar';
 
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
@@ -71,8 +72,10 @@ const Login = () => {
   const bgImage = 'https://res.cloudinary.com/dwiga4jg8/image/upload/w_1600,q_auto,f_auto/Fondo_APLICACION_EAR_1_nxvzab.png';
 
   return (
-    // Layout mobile-first: columna en mobile, fila en desktop
-    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
+    <>
+      <PublicNavbar />
+      {/* Layout mobile-first: columna en mobile, fila en desktop */}
+      <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: { xs: 'column', md: 'row' }, pt: { xs: '64px', md: '72px' } }}>
 
       {/* ── Mitad imagen (arriba en mobile, izquierda en desktop) ── */}
       <Box
@@ -227,7 +230,7 @@ const Login = () => {
           </motion.div>
         </Box>
       </Box>
-    </Box>
+    </>
   );
 };
 
