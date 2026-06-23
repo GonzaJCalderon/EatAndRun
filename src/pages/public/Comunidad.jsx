@@ -5,7 +5,7 @@ import {
   IcoGift, IcoCalendar, IcoChat, IcoStar, IcoSmartphone, IcoComunidad
 } from '../../components/public/icons';
 
-const WA_GRUPO = 'https://wa.me/542614601788?text=Hola%2C%20quiero%20unirme%20a%20la%20comunidad%20de%20Eat%20%26%20Run.';
+const WA_GRUPO = 'https://chat.whatsapp.com/Ij46fXwMncSDelal2D2jPH';
 
 const BENEFITS = [
   { Icon: IcoGift,       title: 'Promociones exclusivas', desc: 'Descuentos y ofertas especiales solo para miembros de nuestra comunidad.' },
