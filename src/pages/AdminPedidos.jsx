@@ -518,7 +518,7 @@ const AdminPedidos = () => {
             {comprobanteUrl.endsWith('.pdf') ? (
               <iframe src={comprobanteUrl} width="100%" height="600px" title="Comprobante" />
             ) : (
-              <img src={comprobanteUrl} alt="Comprobante" style={{ maxWidth: '100%', maxHeight: '85vh', objectFit: 'contain' }} />
+              <img src={comprobanteUrl} alt="Comprobante" style={{ maxWidth: '100%', maxHeight: '85vh', objectFit: 'contain' }} / decoding="async" loading="lazy">
             )}
           </Box>
         </Modal>

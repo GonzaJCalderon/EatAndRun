@@ -109,7 +109,7 @@ export default function Home() {
           src="/fotos/sin-frase.webp" 
           alt="Eat & Run — alimentación semanal" 
           className="home-hero__bg" 
-          fetchpriority="high"
+          fetchPriority="high"
           loading="eager"
           decoding="async"
         />
@@ -148,7 +148,7 @@ export default function Home() {
 
             {/* Card destacada — Menús */}
             <Link to={featured.path} className="home-feat">
-              <img src={featured.img} alt={featured.title} className="home-feat__img" loading="lazy" />
+              <img src={featured.img} alt={featured.title} className="home-feat__img" loading="lazy" / decoding="async">
               <div className="home-feat__overlay" />
               <div className="home-feat__body">
                 <span className="home-feat__tag">{featured.tag}</span>

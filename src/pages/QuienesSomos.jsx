@@ -334,7 +334,7 @@ const QuienesSomos = () => {
                     }
                   }}
                 >
-                  <img src={logo} alt={`logo-${i}`} style={{ height: 60, maxWidth: 120, objectFit: 'contain' }} />
+                  <img src={logo} alt={`logo-${i}`} style={{ height: 60, maxWidth: 120, objectFit: 'contain' }} / decoding="async" loading="lazy">
                 </Paper>
               ))}
             </motion.div>
@@ -384,7 +384,7 @@ const QuienesSomos = () => {
           src="/assets/eatandrun-logo.jpg"
           alt="Logo Footer"
           style={{ width: '50px', borderRadius: '50%', marginBottom: 12 }}
-        />
+        / decoding="async" loading="lazy">
         <Typography variant="body2" sx={{ color: '#94a3b8', mb: 1 }}>
           Eat & Run - Healthy Food 🍃
         </Typography>

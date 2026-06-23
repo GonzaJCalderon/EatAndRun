@@ -323,7 +323,7 @@ const endpointBase = isProd
                                 src={plato.image_url}
                                 alt="plato"
                                 style={{ width: 60, height: 60, borderRadius: 6, objectFit: 'cover' }}
-                              />
+                              / decoding="async" loading="lazy">
                               <Tooltip title="Quitar imagen">
                                 <IconButton size="small" color="error" onClick={() => handleQuitarImagen(index)}>
                                   <DeleteIcon fontSize="small" />

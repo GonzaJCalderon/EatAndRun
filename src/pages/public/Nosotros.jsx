@@ -30,7 +30,7 @@ export default function Nosotros() {
           src="/fotos/actividad.webp" 
           alt="Nosotros" 
           className="page-hero__img"
-          fetchpriority="high"
+          fetchPriority="high"
           loading="eager"
           decoding="async"
         />
@@ -63,7 +63,7 @@ export default function Nosotros() {
             </p>
           </div>
           <div className="nos-img-wrap">
-            <img src="/fotos/actividad.png" alt="Nuestra historia" />
+            <img src="/fotos/actividad.png" alt="Nuestra historia" / decoding="async" loading="lazy">
           </div>
         </div>
       </section>
@@ -87,7 +87,7 @@ export default function Nosotros() {
               </p>
             </div>
             <div className="nos-img-wrap">
-              <img src="/fotos/cocina.png" alt="Nuestra filosofía" loading="lazy" />
+              <img src="/fotos/cocina.png" alt="Nuestra filosofía" loading="lazy" / decoding="async">
             </div>
           </div>
         </div>
