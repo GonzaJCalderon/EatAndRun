@@ -110,11 +110,11 @@ export default function Home() {
         <div className="home-hero__content">
           <span className="home-hero__badge">🌱 Mendoza, Argentina</span>
           <h1 className="home-hero__title">
-            Tu alimentación<br />
-            <em>semanal, resuelta.</em>
+            Viandas y comida saludable<br />
+            <em>en Mendoza.</em>
           </h1>
           <p className="home-hero__sub">
-            Menús saludables listos para disfrutar donde estés.
+            Menús semanales listos para disfrutar donde estés.
           </p>
           <p className="home-hero__quote">
             "Si no lo estás cambiando, lo estás eligiendo."
