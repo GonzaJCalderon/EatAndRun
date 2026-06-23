@@ -97,11 +97,8 @@ const SECTIONS = [
   },
 ];
 
-import { useState } from 'react';
-
 export default function Home() {
   const [featured, ...rest] = SECTIONS;
-  const [loaded, setLoaded] = useState(false);
 
   return (
     <div className="pub-page home">
@@ -112,8 +109,7 @@ export default function Home() {
           src="/fotos/sin-frase.webp" 
           alt="Eat & Run — alimentación semanal" 
           className="home-hero__bg" 
-          style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.8s ease-out' }}
-          onLoad={() => setLoaded(true)}
+          fetchpriority="high"
         />
         <div className="home-hero__overlay" />
         <div className="home-hero__content">

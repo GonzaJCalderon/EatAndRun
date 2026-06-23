@@ -20,11 +20,7 @@ const TEAM = [
   { Icon: IcoHeadset, role: 'Atención',  desc: 'Siempre disponibles para ayudarte a elegir lo mejor para vos.' },
 ];
 
-import { useState } from 'react';
-
 export default function Nosotros() {
-  const [loaded, setLoaded] = useState(false);
-
   return (
     <div className="pub-page">
 
@@ -34,8 +30,7 @@ export default function Nosotros() {
           src="/fotos/actividad.webp" 
           alt="Nosotros" 
           className="page-hero__img"
-          style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.6s ease-out' }}
-          onLoad={() => setLoaded(true)}
+          fetchpriority="high"
         />
         <div className="page-hero__overlay" />
         <div className="page-hero__content">
