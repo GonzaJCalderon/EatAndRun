@@ -114,48 +114,58 @@ const Login = () => {
             transition={{ duration: 0.5, ease: 'easeOut' }}
           >
             {/* Header compacto */}
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, mb: 1.5 }}>
-              <Box sx={{ backgroundColor: '#E8F5E9', p: 1, borderRadius: '50%', display: 'inline-flex' }}>
-                <LockOutlinedIcon sx={{ fontSize: 24, color: '#4CAF50' }} />
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 2 }}>
+              <Box sx={{ backgroundColor: '#e4f4e1', width: 48, height: 48, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <LockOutlinedIcon sx={{ fontSize: 24, color: '#4a7c42' }} />
               </Box>
-              <Typography component="h1" variant="h6" fontWeight="bold" lineHeight={1.2}>
+              <Typography component="h1" variant="h5" fontWeight="800" sx={{ color: '#0f1a0d' }}>
                 Iniciar Sesión
               </Typography>
             </Box>
-            <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mb: 2 }}>
+            <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ mb: 3 }}>
               Ingresá tus credenciales para continuar
             </Typography>
 
             <Box component="form" onSubmit={handleSubmit}>
               <TextField
-                size="small"
-                label="Correo electrónico"
+                label="Correo electrónico *"
                 type="email"
                 fullWidth
-                required
                 variant="outlined"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 error={email.length > 0 && !email.includes('@')}
                 helperText={email.length > 0 && !email.includes('@') ? 'Email inválido' : ''}
-                sx={{ mb: 2 }}
+                sx={{
+                  mb: 2.5,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '12px',
+                    '&.Mui-focused fieldset': { borderColor: '#4a7c42' },
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': { color: '#4a7c42' },
+                }}
               />
 
               <TextField
-                size="small"
-                label="Contraseña"
+                label="Contraseña *"
                 type={showPassword ? 'text' : 'password'}
                 fullWidth
-                required
                 variant="outlined"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                sx={{ mb: 2.5 }}
+                sx={{
+                  mb: 3,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '12px',
+                    '&.Mui-focused fieldset': { borderColor: '#4a7c42' },
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': { color: '#4a7c42' },
+                }}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton size="small" onClick={() => setShowPassword(!showPassword)} edge="end">
-                        {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: '#5a6557' }}>
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
                     </InputAdornment>
                   ),
@@ -166,21 +176,20 @@ const Login = () => {
                 type="submit"
                 fullWidth
                 variant="contained"
-                size="large"
                 disabled={loading}
                 sx={{
-                  py: 1.2,
-                  fontSize: '0.95rem',
-                  fontWeight: 'bold',
-                  borderRadius: 2,
-                  backgroundColor: '#4CAF50',
-                  boxShadow: '0 4px 14px rgba(76, 175, 80, 0.4)',
+                  py: 1.5,
+                  fontSize: '1rem',
+                  fontWeight: '700',
+                  borderRadius: '24px',
+                  backgroundColor: '#4a7c42',
+                  boxShadow: 'none',
+                  textTransform: 'none',
                   '&:hover': {
-                    backgroundColor: '#43A047',
-                    transform: 'translateY(-1px)',
-                    boxShadow: '0 6px 20px rgba(76, 175, 80, 0.3)',
+                    backgroundColor: '#3a6832',
+                    boxShadow: 'none',
                   },
-                  transition: 'all 0.2s',
+                  transition: 'background-color 0.2s',
                 }}
               >
                 {loading ? 'Ingresando...' : 'Ingresar'}
@@ -189,7 +198,7 @@ const Login = () => {
               <Button
                 variant="text"
                 fullWidth
-                sx={{ mt: 1.5, textTransform: 'none', color: 'text.secondary', fontSize: '0.9rem' }}
+                sx={{ mt: 2, textTransform: 'none', color: '#5a6557', fontSize: '0.95rem', fontWeight: 600 }}
                 onClick={() => navigate('/recuperar-clave')}
               >
                 ¿Olvidaste tu contraseña?
@@ -198,11 +207,22 @@ const Login = () => {
               <Button
                 variant="text"
                 fullWidth
-                sx={{ textTransform: 'none', color: '#4CAF50', fontWeight: 600, fontSize: '0.9rem' }}
+                sx={{ textTransform: 'none', color: '#4a7c42', fontWeight: 'bold', fontSize: '0.95rem' }}
                 onClick={() => navigate('/registro')}
               >
                 ¿No tenés cuenta? Registrate
               </Button>
+
+              <Box sx={{ mt: 3, textAlign: 'center' }}>
+                <Button
+                  variant="text"
+                  startIcon={<span style={{ fontSize: '1rem', marginRight: '4px' }}>←</span>}
+                  sx={{ textTransform: 'none', color: '#8a9686', fontSize: '0.9rem', fontWeight: 600 }}
+                  onClick={() => navigate('/')}
+                >
+                  Volver al sitio
+                </Button>
+              </Box>
             </Box>
           </motion.div>
         </Box>

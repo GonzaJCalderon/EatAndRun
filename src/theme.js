@@ -73,10 +73,12 @@ const theme = createTheme({
 
   palette: {
     primary: {
-      main: '#4CAF50',
+      main: '#4a7c42',
+      light: '#e4f4e1',
+      dark: '#3a6832',
     },
     secondary: {
-      main: '#8BC34A',
+      main: '#234a1b',
     },
     background: {
       default: '#f9f9f9',
@@ -92,8 +94,12 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           textTransform: 'none',
-          fontWeight: 600,
-          borderRadius: 8,
+          fontWeight: 700,
+          borderRadius: 24,
+          boxShadow: 'none',
+          '&:hover': {
+            boxShadow: 'none',
+          }
         },
       },
     },

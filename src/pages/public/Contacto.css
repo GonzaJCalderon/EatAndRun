@@ -1,0 +1,57 @@
+.con-channels {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 40px;
+}
+.con-channel {
+  background: var(--ch-bg);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 20px;
+  padding: 32px 24px;
+  text-decoration: none;
+  color: #2d3a2a;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: transform 0.28s ease, box-shadow 0.28s ease;
+}
+.con-channel:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 36px rgba(0,0,0,0.12);
+}
+.con-channel__icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ch-color);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+.con-channel__label  { font-size: 1.3rem; font-weight: 800; color: #0f1a0d; }
+.con-channel__handle { font-size: 0.88rem; color: var(--ch-color); font-weight: 600; margin: 2px 0 8px; }
+.con-channel__desc   { font-size: 0.88rem; color: #5a6557; line-height: 1.5; flex: 1; }
+.con-channel__cta    { font-size: 0.88rem; font-weight: 700; color: var(--ch-color); }
+
+.con-schedule {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 40px;
+}
+.con-schedule__item {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px 32px;
+  min-width: 180px;
+  box-shadow: 0 2px 12px rgba(30,60,20,0.08);
+  text-align: center;
+}
+.con-schedule__day  { display: block; font-size: 0.85rem; font-weight: 700; color: #4a7c42; margin-bottom: 6px; }
+.con-schedule__time { display: block; font-size: 1.1rem; font-weight: 800; color: #0f1a0d; }
+
+@media (max-width: 900px) { .con-channels { grid-template-columns: 1fr; } }

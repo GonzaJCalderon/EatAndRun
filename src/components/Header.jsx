@@ -27,7 +27,7 @@ const Header = () => {
   const navItems = [
    { label: 'Menú', path: '/app' },
   user && { label: 'Mis pedidos', path: '/mis-pedidos' },
-    { label: '¿Quiénes Somos?', path: '/quienes-somos' },
+    { label: '¿Quiénes Somos?', path: '/nosotros' },
     ...(user?.role === 'admin' ? [{ label: 'Panel Admin', path: '/admin' }] : []),
     ...(user?.role === 'delivery' ? [{ label: 'Reparto', path: '/delivery' }] : []),
     ...(user?.role === 'empresa' ? [{ label: 'Empresa', path: '/admin/empresa' }] : []),
@@ -46,7 +46,7 @@ const Header = () => {
 
   return (
     <>
-      <AppBar position="static" sx={{ backgroundColor: '#4caf50' }}>
+      <AppBar position="static" sx={{ backgroundColor: '#4a7c42' }}>
         <Toolbar sx={{ justifyContent: 'space-between' }}>
           {/* Logo */}
           <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => navigate('/')}>

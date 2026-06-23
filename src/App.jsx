@@ -9,6 +9,16 @@ import ResetPassword from './components/ResetPassword';
 import MainApp from './MainApp';
 import QuienesSomos from './pages/QuienesSomos';
 
+// 🌐 Sitio público
+import PublicLayout from './pages/public/PublicLayout';
+import Home       from './pages/public/Home';
+import Menus      from './pages/public/Menus';
+import Productos  from './pages/public/Productos';
+import Empresas   from './pages/public/Empresas';
+import Nosotros   from './pages/public/Nosotros';
+import Comunidad  from './pages/public/Comunidad';
+import Contacto   from './pages/public/Contacto';
+
 import AdminHome from './pages/AdminHome';
 import AdminPedidos from './pages/AdminPedidos';
 import EditarMenu from './pages/EditarMenu';
@@ -41,9 +51,17 @@ import EmpresaOnlyRoute from './components/EmpresaOnlyRoute';
 const App = () => (
   <Routes>
 
-    {/* 🌐 Página pública */}
-    <Route path="/" element={<Login />} />
-    <Route path="/quienes-somos" element={<QuienesSomos />} />
+    {/* 🌐 Sitio público */}
+    <Route element={<PublicLayout />}>
+      <Route path="/"           element={<Home />} />
+      <Route path="/menus"      element={<Menus />} />
+      <Route path="/productos"  element={<Productos />} />
+      <Route path="/empresas"   element={<Empresas />} />
+      <Route path="/nosotros"   element={<Nosotros />} />
+      <Route path="/comunidad"  element={<Comunidad />} />
+      <Route path="/contacto"   element={<Contacto />} />
+      <Route path="/quienes-somos" element={<QuienesSomos />} />
+    </Route>
 
     {/* 🔐 Login y registro */}
     <Route path="/login" element={<Login />} />

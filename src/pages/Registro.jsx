@@ -176,15 +176,15 @@ const Registro = ({ onRegister }) => {
             transition={{ duration: 0.5, ease: 'easeOut' }}
           >
             {/* Header compacto */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-              <Box sx={{ backgroundColor: '#E8F5E9', p: 1, borderRadius: '50%', display: 'inline-flex' }}>
-                <PersonAddAlt1Icon sx={{ fontSize: 24, color: '#4CAF50' }} />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+              <Box sx={{ backgroundColor: '#e4f4e1', width: 48, height: 48, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <PersonAddAlt1Icon sx={{ fontSize: 24, color: '#4a7c42' }} />
               </Box>
               <Box>
-                <Typography component="h1" variant="h6" fontWeight="bold" lineHeight={1.2}>
+                <Typography component="h1" variant="h5" fontWeight="800" sx={{ color: '#0f1a0d' }}>
                   Crear cuenta
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="body2" color="text.secondary">
                   Únete a Eat &amp; Run y comé saludable
                 </Typography>
               </Box>
@@ -196,47 +196,37 @@ const Registro = ({ onRegister }) => {
               </Alert>
             )}
 
-            {/* Formulario compacto — reordenado y con ojito en contraseña */}
-            <Box component="form" onSubmit={handleSubmit}>
-              <Grid container spacing={1.5}>
-
-                {/* Fila 1: Nombre / Apellido */}
-                <Grid item xs={6}>
-                  <TextField size="small" label="Nombre" name="nombre" fullWidth required value={form.nombre} onChange={handleChange} />
-                </Grid>
-                <Grid item xs={6}>
-                  <TextField size="small" label="Apellido" name="apellido" fullWidth required value={form.apellido} onChange={handleChange} />
-                </Grid>
-
-                {/* Fila 2: Email / Teléfono */}
-                <Grid item xs={7}>
-                  <TextField size="small" label="Email" name="email" type="email" fullWidth required value={form.email} onChange={handleChange} />
-                </Grid>
-                <Grid item xs={5}>
-                  <TextField size="small" label="Teléfono" name="telefono" fullWidth required value={form.telefono} onChange={handleChange} />
-                </Grid>
-
-                {/* Fila 3: Dirección full width */}
+            {/* Formulario compacto */}
+            <Box component="form" onSubmit={handleSubmit} sx={{ '& .MuiTextField-root': { mb: 1.5 }, '& .MuiOutlinedInput-root': { borderRadius: '12px', '&.Mui-focused fieldset': { borderColor: '#4a7c42' } }, '& .MuiInputLabel-root.Mui-focused': { color: '#4a7c42' } }}>
+              <Grid container spacing={0}>
                 <Grid item xs={12}>
-                  <TextField size="small" label="Dirección" name="direccion" fullWidth required value={form.direccion} onChange={handleChange} />
+                  <TextField label="Nombre *" name="nombre" fullWidth value={form.nombre} onChange={handleChange} />
                 </Grid>
-
-                {/* Fila 4: Contraseña con ojito */}
+                <Grid item xs={12}>
+                  <TextField label="Apellido *" name="apellido" fullWidth value={form.apellido} onChange={handleChange} />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField label="Email *" name="email" type="email" fullWidth value={form.email} onChange={handleChange} />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField label="Teléfono *" name="telefono" fullWidth value={form.telefono} onChange={handleChange} />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField label="Dirección *" name="direccion" fullWidth value={form.direccion} onChange={handleChange} />
+                </Grid>
                 <Grid item xs={12}>
                   <TextField
-                    size="small"
-                    label="Contraseña"
+                    label="Contraseña *"
                     name="password"
                     type={showPassword ? 'text' : 'password'}
                     fullWidth
-                    required
                     value={form.password}
                     onChange={handleChange}
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position="end">
-                          <IconButton size="small" onClick={() => setShowPassword(!showPassword)} edge="end">
-                            {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                          <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: '#5a6557' }}>
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
                           </IconButton>
                         </InputAdornment>
                       ),
@@ -246,40 +236,40 @@ const Registro = ({ onRegister }) => {
 
                 {/* Selector de rol tipo pastilla */}
                 {!codigoEmpresa && (
-                  <Grid item xs={12}>
-                    <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                  <Grid item xs={12} sx={{ mt: 1 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
                       Tipo de cuenta
                     </Typography>
                     <ToggleButtonGroup
                       value={form.role}
                       exclusive
                       onChange={handleRoleChange}
-                      fullWidth
-                      size="small"
                       sx={{
+                        display: 'flex',
+                        gap: 1.5,
                         '& .MuiToggleButton-root': {
-                          border: '1.5px solid #e0e0e0',
+                          border: '1px solid #ccc !important',
                           borderRadius: '8px !important',
                           fontWeight: 600,
-                          fontSize: '0.82rem',
+                          fontSize: '0.9rem',
+                          textTransform: 'none',
                           py: 0.8,
-                          gap: 0.5,
-                          color: 'text.secondary',
+                          px: 2,
+                          color: '#5a6557',
                           '&.Mui-selected': {
-                            backgroundColor: '#E8F5E9',
-                            color: '#2E7D32',
-                            borderColor: '#4CAF50',
+                            backgroundColor: '#e4f4e1',
+                            color: '#4a7c42',
+                            borderColor: '#4a7c42 !important',
                           },
                           '&:hover': { backgroundColor: '#f1f8f1' },
                         },
-                        gap: 1,
                       }}
                     >
                       <ToggleButton value="usuario">
-                        <PersonIcon fontSize="small" sx={{ mr: 0.5 }} /> Usuario
+                        <PersonIcon fontSize="small" sx={{ mr: 1 }} /> Usuario
                       </ToggleButton>
                       <ToggleButton value="empresa">
-                        <BusinessIcon fontSize="small" sx={{ mr: 0.5 }} /> Empresa
+                        <BusinessIcon fontSize="small" sx={{ mr: 1 }} /> Empresa
                       </ToggleButton>
                     </ToggleButtonGroup>
                   </Grid>
@@ -303,32 +293,32 @@ const Registro = ({ onRegister }) => {
                 type="submit"
                 fullWidth
                 variant="contained"
-                size="large"
                 disabled={loading}
                 sx={{
-                  mt: 2.5,
-                  py: 1.3,
-                  fontWeight: 'bold',
-                  borderRadius: 2,
-                  backgroundColor: '#4CAF50',
-                  boxShadow: '0 4px 14px rgba(76, 175, 80, 0.4)',
+                  mt: 3,
+                  py: 1.5,
+                  fontSize: '1rem',
+                  fontWeight: '700',
+                  borderRadius: '24px',
+                  backgroundColor: '#4a7c42',
+                  boxShadow: 'none',
+                  textTransform: 'none',
                   '&:hover': {
-                    backgroundColor: '#43A047',
-                    transform: 'translateY(-1px)',
-                    boxShadow: '0 6px 20px rgba(76, 175, 80, 0.3)',
+                    backgroundColor: '#3a6832',
+                    boxShadow: 'none',
                   },
-                  transition: 'all 0.2s',
+                  transition: 'background-color 0.2s',
                 }}
               >
                 {loading ? 'Registrando...' : 'Crear cuenta'}
               </Button>
 
-              <Divider sx={{ my: 1.5 }} />
+              <Divider sx={{ my: 2 }} />
 
               <Button
                 variant="text"
                 fullWidth
-                sx={{ textTransform: 'none', color: '#4CAF50', fontWeight: 600, fontSize: '0.85rem' }}
+                sx={{ textTransform: 'none', color: '#4a7c42', fontWeight: 'bold', fontSize: '0.95rem' }}
                 onClick={() => navigate('/login')}
               >
                 ¿Ya tenés cuenta? Iniciá sesión
