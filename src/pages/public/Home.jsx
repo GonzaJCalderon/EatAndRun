@@ -116,7 +116,7 @@ export default function Home() {
         <div className="home-hero__overlay" />
         <div className="home-hero__content">
           <h2 className="home-hero__badge" style={{ margin: 0, fontWeight: 500, fontSize: '0.9rem' }}>
-            🌱 Viandas y comida saludable en Mendoza
+            🌱 Menús y comida saludable en Mendoza
           </h2>
           <h1 className="home-hero__title">
             Tu alimentación<br />

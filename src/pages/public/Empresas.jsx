@@ -28,7 +28,7 @@ export default function Empresas() {
           <div>
             <h2 className="section-title">Menús corporativos</h2>
             <p className="section-body">
-              Viandas ejecutivas y planes de alimentación saludables diseñados a la medida de tu equipo de trabajo.
+              Menús ejecutivos y planes de alimentación saludables diseñados a la medida de tu equipo de trabajo.
             </p>
             <a href={WA_LINK} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ marginTop: '16px' }}>
               Hacé click acá para conocer más
