@@ -230,6 +230,7 @@ const Login = () => {
           </motion.div>
         </Box>
       </Box>
+    </Box>
     </>
   );
 };

@@ -16,7 +16,7 @@ const STEPS = [
   {
     Icon: IcoCheck,
     num: '02',
-    title: 'Confirmá',
+    title: 'Confirmá y abona $',
     img: null,
     desc: 'Completá tu pedido desde la plataforma y dejá todo organizado para la semana. Nosotros nos encargamos del resto.',
   },

@@ -50,11 +50,11 @@
 
 .lmarquee__item {
   flex-shrink: 0;
-  height: 60px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 16px;
+  padding: 12px 24px;
   background: #f9faf8;
   border-radius: 12px;
   border: 1px solid #e8f0e6;
@@ -68,9 +68,9 @@
 }
 
 .lmarquee__item img {
-  height: 40px;
+  height: 56px;
   width: auto;
-  max-width: 130px;
+  max-width: 180px;
   object-fit: contain;
   filter: grayscale(30%);
   opacity: 0.85;
