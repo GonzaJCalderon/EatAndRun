@@ -108,10 +108,12 @@ export default function Home() {
         <img src="/fotos/sin-frase.png" alt="Eat & Run — alimentación semanal" className="home-hero__bg" />
         <div className="home-hero__overlay" />
         <div className="home-hero__content">
-          <span className="home-hero__badge">🌱 Mendoza, Argentina</span>
+          <h2 className="home-hero__badge" style={{ margin: 0, fontWeight: 500, fontSize: '0.9rem' }}>
+            🌱 Viandas y comida saludable en Mendoza
+          </h2>
           <h1 className="home-hero__title">
-            Viandas y comida saludable<br />
-            <em>en Mendoza.</em>
+            Tu alimentación<br />
+            <em>semanal, resuelta.</em>
           </h1>
           <p className="home-hero__sub">
             Menús semanales listos para disfrutar donde estés.
