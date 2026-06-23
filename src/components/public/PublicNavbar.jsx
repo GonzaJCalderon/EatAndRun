@@ -73,7 +73,7 @@ export default function PublicNavbar() {
       <div className="pnav__inner">
         <Link to="/" className="pnav__logo">
           <img src={logo} alt="Eat & Run" className="pnav__logo-img"  decoding="async" loading="lazy" />
-          <span className="pnav__logo-text">eat<b>&amp;</b>run</span>
+
         </Link>
 
         <ul className="pnav__links">
