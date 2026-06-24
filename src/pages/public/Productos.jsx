@@ -18,7 +18,7 @@ const IcoNut = ({ size = 18 }) => (
 );
 
 const PRODUCTS = [
-  { img: '/fotos/oliva.png',                   name: 'Aceite de Oliva',   desc: 'Aceite de oliva extra virgen de primera extracción en frío. Calidad premium.',              tag: 'Condimento',   TagIcon: IcoOlive },
+  { img: '/fotos/Oliva.jpg',                   name: 'Aceite de Oliva',   desc: 'Aceite de oliva extra virgen de primera extracción en frío. Calidad premium.',              tag: 'Condimento',   TagIcon: IcoOlive },
   { img: '/fotos/Granola_.jpg',                name: 'Granola',           desc: 'Granola artesanal con semillas, avena y frutos secos. Ideal para el desayuno o colación.', tag: 'Snack',        TagIcon: IcoGranola },
   { img: '/fotos/Frutos%20secos.jpg',          name: 'Frutos Secos',      desc: 'Mix de frutos secos naturales y sin sal. La colación perfecta para tu jornada.',           tag: 'Snack',        TagIcon: IcoNut },
   { img: '/fotos/Galletas%20de%20Avena2.jpg',  name: 'Galletas de Avena', desc: 'Galletas artesanales de avena, la opción nutritiva perfecta para tus pausas.',             tag: 'Snack',        TagIcon: IcoLeaf },
