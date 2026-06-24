@@ -121,9 +121,13 @@ export default function Home() {
             semanal,<br />
             resuelta.
           </h1>
-          <p className="home-hero__sub" style={{ color: '#1e3a1f', fontWeight: 500, fontSize: '1.2rem', marginBottom: '24px' }}>
+          <p className="home-hero__sub" style={{ color: '#1e3a1f', fontWeight: 500, fontSize: '1.2rem', marginBottom: '16px' }}>
             Menús saludables listos<br />
             para disfrutar donde estés.
+          </p>
+
+          <p style={{ color: '#2a5124', fontSize: '1.1rem', fontWeight: 800, fontStyle: 'italic', marginBottom: '28px', paddingLeft: '14px', borderLeft: '3px solid #2a5124' }}>
+            "Si no lo estás cambiando, lo estás eligiendo."
           </p>
           
           <div className="home-hero__btns" style={{ marginBottom: '24px' }}>
@@ -132,13 +136,6 @@ export default function Home() {
           </div>
         </div>
         <div className="home-hero__mouse"><span /></div>
-      </section>
-
-      {/* ── Quote Banner ── */}
-      <section style={{ backgroundColor: '#2a5124', color: '#ffffff', padding: '40px 20px', textAlign: 'center' }}>
-        <p style={{ fontSize: '1.6rem', fontWeight: 700, fontStyle: 'italic', maxWidth: '800px', margin: '0 auto', letterSpacing: '0.02em', lineHeight: 1.4 }}>
-          "Si no lo estás cambiando, lo estás eligiendo."
-        </p>
       </section>
 
       {/* ── Secciones — layout editorial ── */}

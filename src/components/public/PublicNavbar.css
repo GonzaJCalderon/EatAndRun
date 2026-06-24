@@ -30,9 +30,16 @@
 }
 .pnav__logo-img {
   height: 36px;
-  width: auto;
-  object-fit: contain;
-  mix-blend-mode: multiply;
+  width: 140px;
+  background-color: #1e3a1f;
+  -webkit-mask: url('/fotos/logo.png') no-repeat left center;
+  -webkit-mask-size: contain;
+  mask: url('/fotos/logo.png') no-repeat left center;
+  mask-size: contain;
+  transition: background-color 0.3s;
+}
+.pnav--solid .pnav__logo-img {
+  background-color: #2a5124;
 }
 .pnav__logo-text {
   font-size: 1.15rem;
