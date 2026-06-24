@@ -121,18 +121,22 @@ export default function Home() {
             semanal,<br />
             resuelta.
           </h1>
-          <p className="home-hero__sub" style={{ color: '#1e3a1f', fontWeight: 500, fontSize: '1.2rem', marginBottom: '16px' }}>
+          <p className="home-hero__sub" style={{ color: '#1e3a1f', fontWeight: 500, fontSize: '1.2rem', marginBottom: '32px' }}>
             Menús saludables listos<br />
             para disfrutar donde estés.
           </p>
-
-          <p style={{ color: '#2a5124', fontSize: '1.1rem', fontWeight: 800, fontStyle: 'italic', marginBottom: '28px', paddingLeft: '14px', borderLeft: '3px solid #2a5124' }}>
-            "Si no lo estás cambiando, lo estás eligiendo."
-          </p>
           
-          <div className="home-hero__btns" style={{ marginBottom: '24px' }}>
+          <div className="home-hero__btns" style={{ marginBottom: '40px' }}>
             <Link to="/menus" className="btn-primary" style={{ backgroundColor: '#1e3a1f' }}>Ver Menús</Link>
             <Link to="/registro" className="btn-white" style={{ color: '#1e3a1f' }}>Crear cuenta</Link>
+          </div>
+
+          <div style={{ position: 'relative', display: 'inline-block' }}>
+            <span style={{ position: 'absolute', top: '-16px', left: '-12px', fontSize: '4rem', color: '#3a6832', opacity: 0.15, fontFamily: 'serif', lineHeight: 1, zIndex: 0 }}>❝</span>
+            <p style={{ position: 'relative', zIndex: 1, color: '#1e3a1f', fontSize: '1.15rem', fontWeight: 800, fontStyle: 'italic', margin: 0, lineHeight: 1.3 }}>
+              Si no lo estás cambiando,<br />
+              lo estás eligiendo.
+            </p>
           </div>
         </div>
         <div className="home-hero__mouse"><span /></div>
