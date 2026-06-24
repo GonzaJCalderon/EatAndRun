@@ -106,7 +106,7 @@ export default function Home() {
       {/* ── Hero ── */}
       <section className="home-hero">
         <img 
-          src="/fotos/Principal2_opt.webp" 
+          src="/fotos/Principal (1).png" 
           alt="Eat & Run — alimentación semanal" 
           className="home-hero__bg" 
           fetchPriority="high"
@@ -121,20 +121,19 @@ export default function Home() {
             semanal,<br />
             resuelta.
           </h1>
-          <p className="home-hero__sub" style={{ color: '#1e3a1f', fontWeight: 500, fontSize: '1.2rem', marginBottom: '10px' }}>
+          <p className="home-hero__sub" style={{ color: '#1e3a1f', fontWeight: 500, fontSize: '1.2rem', marginBottom: '24px' }}>
             Menús saludables listos<br />
             para disfrutar donde estés.
           </p>
-          <div className="home-hero__quote-box">
-            <span className="home-hero__quote-icon">❝</span>
-            <p className="home-hero__quote-text">
-              Si no lo estás cambiando,<br/>lo estás eligiendo.
-            </p>
-          </div>
-          <div className="home-hero__btns">
+          
+          <div className="home-hero__btns" style={{ marginBottom: '24px' }}>
             <Link to="/menus" className="btn-primary" style={{ backgroundColor: '#1e3a1f' }}>Ver Menús</Link>
             <Link to="/registro" className="btn-white" style={{ color: '#1e3a1f' }}>Crear cuenta</Link>
           </div>
+
+          <p style={{ color: '#1e3a1f', fontSize: '1.05rem', fontWeight: 800, fontStyle: 'italic', letterSpacing: '-0.01em', opacity: 0.85, textShadow: '0 2px 10px rgba(255,255,255,0.5)' }}>
+            "Si no lo estás cambiando, lo estás eligiendo."
+          </p>
         </div>
         <div className="home-hero__mouse"><span /></div>
       </section>
