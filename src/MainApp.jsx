@@ -783,7 +783,7 @@ return (
 
     {/* FOOTER */}
     <Box sx={{ textAlign: 'center', py: 3, backgroundColor: '#f9f9f9' }}>
-      <img src="/fotos/Eat%26Runmarca.jpg" alt="Eat & Run" style={{ height: '48px', width: 'auto', marginBottom: '12px' }} />
+      <img src="/fotos/Eat%26Runmarca.jpg" alt="Eat & Run" style={{ height: '48px', width: 'auto', marginBottom: '12px', mixBlendMode: 'multiply' }} />
       <Typography variant="body2" color="text.secondary">Healthy Food 🍃</Typography>
       <Box sx={{ mt: 1, display: 'flex', justifyContent: 'center', gap: 1 }}>
         <InstagramIcon sx={{ color: '#E1306C' }} />

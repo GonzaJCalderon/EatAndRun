@@ -13,7 +13,7 @@ export default function PublicFooter() {
 
         {/* Brand */}
         <div className="pfooter__brand">
-          <img src="/fotos/Eat%26Runmarca.jpg" alt="Eat & Run" className="pfooter__logo-img" decoding="async" loading="lazy" />
+          <img src="/fotos/logo.png" alt="Eat & Run" className="pfooter__logo-img" decoding="async" loading="lazy" />
           <p className="pfooter__tagline">Tu alimentación semanal, resuelta.</p>
           <div className="pfooter__socials">
             <a href={WA} target="_blank" rel="noopener noreferrer" className="pfooter__social pfooter__social--wa" aria-label="WhatsApp">
