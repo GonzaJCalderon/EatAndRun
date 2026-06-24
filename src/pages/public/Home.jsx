@@ -115,9 +115,6 @@ export default function Home() {
         />
         <div className="home-hero__overlay" />
         <div className="home-hero__content">
-          <div style={{ display: 'inline-block', backgroundColor: 'rgba(255,255,255,0.9)', color: '#2a5124', padding: '8px 16px', borderRadius: '999px', fontSize: '0.85rem', fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: '24px', boxShadow: '0 4px 14px rgba(0,0,0,0.05)', backdropFilter: 'blur(4px)' }}>
-            Si no lo estás cambiando, lo estás eligiendo.
-          </div>
           <h1 className="home-hero__title" style={{ color: '#1e3a1f', fontWeight: 800 }}>
             Tu<br />
             alimentación<br />
@@ -135,6 +132,13 @@ export default function Home() {
           </div>
         </div>
         <div className="home-hero__mouse"><span /></div>
+      </section>
+
+      {/* ── Quote Banner ── */}
+      <section style={{ backgroundColor: '#2a5124', color: '#ffffff', padding: '40px 20px', textAlign: 'center' }}>
+        <p style={{ fontSize: '1.6rem', fontWeight: 700, fontStyle: 'italic', maxWidth: '800px', margin: '0 auto', letterSpacing: '0.02em', lineHeight: 1.4 }}>
+          "Si no lo estás cambiando, lo estás eligiendo."
+        </p>
       </section>
 
       {/* ── Secciones — layout editorial ── */}
