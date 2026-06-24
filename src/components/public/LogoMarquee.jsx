@@ -1,28 +1,28 @@
 import './LogoMarquee.css';
 
 // Logos reales desde src/assets/logos
-import allianz      from '../../assets/logos/Allianz.jpg';
-import blogo        from '../../assets/logos/Blogo.jpg';
-import hidroplas    from '../../assets/logos/Hidroplas.jpg';
-import acsa         from '../../assets/logos/acsa_mining.jpg';
-import chitza       from '../../assets/logos/chitza.jpg';
-import colegio      from '../../assets/logos/colegio_san_jorge.jpg';
-import goldstein    from '../../assets/logos/goldstein.jpg';
-import inap         from '../../assets/logos/inap.jpg';
-import mendozaCiudad from '../../assets/logos/mendoza_ciudad.jpg';
-import nav          from '../../assets/logos/nav.jpg';
+import chitza from '../../assets/logos/CHITZA.png';
+import ecolodge from '../../assets/logos/ECOLODGE.jpeg';
+import ipc from '../../assets/logos/IPC.png';
+import knauf from '../../assets/logos/Knauf.png';
+import royalEnfield from '../../assets/logos/LOGO Royal Enfield.jpg';
+import sanJorge from '../../assets/logos/San Jorge.jpg';
+import triunfo from '../../assets/logos/TRIUNFO.jpg';
+import acerosCuyanos from '../../assets/logos/aceroscuyanos_sa_logo.jpeg';
+import edemsa from '../../assets/logos/edemsa_logo.jpeg';
+import mendozaCiudad from '../../assets/logos/logociudaddemendoza.png';
 
 const LOGOS = [
-  { src: allianz,       alt: 'Allianz' },
-  { src: blogo,         alt: 'Blogo' },
-  { src: hidroplas,     alt: 'Hidroplas' },
-  { src: acsa,          alt: 'ACSA Mining' },
   { src: chitza,        alt: 'Chitza' },
-  { src: colegio,       alt: 'Colegio San Jorge' },
-  { src: goldstein,     alt: 'Goldstein' },
-  { src: inap,          alt: 'INAP' },
-  { src: mendozaCiudad, alt: 'Municipalidad Mendoza' },
-  { src: nav,           alt: 'NAV' },
+  { src: ecolodge,      alt: 'Ecolodge' },
+  { src: ipc,           alt: 'IPC' },
+  { src: knauf,         alt: 'Knauf' },
+  { src: royalEnfield,  alt: 'Royal Enfield' },
+  { src: sanJorge,      alt: 'San Jorge' },
+  { src: triunfo,       alt: 'Triunfo' },
+  { src: acerosCuyanos, alt: 'Aceros Cuyanos' },
+  { src: edemsa,        alt: 'Edemsa' },
+  { src: mendozaCiudad, alt: 'Ciudad de Mendoza' },
 ];
 
 export default function LogoMarquee() {

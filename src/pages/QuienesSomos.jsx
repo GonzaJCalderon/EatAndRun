@@ -10,18 +10,18 @@ import plantaImg from '../assets/imgs/planta-elaboradora.png';
 import nutricionImg from '../assets/imgs/nutricionista_saludable.png';
 
 // Logos
-import acsa from '../assets/logos/acsa_mining.jpg';
-import allianz from '../assets/logos/Allianz.jpg';
-import blogo from '../assets/logos/Blogo.jpg';
-import chitza from '../assets/logos/chitza.jpg';
-import sanJorge from '../assets/logos/colegio_san_jorge.jpg';
-import goldstein from '../assets/logos/goldstein.jpg';
-import hidroplas from '../assets/logos/Hidroplas.jpg';
-import inap from '../assets/logos/inap.jpg';
-import ciudad from '../assets/logos/mendoza_ciudad.jpg';
-import nav from '../assets/logos/nav.jpg';
+import chitza from '../assets/logos/CHITZA.png';
+import ecolodge from '../assets/logos/ECOLODGE.jpeg';
+import ipc from '../assets/logos/IPC.png';
+import knauf from '../assets/logos/Knauf.png';
+import royalEnfield from '../assets/logos/LOGO Royal Enfield.jpg';
+import sanJorge from '../assets/logos/San Jorge.jpg';
+import triunfo from '../assets/logos/TRIUNFO.jpg';
+import acerosCuyanos from '../assets/logos/aceroscuyanos_sa_logo.jpeg';
+import edemsa from '../assets/logos/edemsa_logo.jpeg';
+import mendozaCiudad from '../assets/logos/logociudaddemendoza.png';
 
-const logos = [acsa, allianz, blogo, chitza, sanJorge, goldstein, hidroplas, inap, ciudad, nav];
+const logos = [chitza, ecolodge, ipc, knauf, royalEnfield, sanJorge, triunfo, acerosCuyanos, edemsa, mendozaCiudad];
 
 const hitos = [
   { año: '2019', titulo: 'Fundación', descripcion: 'Nacemos con el objetivo de llevar salud y sabor a tu mesa.' },
@@ -129,12 +129,35 @@ const QuienesSomos = () => {
       >
         <Container sx={{ position: 'relative', zIndex: 2, textAlign: 'center', color: '#fff', px: 2 }}>
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-            <Typography variant="h2" sx={{ fontWeight: 800, mb: 2, fontSize: { xs: '2rem', md: '3.5rem' }, textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
-              Eat & Run
-            </Typography>
-            <Typography variant="h5" sx={{ fontWeight: 400, mb: 4, maxWidth: '800px', mx: 'auto', opacity: 0.9, lineHeight: 1.5, fontSize: { xs: '1rem', md: '1.2rem' } }}>
-              Alimentarte bien es quererte mejor. Llevamos menús saludables, frescos y ricos directo a tu mesa.
-            </Typography>
+            <img src="/fotos/logo.png" alt="Eat & Run" style={{ height: '70px', width: 'auto', marginBottom: '16px', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.3))' }} />
+            
+            <Box sx={{ 
+              backgroundColor: 'rgba(34, 197, 94, 0.15)', 
+              backdropFilter: 'blur(12px)', 
+              border: '1px solid rgba(34, 197, 94, 0.3)', 
+              borderLeft: '6px solid #4ade80',
+              borderRadius: 2, 
+              p: { xs: 2, md: 3 }, 
+              mb: 4, 
+              maxWidth: '800px',
+              mx: 'auto',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.2)' 
+            }}>
+              <Typography variant="h4" sx={{ 
+                fontWeight: 800, 
+                color: '#4ade80', 
+                fontStyle: 'italic', 
+                mb: 1.5, 
+                fontSize: { xs: '1.4rem', md: '2rem' }, 
+                letterSpacing: '-0.02em',
+                textShadow: '0 2px 10px rgba(0,0,0,0.3)' 
+              }}>
+                "Si no lo estás cambiando, lo estás eligiendo."
+              </Typography>
+              <Typography variant="h6" sx={{ fontWeight: 500, color: '#f8fafc', fontSize: { xs: '1rem', md: '1.2rem' }, opacity: 0.9 }}>
+                Alimentarte bien es quererte mejor. Llevamos menús saludables, frescos y ricos directo a tu mesa.
+              </Typography>
+            </Box>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
               <Button
                 variant="contained"
@@ -380,9 +403,9 @@ const QuienesSomos = () => {
 
       {/* Footer minimalista extra (si querés dejarlo) */}
       <Box sx={{ textAlign: 'center', py: 4, backgroundColor: '#0f172a' }}>
-        <img />
+        <img src="/fotos/logo.png" alt="Eat & Run" style={{ height: '40px', width: 'auto', marginBottom: '12px' }} />
         <Typography variant="body2" sx={{ color: '#94a3b8', mb: 1 }}>
-          Eat & Run - Healthy Food 🍃
+          Healthy Food 🍃
         </Typography>
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
           <InstagramIcon sx={{ color: '#E1306C', fontSize: '1.2rem' }} />

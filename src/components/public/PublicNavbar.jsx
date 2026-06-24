@@ -72,7 +72,7 @@ export default function PublicNavbar() {
     <nav className={`pnav ${solid ? 'pnav--solid' : ''}`}>
       <div className="pnav__inner">
         <Link to="/" className="pnav__logo">
-          <span className="pnav__logo-text">eat<b>&amp;</b>run</span>
+          <img src="/fotos/Eat%26Runmarca.jpg" alt="Eat & Run" className="pnav__logo-img" decoding="async" />
         </Link>
 
         <ul className="pnav__links">

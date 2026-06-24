@@ -13,10 +13,9 @@
   gap: 48px;
 }
 .pfooter__brand img {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  object-fit: cover;
+  height: 48px;
+  width: auto;
+  object-fit: contain;
   margin-bottom: 12px;
 }
 .pfooter__name {

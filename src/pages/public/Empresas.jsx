@@ -35,7 +35,7 @@ export default function Empresas() {
             </a>
           </div>
           <div className="emp-img-wrap">
-            <img src="/fotos/Principal2.png" alt="Menús corporativos" decoding="async" loading="lazy" />
+            <img src="/fotos/Principal%20(1).png" alt="Menús corporativos" decoding="async" loading="lazy" />
           </div>
         </div>
       </section>
@@ -54,7 +54,7 @@ export default function Empresas() {
               </a>
             </div>
             <div className="emp-img-wrap">
-              <img src="/fotos/disfruta.png" alt="Sandwiches para eventos" decoding="async" loading="lazy" />
+              <img src="/fotos/Sandwich.jpg" alt="Sandwiches para eventos" decoding="async" loading="lazy" />
             </div>
           </div>
         </div>

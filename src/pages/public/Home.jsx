@@ -125,9 +125,12 @@ export default function Home() {
             Menús saludables listos<br />
             para disfrutar donde estés.
           </p>
-          <p className="home-hero__quote" style={{ color: '#1e3a1f', fontWeight: 600, fontStyle: 'italic', marginBottom: '30px' }}>
-            "Si no lo estás cambiando, lo estás eligiendo."
-          </p>
+          <div className="home-hero__quote-box">
+            <span className="home-hero__quote-icon">❝</span>
+            <p className="home-hero__quote-text">
+              Si no lo estás cambiando,<br/>lo estás eligiendo.
+            </p>
+          </div>
           <div className="home-hero__btns">
             <Link to="/menus" className="btn-primary" style={{ backgroundColor: '#1e3a1f' }}>Ver Menús</Link>
             <Link to="/registro" className="btn-white" style={{ color: '#1e3a1f' }}>Crear cuenta</Link>

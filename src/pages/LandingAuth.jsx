@@ -70,9 +70,7 @@ const LandingAuth = () => {
               </Box>
             </motion.div>
 
-            <Typography variant="h3" fontWeight="800" gutterBottom sx={{ letterSpacing: '-0.5px', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
-              Eat & Run
-            </Typography>
+            <img src="/fotos/logo.png" alt="Eat & Run" style={{ height: '60px', width: 'auto', display: 'block', margin: '0 auto 16px auto', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }} />
             
             <Typography variant="h6" sx={{ mb: 5, fontWeight: 400, opacity: 0.9, lineHeight: 1.6 }}>
               Comida saludable, sin complicaciones.<br/>Elegí cómo querés empezar.

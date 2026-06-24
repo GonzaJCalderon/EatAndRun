@@ -783,8 +783,8 @@ return (
 
     {/* FOOTER */}
     <Box sx={{ textAlign: 'center', py: 3, backgroundColor: '#f9f9f9' }}>
-      <img />
-      <Typography variant="body2" color="text.secondary">Eat & Run - Healthy Food 🍃</Typography>
+      <img src="/fotos/Eat%26Runmarca.jpg" alt="Eat & Run" style={{ height: '48px', width: 'auto', marginBottom: '12px' }} />
+      <Typography variant="body2" color="text.secondary">Healthy Food 🍃</Typography>
       <Box sx={{ mt: 1, display: 'flex', justifyContent: 'center', gap: 1 }}>
         <InstagramIcon sx={{ color: '#E1306C' }} />
         <Link href="https://www.instagram.com/eatandrun.mza/" target="_blank" rel="noopener noreferrer" underline="hover" variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>

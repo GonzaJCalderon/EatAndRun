@@ -31,10 +31,9 @@
   margin-right: auto;
 }
 .pnav__logo-img {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  object-fit: cover;
+  height: 36px;
+  width: auto;
+  object-fit: contain;
 }
 .pnav__logo-text {
   font-size: 1.15rem;

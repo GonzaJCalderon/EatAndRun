@@ -93,9 +93,7 @@ const Login = () => {
       >
         <Box sx={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.1)' }} />
         <Box sx={{ position: 'absolute', bottom: { xs: 16, md: 40 }, right: { xs: 16, md: 40 }, textAlign: 'right' }}>
-          <Typography variant="h3" component="span" sx={{ fontWeight: 800, fontFamily: 'Inter, sans-serif', color: '#fff', textShadow: '0 2px 10px rgba(0,0,0,0.4)', letterSpacing: '-1px' }}>
-            eat<b style={{ fontWeight: 900, color: '#e4f4e1' }}>&amp;</b>run
-          </Typography>
+          <img src="/fotos/logo.png" alt="Eat & Run" style={{ height: '50px', width: 'auto', display: 'block', marginLeft: 'auto', marginBottom: '4px', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.3))' }} />
           <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600, textShadow: '0 1px 6px rgba(0,0,0,0.4)', mt: -0.5 }}>
             #familiaEatAndRun
           </Typography>

@@ -69,11 +69,33 @@
   margin-bottom: 10px;
   line-height: 1.5;
 }
-.home-hero__quote {
-  font-size: 0.88rem;
+.home-hero__quote-box {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: rgba(30, 58, 31, 0.08);
+  padding: 16px 24px;
+  border-radius: 4px 16px 16px 4px;
+  margin-bottom: 32px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.05);
+  border: 1px solid rgba(30, 58, 31, 0.1);
+  border-left: 5px solid #1e3a1f;
+}
+.home-hero__quote-icon {
+  font-size: 2rem;
+  color: #1e3a1f;
+  line-height: 1;
+  font-family: serif;
   opacity: 0.6;
+}
+.home-hero__quote-text {
+  color: #1e3a1f;
+  font-size: 1.15rem;
+  font-weight: 800;
   font-style: italic;
-  margin-bottom: 28px;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
 }
 .home-hero__btns {
   display: flex;

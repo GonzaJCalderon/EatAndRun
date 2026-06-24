@@ -18,11 +18,12 @@ const IcoNut = ({ size = 18 }) => (
 );
 
 const PRODUCTS = [
-  { img: '/fotos/oliva.png',              name: 'Aceite de Oliva',   desc: 'Aceite de oliva extra virgen de primera extracción en frío. Calidad premium.',              tag: 'Condimento',   TagIcon: IcoOlive },
-  { img: '/fotos/granola.png',            name: 'Snack',             desc: 'Granola artesanal con semillas, avena y frutos secos. Ideal para el desayuno o colación.', tag: 'Desayuno',     TagIcon: IcoGranola },
-  { img: '/fotos/fs.png',                 name: 'Frutos Secos',      desc: 'Mix de frutos secos naturales y sin sal. La colación perfecta para tu jornada.',           tag: 'Snack',        TagIcon: IcoNut },
-  { img: '/fotos/habitos saludables.png', name: 'Snacks Saludables', desc: 'Opciones naturales y nutritivas para acompañar tu día con energía.',                        tag: 'Snack',        TagIcon: IcoLeaf },
-  { img: null,                            name: 'Nuevos Productos',  desc: 'Estamos trabajando en nuevas opciones para completar tu despensa saludable.',               tag: 'Próximamente', TagIcon: IcoBox, soon: true },
+  { img: '/fotos/oliva.png',                   name: 'Aceite de Oliva',   desc: 'Aceite de oliva extra virgen de primera extracción en frío. Calidad premium.',              tag: 'Condimento',   TagIcon: IcoOlive },
+  { img: '/fotos/Granola_.jpg',                name: 'Granola',           desc: 'Granola artesanal con semillas, avena y frutos secos. Ideal para el desayuno o colación.', tag: 'Snack',        TagIcon: IcoGranola },
+  { img: '/fotos/Frutos%20secos.jpg',          name: 'Frutos Secos',      desc: 'Mix de frutos secos naturales y sin sal. La colación perfecta para tu jornada.',           tag: 'Snack',        TagIcon: IcoNut },
+  { img: '/fotos/Galletas%20de%20Avena2.jpg',  name: 'Galletas de Avena', desc: 'Galletas artesanales de avena, la opción nutritiva perfecta para tus pausas.',             tag: 'Snack',        TagIcon: IcoLeaf },
+  { img: '/fotos/Sandwich.jpg',                name: 'Sándwiches',        desc: 'Sándwiches frescos, elaborados en el día con ingredientes de primera calidad.',             tag: 'Almuerzo',     TagIcon: IcoLeaf },
+  { img: null,                                 name: 'Nuevos Productos',  desc: 'Estamos trabajando en nuevas opciones para completar tu despensa saludable.',               tag: 'Próximamente', TagIcon: IcoBox, soon: true },
 ];
 
 export default function Productos() {
