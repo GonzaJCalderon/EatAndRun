@@ -131,7 +131,7 @@ export default function Home() {
             <Link to="/registro" className="btn-white" style={{ color: '#1e3a1f' }}>Crear cuenta</Link>
           </div>
 
-          <p style={{ color: '#1e3a1f', fontSize: '1.05rem', fontWeight: 800, fontStyle: 'italic', letterSpacing: '-0.01em', opacity: 0.85, textShadow: '0 2px 10px rgba(255,255,255,0.5)' }}>
+          <p className="home-hero__handwritten-quote">
             "Si no lo estás cambiando, lo estás eligiendo."
           </p>
         </div>
