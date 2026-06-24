@@ -4,7 +4,8 @@
   box-shadow: 0 8px 40px rgba(30,60,20,0.16);
   aspect-ratio: 4/3;
 }
-.emp-img-wrap img { width: 100%; height: 100%; object-fit: cover; object-position: left center; }
+.emp-img-wrap img { width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.emp-img-wrap--left img { object-position: left center; }
 
 .emp-clients {
   display: grid;

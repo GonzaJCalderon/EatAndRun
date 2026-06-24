@@ -53,7 +53,7 @@ export default function Empresas() {
                 Contactanos para más detalles
               </a>
             </div>
-            <div className="emp-img-wrap">
+            <div className="emp-img-wrap emp-img-wrap--left">
               <img src="/fotos/Sandwich.jpg" alt="Sandwiches para eventos" decoding="async" loading="lazy" />
             </div>
           </div>
