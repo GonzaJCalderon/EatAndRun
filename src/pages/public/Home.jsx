@@ -133,7 +133,7 @@ export default function Home() {
 
           <div style={{ position: 'relative', display: 'inline-block' }}>
             <span style={{ position: 'absolute', top: '-16px', left: '-12px', fontSize: '4rem', color: '#3a6832', opacity: 0.15, fontFamily: 'serif', lineHeight: 1, zIndex: 0 }}>❝</span>
-            <p style={{ position: 'relative', zIndex: 1, color: '#1e3a1f', fontSize: '1.15rem', fontWeight: 800, fontStyle: 'italic', margin: 0, lineHeight: 1.3 }}>
+            <p style={{ position: 'relative', zIndex: 1, color: '#1e3a1f', fontSize: '1.3rem', fontWeight: 500, margin: 0, lineHeight: 1.3, fontFamily: "'Clash Display', sans-serif" }}>
               Si no lo estás cambiando,<br />
               lo estás eligiendo.
             </p>
