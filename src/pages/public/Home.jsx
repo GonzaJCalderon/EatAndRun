@@ -121,7 +121,7 @@ export default function Home() {
             semanal,<br />
             resuelta.
           </h1>
-          <p className="home-hero__sub" style={{ color: '#1e3a1f', fontWeight: 500, fontSize: '1.2rem', marginBottom: '32px' }}>
+          <p className="home-hero__sub" style={{ color: '#1e3a1f', fontWeight: 500, fontSize: '1.2rem', marginBottom: '32px', textShadow: '0 2px 15px rgba(255,255,255,0.9), 0 0 5px rgba(255,255,255,0.9)' }}>
             Menús saludables listos<br />
             para disfrutar donde estés.
           </p>
@@ -133,7 +133,7 @@ export default function Home() {
 
           <div style={{ position: 'relative', display: 'inline-block' }}>
             <span style={{ position: 'absolute', top: '-16px', left: '-12px', fontSize: '4rem', color: '#3a6832', opacity: 0.15, fontFamily: 'serif', lineHeight: 1, zIndex: 0 }}>❝</span>
-            <p style={{ position: 'relative', zIndex: 1, color: '#1e3a1f', fontSize: '1.3rem', fontWeight: 500, margin: 0, lineHeight: 1.3, fontFamily: "'Clash Display', sans-serif" }}>
+            <p style={{ position: 'relative', zIndex: 1, color: '#1e3a1f', fontSize: '1.3rem', fontWeight: 500, margin: 0, lineHeight: 1.3, fontFamily: "'Clash Display', sans-serif", textShadow: '0 2px 15px rgba(255,255,255,0.9), 0 0 5px rgba(255,255,255,0.8)' }}>
               Si no lo estás cambiando,<br />
               lo estás eligiendo.
             </p>
