@@ -61,13 +61,13 @@ const App = () => (
       <Route path="/comunidad"  element={<Comunidad />} />
       <Route path="/contacto"   element={<Contacto />} />
       <Route path="/quienes-somos" element={<QuienesSomos />} />
+      <Route path="/recuperar-clave" element={<RecuperarClave />} />
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
     </Route>
 
-    {/* 🔐 Login y registro */}
+    {/* 🔐 Login y registro (mantienen su propio layout) */}
     <Route path="/login" element={<Login />} />
     <Route path="/registro" element={<Registro />} />
-    <Route path="/recuperar-clave" element={<RecuperarClave />} />
-    <Route path="/reset-password/:token" element={<ResetPassword />} />
 
     {/* 🔄 Layout común */}
     <Route element={<Layout />}>
