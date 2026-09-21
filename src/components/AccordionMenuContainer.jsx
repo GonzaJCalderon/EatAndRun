@@ -98,14 +98,26 @@ useEffect(() => {
     <Box sx={{ width: '100%', mt: 2 }}>
       {diasSemana.map((dia) => {
         const estaHabilitado = diasHabilitados?.[dia] === true;
-        if (!estaHabilitado) return null;
 
         const diaData = menuData?.[dia] || {};
 
         // 🧠 APLICAMOS ORDENAMIENTO
         const platosFijos = [...(diaData.fijos || [])].sort(ordenarPlatos);
         const platosEspeciales = [...(diaData.especiales || [])].sort(ordenarPlatos);
+        const platosTodos = [...platosFijos, ...platosEspeciales];
 
+        const primeraFecha = platosTodos[0]?.date;
+        // Si hay una fecha en el plato, vemos si ya es pasado
+        let esPasado = false;
+        if (primeraFecha) {
+          const TZ = 'America/Argentina/Buenos_Aires';
+          const fechaDia = dayjs.utc(primeraFecha).tz(TZ).startOf('day');
+          const hoy = dayjs().tz(TZ).startOf('day');
+          const mañana = hoy.add(1, 'day');
+          esPasado = fechaDia.isBefore(mañana);
+        }
+
+        const habilitadoFinal = estaHabilitado && !esPasado;
         const seleccionDia = selecciones?.[dia] || {};
 
         return (
@@ -120,8 +132,6 @@ useEffect(() => {
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               {(() => {
-  const platos = [...platosFijos, ...platosEspeciales];
-  const primeraFecha = platos[0]?.date;
   const fechaFormateada = primeraFecha
     ? dayjs(primeraFecha).format('DD/MM')
     : null;
@@ -139,6 +149,11 @@ useEffect(() => {
             </AccordionSummary>
 
             <AccordionDetails>
+              {!habilitadoFinal ? (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  🚫 El día {prettyName(dia)} está deshabilitado o ya pasó.
+                </Alert>
+              ) : (
                 <>
                   {platosFijos.length === 0 && platosEspeciales.length === 0 ? (
                     <Typography color="text.secondary" sx={{ mb: 2 }}>
@@ -152,7 +167,7 @@ useEffect(() => {
                       selected={seleccionDia}
                       onChange={(seleccion) => handleSelectCambio(dia, seleccion)}
                       semanaCerrada={semanaCerrada}
-                      disabled={!estaHabilitado}
+                      disabled={!habilitadoFinal}
                     />
                   )}
 
@@ -161,7 +176,7 @@ useEffect(() => {
                     selectedGlobal={selecciones}
                     onSelect={onSelect}
                     semanaCerrada={semanaCerrada}
-                    disabled={!estaHabilitado}
+                    disabled={!habilitadoFinal}
                   />
 
                   {dia === 'viernes' ? (
@@ -196,6 +211,7 @@ useEffect(() => {
 
                   )}
                 </>
+              )}
             </AccordionDetails>
           </Accordion>
         );

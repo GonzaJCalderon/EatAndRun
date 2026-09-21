@@ -2,11 +2,13 @@ import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import duration from 'dayjs/plugin/duration';
 
 // Plugins
 dayjs.extend(isBetween);
 dayjs.extend(utc);
 dayjs.extend(timezone);
+dayjs.extend(duration);
 
 // ✅ Locale español personalizado (sin usar dayjs.Ls directamente)
 const localeData = {

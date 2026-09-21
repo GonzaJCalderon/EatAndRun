@@ -11,6 +11,8 @@ import { useState } from 'react';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { Link } from 'react-router-dom';
 
+import CountdownBanner from './CountdownBanner';
+
 
 const Header = () => {
   const user = useSelector(selectUser);
@@ -46,7 +48,8 @@ const Header = () => {
 
   return (
     <>
-      <AppBar position="static" sx={{ backgroundColor: '#4a7c42' }}>
+      <CountdownBanner />
+      <AppBar position="static" sx={{ backgroundColor: '#4a7c42', boxShadow: 'none' }}>
         <Toolbar sx={{ justifyContent: 'space-between' }}>
           {/* Logo */}
           <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => navigate('/')}>

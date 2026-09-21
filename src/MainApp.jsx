@@ -186,19 +186,13 @@ useEffect(() => {
   }, [user]);
 
   useEffect(() => {
-    if (!cargandoUsuario && !user) navigate('/app');
-  }, [cargandoUsuario, user, navigate])
+    // Si no hay usuario logueado, permitir ver el menú sin pantalla blanca
+  }, [cargandoUsuario, user]);
 
 
 
 
-  useEffect(() => {
-    const ahora = new Date();
-    const deadline = new Date();
-    deadline.setDate(ahora.getDate() + ((7 - ahora.getDay()) % 7));
-    deadline.setHours(20, 0, 0, 0);
-    if (ahora > deadline) setBloqueado(true);
-  }, []);
+// El estado bloqueado se ha eliminado para permitir ver y pedir en las próximas semanas
 
 const semanaCerrada = useMemo(() => {
   if (!semanaActiva || !semanaActiva.habilitado) return true;
@@ -469,7 +463,8 @@ if (loadingPrecios || !precios) {
     );
   }
 
-  if (!user) return null;
+  // Si el usuario no está autenticado aún, asignamos un objeto invitado por defecto para que no quede en blanco
+  const userSafe = user || { name: 'Invitado', role: 'usuario' };
 if (confirmando) {
   const { total, descuento, totalPlatos } = estimarTotal(); // ✅ 👈 AGREGAMOS ESTO
 
@@ -609,7 +604,7 @@ return (
             letterSpacing: '-0.5px' 
           }}
         >
-          ¡Hola {user.name}! <span style={{ fontSize: '1.2em' }}>🌱</span>
+          ¡Hola {userSafe?.name || 'Cliente'}! <span style={{ fontSize: '1.2em' }}>🌱</span>
         </Typography>
         <Typography 
           variant="subtitle1" 
@@ -626,168 +621,149 @@ return (
         </Typography>
       </Box>
 
-      {/* BLOQUEO DE PEDIDO */}
-      {bloqueado ? (
+      {/* BLOQUEO DE PEDIDO: Mostrar alerta pero NO ocultar el menú */}
+      {bloqueado && (
         <Typography color="error" sx={{ mb: 2 }}>
-          🚫 Ya no se pueden modificar los pedidos.
+          🚫 Ya no se pueden realizar ni modificar pedidos para esta semana.
         </Typography>
-      ) : (
-        <>
-          {/* TABS (si es admin) */}
-          {user.role === 99 && (
-            <Tabs value={activeTab} onChange={(e, val) => setActiveTab(val)} centered sx={{ mb: 2 }}>
-              <Tab label="🧍 Usuario" value="usuario" />
-              <Tab label="🏢 Empresa" value="empresa" />
-            </Tabs>
-          )}
+      )}
 
-          {/* SEMANA ACTIVA PREMIUM */}
-          {semanaCargada && semanaActiva?.habilitado && (
-            <Box sx={{ px: 2, mb: 3 }}>
-              <Box 
-                sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  gap: 1.5,
-                  backgroundColor: '#f0fdf4',
-                  border: '1px solid #bbf7d0',
-                  color: '#166534',
-                  py: 1.5,
-                  px: 3,
-                  borderRadius: 16,
-                  boxShadow: '0 2px 10px rgba(22, 163, 74, 0.05)'
-                }}
-              >
-                <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
-                  🗓️ Menú disponible del{' '}
-                  <Box component="span" sx={{ color: '#15803d', fontWeight: 800 }}>
-                    {dayjs.utc(semanaActiva.semana_inicio).format('D/M')}
-                  </Box>{' '}
-                  al{' '}
-                  <Box component="span" sx={{ color: '#15803d', fontWeight: 800 }}>
-                    {dayjs.utc(semanaActiva.semana_fin).format('D/M')}
-                  </Box>
+      <>
+        {/* TABS (si es admin) */}
+        {userSafe?.role === 99 && (
+          <Tabs value={activeTab} onChange={(e, val) => setActiveTab(val)} centered sx={{ mb: 2 }}>
+            <Tab label="🧍 Usuario" value="usuario" />
+            <Tab label="🏢 Empresa" value="empresa" />
+          </Tabs>
+        )}
+
+        {/* SEMANA ACTIVA PREMIUM */}
+        {semanaCargada && semanaActiva?.habilitado && (
+          <Box sx={{ px: 2, mb: 3 }}>
+            <Box 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                gap: 1.5,
+                backgroundColor: '#f0fdf4',
+                border: '1px solid #bbf7d0',
+                color: '#166534',
+                py: 1.5,
+                px: 3,
+                borderRadius: 16,
+                boxShadow: '0 2px 10px rgba(22, 163, 74, 0.05)'
+              }}
+            >
+              <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                🗓️ Menú disponible del{' '}
+                <Box component="span" sx={{ color: '#15803d', fontWeight: 800 }}>
+                  {dayjs.utc(semanaActiva.semana_inicio).format('D/M')}
+                </Box>{' '}
+                al{' '}
+                <Box component="span" sx={{ color: '#15803d', fontWeight: 800 }}>
+                  {dayjs.utc(semanaActiva.semana_fin).format('D/M')}
+                </Box>
+              </Typography>
+            </Box>
+          </Box>
+        )}
+        {/* 🎁 Barra de incentivo de Pack Semanal */}
+        {(() => {
+          const diasConPlato = Object.values(activeSelecciones).filter(diaObj =>
+            Object.values(diaObj || {}).some(p => parseInt(p?.cantidad || 0) > 0)
+          ).length;
+          const porcentaje = Math.min((diasConPlato / 5) * 100, 100);
+
+          return (
+            <Box sx={{ mb: 3, px: 2 }}>
+              <Box sx={{ p: 2, bgcolor: '#e8f5e9', borderRadius: 3, border: '1px solid #c8e6c9' }}>
+                <Typography variant="subtitle2" fontWeight="bold" color="success.dark" align="center" sx={{ mb: 0.5 }}>
+                  {diasConPlato >= 5
+                    ? '🎉 ¡Completaste tu Pack Semanal! Tenés descuento automático.'
+                    : `🎁 Pediste ${diasConPlato} de 5 días. ¡Pedí ${5 - diasConPlato} día${5 - diasConPlato !== 1 ? 's' : ''} más para activar tu Pack Semanal!`}
                 </Typography>
+                <Box sx={{ width: '100%', bgcolor: '#c8e6c9', borderRadius: 1, height: 10, overflow: 'hidden' }}>
+                  <Box sx={{ width: `${porcentaje}%`, bgcolor: '#4caf50', height: '100%', transition: 'width 0.4s ease' }} />
+                </Box>
               </Box>
             </Box>
-          )}
+          );
+        })()}
 
-          {/* 1. MENÚ POR DÍA */}
-          <TabsMenuContainer
-            menuData={filteredMenuData}
-            selecciones={activeSelecciones}
-            onSelect={setActiveSelecciones}
-            semanaCerrada={semanaCerrada}
-            onFinalizarDias={() => {
-              const target = document.getElementById('confirmar-pedido-btn');
-              if (target) {
-                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              }
-            }}
-          />
+        {/* 1. MENÚ POR DÍA */}
+        <TabsMenuContainer
+          menuData={filteredMenuData}
+          selecciones={activeSelecciones}
+          onSelect={setActiveSelecciones}
+          semanaCerrada={semanaCerrada || bloqueado}
+          onFinalizarDias={() => {
+            const target = document.getElementById('confirmar-pedido-btn');
+            if (target) {
+              target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }}
+        />
 
-          {/* 2. TARTAS */}
-          <TartaGallery
-            seleccionadas={tartasSeleccionadas}
-            onChange={setTartasSeleccionadas}
-            tartasDisponibles={tartasDisponibles}
-          />
-          
+        {/* 2. TARTAS */}
+        <TartaGallery
+          seleccionadas={tartasSeleccionadas}
+          onChange={setTartasSeleccionadas}
+          tartasDisponibles={tartasDisponibles}
+        />
+        
 
-          {/* 3. OBSERVACIONES */}
-          <Typography variant="h6" sx={{ mt: 3 }}>📝 Observaciones</Typography>
-          <TextField
-            multiline
-            rows={3}
-            fullWidth
-            value={observaciones}
-            onChange={(e) => setObservaciones(e.target.value)}
-            sx={{ mt: 1, mb: 2 }}
-          />
+        {/* 3. OBSERVACIONES */}
+        <Typography variant="h6" sx={{ mt: 3 }}>📝 Observaciones</Typography>
+        <TextField
+          multiline
+          rows={3}
+          fullWidth
+          value={observaciones}
+          onChange={(e) => setObservaciones(e.target.value)}
+          sx={{ mt: 1, mb: 2 }}
+        />
 
-          {/* 4. MÉTODO DE PAGO */}
-          {/* <PagoSection
-            metodoPago={metodoPago}
-            onMetodoPagoChange={setMetodoPago}
-            onExtrasChange={(data) => {
-              setExtras(data);
-              setExtrasDetalle(data);
-            }}
-            onComprobanteChange={setComprobante}
-          /> */}
-
-          {/* 5. RESUMEN Y TOTAL */}
-          {/* <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>📋 Resumen de selección</Typography>
-         {resumenDias.map(({ dia, resumen }, idx) => {
-  if (!dia || typeof dia !== 'string') return null; // 🔐 Protección
-
-  return (
-    <Typography key={idx} variant="body2" sx={{ mb: 0.5 }}>
-      📅 <strong>{dia.charAt(0).toUpperCase() + dia.slice(1)}:</strong> {resumen}
-    </Typography>
-  );
-})} */}
-
-
-          {/* TOTAL */}
-          {/* {activeTab !== 'empresa' && (() => {
-            const { total, descuento } = estimarTotal();
-            return (
-              <>
-                {descuento > 0 && (
-                  <Typography variant="body2" color="success.main" sx={{ mb: 1 }}>
-                    🎉 ¡Descuento aplicado por superar 5 platos! Ahorro: <strong>${descuento.toLocaleString('es-AR')}</strong>
-                  </Typography>
-                )}
-                <Typography variant="h6" sx={{ mt: 1 }}>
-                  💰 Total estimado: <strong>${total.toLocaleString('es-AR')}</strong>
-                </Typography>
-              </>
-            );
-          })()} */}
-          
-          
-          {/* 6. BOTÓN DE CONFIRMACIÓN */}
-
-
+        {/* 6. BOTÓN DE CONFIRMACIÓN */}
         <Button
-  id="confirmar-pedido-btn"
-  variant="contained"
-  color="success"
-  fullWidth
-  disabled={
-    semanaCerrada ||
-    !(
-      Object.values(activeSelecciones).some(dia =>
-        Object.values(dia).some(p => parseInt(p.cantidad) > 0)
-      ) ||
-      Object.values(tartasSeleccionadas).some(q => q > 0)
-    )
-  }
-  onClick={() => setConfirmando(true)}
-  sx={{ mt: 2 }}
->
-  
-  Confirmar pedido
-</Button>
+          id="confirmar-pedido-btn"
+          variant="contained"
+          color="success"
+          fullWidth
+          disabled={
+            semanaCerrada ||
+            bloqueado ||
+            !(
+              Object.values(activeSelecciones).some(dia =>
+                Object.values(dia).some(p => parseInt(p.cantidad) > 0)
+              ) ||
+              Object.values(tartasSeleccionadas).some(q => q > 0)
+            )
+          }
+          onClick={() => setConfirmando(true)}
+          sx={{ mt: 2 }}
+        >
+          Confirmar pedido
+        </Button>
 
-
-          {/* CERRAR SESIÓN */}
-          <Button onClick={() => dispatch(logout())} variant="outlined" fullWidth sx={{ mt: 3 }}>
-            Cerrar sesión
-          </Button>
-        </>
-      )}
+        {/* CERRAR SESIÓN */}
+        <Button onClick={() => dispatch(logout())} variant="outlined" fullWidth sx={{ mt: 3 }}>
+          Cerrar sesión
+        </Button>
+      </>
     </Container>
 
     {/* FOOTER */}
-    <Box sx={{ textAlign: 'center', py: 3, backgroundColor: '#f9f9f9' }}>
-      <img src="/fotos/Eat%26Runmarca.jpg" alt="Eat & Run" style={{ height: '48px', width: 'auto', marginBottom: '12px', mixBlendMode: 'multiply' }} />
-      <Typography variant="body2" color="text.secondary">Healthy Food 🍃</Typography>
-      <Box sx={{ mt: 1, display: 'flex', justifyContent: 'center', gap: 1 }}>
-        <InstagramIcon sx={{ color: '#E1306C' }} />
-        <Link href="https://www.instagram.com/eatandrun.mza/" target="_blank" rel="noopener noreferrer" underline="hover" variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+    <Box sx={{ textAlign: 'center', py: 4, backgroundColor: '#f8fafc', borderTop: '1px solid #e2e8f0' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 1 }}>
+        <Typography variant="h5" component="span" sx={{ fontWeight: 800, fontFamily: 'Inter, sans-serif', color: '#4a7c42', letterSpacing: '-0.5px' }}>
+          eat<b style={{ fontWeight: 900, color: '#15803d' }}>&amp;</b>run
+        </Typography>
+      </Box>
+      <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>Healthy Food 🍃</Typography>
+      <Box sx={{ mt: 1.5, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
+        <InstagramIcon sx={{ color: '#E1306C', fontSize: 20 }} />
+        <Link href="https://www.instagram.com/eatandrun.mza/" target="_blank" rel="noopener noreferrer" underline="hover" variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
           @eatandrun.mza
         </Link>
       </Box>

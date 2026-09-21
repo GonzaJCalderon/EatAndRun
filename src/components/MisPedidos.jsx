@@ -10,6 +10,8 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import dayjs from '../utils/day';
+import { tartaLabelMap } from '../utils/tartaUtils';
 
 const EXTRAS_MAP = {
   1: '🍰 Postre',
@@ -20,20 +22,89 @@ const EXTRAS_MAP = {
 const MisPedidos = () => {
   const [pedidos, setPedidos] = useState([]);
   const [cargando, setCargando] = useState(true);
-  
+  const [nameMap, setNameMap] = useState({});
+
   // Filters
   const [filtroEstado, setFiltroEstado] = useState('Todos');
   const [filtroMes, setFiltroMes] = useState('Todos');
-  
+
   const navigate = useNavigate();
 
   useEffect(() => {
-    api.get('/orders')
-      .then(res => {
-        setPedidos(res.data);
-      })
-      .catch(err => console.error(err))
-      .finally(() => setCargando(false));
+    const loadData = async () => {
+      try {
+        const [resOrders, resFixed, resTartas, resDaily, resSemanal] = await Promise.all([
+          api.get('/orders').catch(() => ({ data: [] })),
+          api.get('/fixed').catch(() => ({ data: [] })),
+          api.get('/tartas').catch(() => ({ data: [] })),
+          api.get('/daily/all').catch(() => ({ data: [] })),
+          api.get('/daily/semanal').catch(() => ({ data: {} }))
+        ]);
+
+        const dict = {};
+
+        // 1. Platos Fijos
+        if (Array.isArray(resFixed.data)) {
+          resFixed.data.forEach((p, index) => {
+            const name = p.name || p.nombre || p.title;
+            if (name) {
+              dict[`${index}`] = name;
+              if (p.id) dict[String(p.id)] = name;
+              if (p._id) dict[String(p._id)] = name;
+              dict[`ID:${p.id || p._id}`] = name;
+            }
+          });
+        }
+
+        // 2. Platos Diarios (all)
+        if (Array.isArray(resDaily.data)) {
+          resDaily.data.forEach(p => {
+            const name = p.name || p.nombre || p.title;
+            if (name) {
+              if (p.id) dict[String(p.id)] = name;
+              if (p._id) dict[String(p._id)] = name;
+              dict[`ID:${p.id || p._id}`] = name;
+            }
+          });
+        }
+
+        // 3. Platos del Menú Semanal activo
+        if (resSemanal.data && typeof resSemanal.data === 'object') {
+          Object.values(resSemanal.data).forEach(diaObj => {
+            const lista = [...(diaObj?.platos || []), ...(diaObj?.especiales || []), ...(diaObj?.fijos || [])];
+            lista.forEach(p => {
+              const name = p.name || p.nombre || p.title;
+              if (name) {
+                if (p.id) dict[String(p.id)] = name;
+                if (p._id) dict[String(p._id)] = name;
+                dict[`ID:${p.id || p._id}`] = name;
+              }
+            });
+          });
+        }
+
+        // 4. Tartas
+        if (Array.isArray(resTartas.data)) {
+          resTartas.data.forEach(t => {
+            const name = t.nombre || t.name || t.gusto;
+            if (name) {
+              if (t.id) dict[String(t.id)] = name;
+              if (t.key) dict[t.key] = name;
+            }
+          });
+        }
+
+        console.log('📚 Diccionario completo cargado en MisPedidos:', dict);
+        setNameMap(dict);
+        setPedidos(resOrders.data || []);
+      } catch (err) {
+        console.error('Error cargando pedidos o catálogo:', err);
+      } finally {
+        setCargando(false);
+      }
+    };
+
+    loadData();
   }, []);
 
   const logout = () => {
@@ -44,29 +115,62 @@ const MisPedidos = () => {
   const tieneDetalles = (pedido) => {
     if (!pedido || typeof pedido !== 'object') return false;
     const { diarios = {}, extras = {}, tartas = {} } = pedido;
-    
+
     const hasDiarios = Object.values(diarios || {}).some(val => val && typeof val === 'object' && Object.keys(val).length > 0);
     const hasExtras = Object.values(extras || {}).some(val => val && typeof val === 'object' && Object.keys(val).length > 0);
     const hasTartas = (tartas || {}) && Object.keys(tartas || {}).length > 0;
-    
+
     return hasDiarios || hasExtras || hasTartas;
   };
 
   const normalizarNombre = (nombre, tipo) => {
-    const match = nombre.match(/^ID:(\d+)/);
-    const id = match?.[1];
-    if (!id) return nombre;
+    if (!nombre) return '';
+    const str = String(nombre).trim();
 
-    switch (tipo) {
-      case 'extras':
-        return EXTRAS_MAP[id] || `Extra #${id}`;
-      case 'diarios':
-        return `Menú diario #${id}`;
-      case 'tartas':
-        return `Tarta #${id}`;
-      default:
-        return nombre;
+    // 1. Coincidencia directa o por ID limpio
+    const idClean = str.replace(/^ID:/i, '').trim();
+    if (nameMap[idClean]) return nameMap[idClean];
+    if (nameMap[str]) return nameMap[str];
+
+    // Buscar en cualquier clave del diccionario que termine o coincida con la ID
+    const entry = Object.entries(nameMap).find(([k]) => k === idClean || k.endsWith(`:${idClean}`) || k.endsWith(`-${idClean}`));
+    if (entry) return entry[1];
+
+    // 2. Tartas
+    if (tipo === 'tartas' || tartaLabelMap[str]) {
+      if (tartaLabelMap[str]) return tartaLabelMap[str];
     }
+
+    // 3. Texto con prefijo "ID:" pero con letras reales (Ej: ID:Pechuga a la plancha)
+    if (str.toUpperCase().startsWith('ID:')) {
+      const sinPrefix = str.slice(3).trim();
+      if (sinPrefix && isNaN(sinPrefix)) {
+        return sinPrefix
+          .replace(/_/g, ' ')
+          .toLowerCase()
+          .replace(/^\w|\s\w/g, c => c.toUpperCase());
+      }
+    }
+
+    // 4. Extras
+    const match = str.match(/^ID:(\d+)/i);
+    const id = match?.[1] || (isNaN(idClean) ? null : idClean);
+    if (id && tipo === 'extras') {
+      return EXTRAS_MAP[id] || `Extra #${id}`;
+    }
+
+    // 5. Fallback final limpio sin número de ID feo
+    if (!isNaN(idClean)) {
+      return `Menú Especial #${idClean}`;
+    }
+
+    return str
+      .replace(/^ID:/i, '')
+      .replace(/_/g, ' ')
+      .trim()
+      .replace(/\s+/g, ' ')
+      .toLowerCase()
+      .replace(/^\w|\s\w/g, c => c.toUpperCase());
   };
 
   const getStatusColor = (status) => {
@@ -305,10 +409,43 @@ const MisPedidos = () => {
 
                 <Divider sx={{ my: 2 }} />
 
-                <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2} sx={{ mb: 2 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#1e293b' }}>
-                    Total estimado: <span style={{ color: '#22c55e', fontSize: '1.2rem' }}>${Number(p.total).toLocaleString()}</span>
-                  </Typography>
+                <Stack direction="column" gap={0.5} sx={{ mb: 2 }}>
+                  {(() => {
+                    const diarios = p.pedido?.diarios || {};
+                    let totalPlatos = 0;
+                    Object.values(diarios).forEach(dia => {
+                      if (dia && typeof dia === 'object') {
+                        Object.values(dia).forEach(cant => {
+                          totalPlatos += Number(cant || 0);
+                        });
+                      }
+                    });
+
+                    // Descuento explícito o calculado por Pack Semanal (5 platos o más)
+                    const descAplicado = Number(p.descuento || (totalPlatos >= 5 ? totalPlatos * 200 : 0));
+                    const totalMostrar = Number(p.total);
+
+                    return (
+                      <>
+                        {descAplicado > 0 && (
+                          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, backgroundColor: '#dcfce7', border: '1px solid #86efac', px: 1.5, py: 0.5, borderRadius: 2, width: 'fit-content', mb: 0.5 }}>
+                            <Typography variant="caption" sx={{ color: '#15803d', fontWeight: 800 }}>
+                              🎉 ¡Descuento por Pack Semanal (5 días) aplicado! (-${descAplicado.toLocaleString()})
+                            </Typography>
+                          </Box>
+                        )}
+                        <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#1e293b' }}>
+                          Total estimado:{' '}
+                          {descAplicado > 0 && (
+                            <span style={{ textDecoration: 'line-through', color: '#94a3b8', marginRight: '8px', fontSize: '0.95rem' }}>
+                              ${(totalMostrar + descAplicado).toLocaleString()}
+                            </span>
+                          )}
+                          <span style={{ color: '#22c55e', fontSize: '1.2rem' }}>${totalMostrar.toLocaleString()}</span>
+                        </Typography>
+                      </>
+                    );
+                  })()}
                 </Stack>
                 
                 <Accordion sx={{ boxShadow: 'none', border: '1px solid #e2e8f0', borderRadius: '12px !important', '&:before': { display: 'none' } }}>
