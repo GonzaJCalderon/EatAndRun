@@ -1,9 +1,15 @@
 // src/api/api.js
 import axios from 'axios';
 
-// ✅ En producción usa la variable de entorno de Vite
-// En desarrollo usa localhost si no hay variable definida
-const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
+let baseURL;
+
+if (window.location.hostname === 'localhost') {
+  baseURL = 'http://localhost:4000/api';
+} else {
+  baseURL = 'https://eatandrun-back-production.up.railway.app/api';
+}
+
+console.log('🌍 API base URL detectada:', baseURL);
 
 const api = axios.create({ baseURL });
 

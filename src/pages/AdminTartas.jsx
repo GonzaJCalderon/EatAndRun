@@ -36,7 +36,7 @@ const slugify = (str) =>
 const AdminTartas = () => {
   const [tartas, setTartas] = useState([]);
   const [form, setForm] = useState({
-    key: '',
+  
     nombre: '',
     descripcion: '',
     img: '',
@@ -56,15 +56,16 @@ const AdminTartas = () => {
     fetchTartas();
     fetchPrecios();
   }, []);
+const fetchTartas = async () => {
+  try {
+    const res = await api.get('/tartas');
+    setTartas(res.data);
+    console.log('TARTAS:', res.data); // 👈 esto te va a mostrar si falta el campo `img`
+  } catch (err) {
+    console.error('Error cargando tartas:', err);
+  }
+};
 
-  const fetchTartas = async () => {
-    try {
-      const res = await api.get('/tartas');
-      setTartas(res.data);
-    } catch (err) {
-      console.error('Error cargando tartas:', err);
-    }
-  };
 
   const fetchPrecios = async () => {
     try {
@@ -108,32 +109,33 @@ const AdminTartas = () => {
     setForm(newForm);
   };
 
-  const handleGuardar = async () => {
-    if (!form.nombre || !form.key) {
-      alert('Debe ingresar un nombre válido para generar el key.');
-      return;
-    }
+ const handleGuardar = async () => {
+  if (!form.nombre) {
+    alert('Debe ingresar un nombre válido.');
+    return;
+  }
 
-    try {
-      if (modoEditar) {
-        await api.put(`/tartas/${editarId}`, form);
-      } else {
-        await api.post('/tartas', form);
-      }
-      fetchTartas();
-      cerrarDialogo();
-    } catch (err) {
-      if (
-        err.response?.data?.detail &&
-        err.response.data.detail.includes('already exists')
-      ) {
-        alert('⚠️ Ya existe una tarta con ese nombre. Cambia el nombre o edítala.');
-      } else {
-        alert('Error guardando tarta: ' + (err.response?.data?.detail || err.message));
-      }
-      console.error('Error guardando tarta:', err);
+  try {
+    if (modoEditar) {
+      await api.put(`/tartas/${editarId}`, form);
+    } else {
+      await api.post('/tartas', form);
     }
-  };
+    fetchTartas();
+    cerrarDialogo();
+  } catch (err) {
+    if (
+      err.response?.data?.detail &&
+      err.response.data.detail.includes('already exists')
+    ) {
+      alert('⚠️ Ya existe una tarta con ese nombre. Cambia el nombre o edítala.');
+    } else {
+      alert('Error guardando tarta: ' + (err.response?.data?.detail || err.message));
+    }
+    console.error('Error guardando tarta:', err);
+  }
+};
+
 
   const cerrarDialogo = () => {
     setDialogOpen(false);
@@ -156,26 +158,31 @@ const AdminTartas = () => {
       fetchTartas();
     }
   };
+const handleFileUpload = async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const formData = new FormData();
+  formData.append('image', file);
 
-    const formData = new FormData();
-    formData.append('image', file);
+  try {
+    setSubiendo(true);
+    const res = await api.post('/images/tarta', formData); // No pongas headers acá
+    setForm((prev) => ({ ...prev, img: res.data.secure_url }));
+  } catch (err) {
+    console.error('❌ Error al subir imagen:', err);
 
-    try {
-      setSubiendo(true);
-      const res = await api.post('/images/tarta', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      setForm((prev) => ({ ...prev, img: res.data.secure_url }));
-    } catch (err) {
-      console.error('❌ Error al subir imagen:', err);
-    } finally {
-      setSubiendo(false);
-    }
-  };
+    const mensaje =
+      err?.response?.data?.error || // Ejemplo: error personalizado desde el backend
+      err?.response?.data?.detail || // Si el backend manda más detalles
+      err?.message || 'Error desconocido al subir la imagen';
+
+    alert(`❌ Error al subir la imagen: ${mensaje}`);
+  } finally {
+    setSubiendo(false);
+  }
+};
+
 
   const handleEliminarImagen = () => {
     setForm((prev) => ({ ...prev, img: '' }));

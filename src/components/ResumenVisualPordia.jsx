@@ -8,10 +8,28 @@ const ResumenVisualPorDia = ({ pedidos }) => {
   const agrupado = {};
 
   pedidos.forEach(p => {
+    // Procesar platos principales (ya vienen con nombres correctos del backend)
     p.platos.forEach(plato => {
-      const nombre = plato.nombre;
+      const nombre = plato.nombre; // Ya viene resuelto desde el backend
+
       if (!agrupado[nombre]) agrupado[nombre] = [];
       agrupado[nombre].push({ nombre: p.nombreCompleto, cantidad: plato.cantidad });
+    });
+
+    // Procesar extras (ya vienen con nombres correctos del backend)
+    p.extras.forEach(extra => {
+      const nombre = extra.nombre; // Ya viene resuelto desde el backend
+
+      if (!agrupado[nombre]) agrupado[nombre] = [];
+      agrupado[nombre].push({ nombre: p.nombreCompleto, cantidad: extra.cantidad });
+    });
+
+    // Procesar tartas (ya vienen con nombres correctos del backend)
+    p.tartas.forEach(tarta => {
+      const nombre = tarta.nombre; // Ya viene resuelto desde el backend
+
+      if (!agrupado[nombre]) agrupado[nombre] = [];
+      agrupado[nombre].push({ nombre: p.nombreCompleto, cantidad: tarta.cantidad });
     });
   });
 
@@ -24,9 +42,13 @@ const ResumenVisualPorDia = ({ pedidos }) => {
     <Box sx={{ flex: 1, pr: 2 }}>
       {lista.map(nombre => (
         <Box key={nombre} sx={{ mb: 2 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', background: '#ffe0b2', px: 1 }}>{nombre}</Typography>
+          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', background: '#ffe0b2', px: 1 }}>
+            {nombre}
+          </Typography>
           {agrupado[nombre].map((p, i) => (
-            <Typography key={i} sx={{ pl: 2 }}>• {p.nombre}</Typography>
+            <Typography key={i} sx={{ pl: 2 }}>
+              • {p.nombre}
+            </Typography>
           ))}
           <Typography sx={{ fontWeight: 'bold', mt: 1, pl: 2 }}>
             TOTAL: {agrupado[nombre].reduce((a, b) => a + b.cantidad, 0)}

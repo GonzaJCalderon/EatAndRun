@@ -14,10 +14,11 @@ import {
 import { tartaLabelMap } from '../utils/tartaUtils';
 import CopyText from './CopyText';
 import { usePreciosCompletos } from '../hooks/usePreciosCompletos';
+import dayjs from '../utils/day';
 
 const ResumenFinal = ({
-   loading,
-precios, 
+  loading,
+  precios,
   resumenDias,
   descuento = 0,
   metodoPago,
@@ -34,8 +35,10 @@ precios,
   subtotalExtras = 0,
   subtotalEnvio = 0,
   subtotalTartas = 0,
+  semanaTartas = null, // 👈 ✅ AGREGA ESTA LÍNEA
   guardando = false
 }) => {
+
 
   if (loading || !precios) {
     return <Box sx={{ textAlign: 'center', mt: 5 }}><CircularProgress /></Box>;
@@ -61,13 +64,14 @@ precios,
     <Box sx={{ mt: 3 }}>
       <Typography variant="h6" gutterBottom>📋 Resumen del Pedido</Typography>
 
-      {resumenDias.map(({ dia, resumen }, idx) => (
-        typeof dia === 'string' && (
-          <Typography key={idx} variant="body2" sx={{ mb: 0.5 }}>
-            📅 <strong>{dia.charAt(0).toUpperCase() + dia.slice(1)}:</strong> {resumen}
-          </Typography>
-        )
-      ))}
+    {resumenDias.map(({ dia, resumen }, idx) => (
+  typeof dia === 'string' && (
+    <Typography key={idx} variant="body2" sx={{ mb: 0.5 }}>
+      📅 <strong>{dia.charAt(0).toUpperCase() + dia.slice(1)}:</strong> {resumen}
+    </Typography>
+  )
+))}
+
 
       {tartasMostradas.length > 0 && (
         <>
@@ -79,6 +83,14 @@ precios,
               {!isEmpresa && ` — $${(cantidad * precios.tarta).toLocaleString('es-AR')}`}
             </Typography>
           ))}
+
+          {semanaTartas && tartasMostradas.length > 0 && (
+  <Typography variant="body2" sx={{ ml: 2, mt: 1 }}>
+    📦 Entrega de tartas: del <strong>{dayjs(semanaTartas.semana_inicio).format('DD/MM')}</strong> al{' '}
+    <strong>{dayjs(semanaTartas.semana_fin).format('DD/MM')}</strong>
+  </Typography>
+)}
+
         </>
       )}
 

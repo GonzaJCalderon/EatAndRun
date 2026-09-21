@@ -9,7 +9,8 @@ import { useSnackbar } from 'notistack';
 import axios from '../api/api';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs from 'dayjs';
+import dayjs from '../utils/day' // o la ruta correcta
+
 
 const AdminEmpresaDetalle = () => {
   const { id } = useParams();

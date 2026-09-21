@@ -10,38 +10,34 @@ const EXTRAS = [
   { key: 3, label: '💪 Proteína', precio: 3500 }
 ];
 
-const ExtrasSection = ({ dia, selectedGlobal, onSelect, disabled = false }) => {
+const ExtrasSection = ({ dia, selected = {}, onSelect, disabled = false }) => {
   const user = useSelector(selectUser);
   const ocultarPrecios = user?.role === 'empresa' || user?.role === 'empleado';
 
-  const selected = selectedGlobal[dia] || {};
+ const handleChange = (key, precio, value) => {
+  if (disabled) return;
+  const cantidad = parseInt(value);
+  if (isNaN(cantidad) || cantidad < 0) return;
 
-  const handleChange = (key, precio, value) => {
-    if (disabled) return;
-    const cantidad = parseInt(value);
-    if (isNaN(cantidad) || cantidad < 0) return;
+  const current = { ...selected };
+  const itemKey = `extra-${key}`;
 
-    const current = { ...selected };
-    const itemKey = `extra-${key}`;
+  if (cantidad === 0) {
+    delete current[itemKey];
+  } else {
+ current[itemKey] = {
+  id: key,
+  tipo: 'extra',
+  cantidad,
+  precio,
+  dia: dia?.toLowerCase()
+};
 
-    if (cantidad === 0) {
-      delete current[itemKey];
-    } else {
-      current[itemKey] = {
-        id: key,
-        tipo: 'extra',
-        cantidad,
-        precio
-      };
-    }
+  }
 
-    const nuevoEstado = {
-      ...selectedGlobal,
-      [dia]: current
-    };
+  onSelect(current);
+};
 
-    onSelect(nuevoEstado);
-  };
 
   return (
     <Box sx={{ mt: 4 }}>

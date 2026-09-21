@@ -1,227 +1,278 @@
-import { useAppData } from './hooks/useAppData';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { loadFromStorage, logout, selectUser } from './store/slices/authSlice';
 import PedidoConfirmado from './components/PedidoConfirmado';
-import dayjs from './utils/day.js'; // o la ruta relativa correcta
+import dayjs from './utils/day.js';
 import LogoAnimado from './components/LogoAnimado';
 import { usePreciosCompletos } from './hooks/usePreciosCompletos';
-
-
-
-// dayjs configurado para español ✅
-
+import { mapearRoleIdANombre } from './utils/roles.js';
+import { Alert } from '@mui/material';
 
 
 import {
-  Container,
-  Typography,
-  Button,
-  TextField,
-  Box,
-  CircularProgress,
-  Tabs,
-  Tab,
-  Link
+  Container, Typography, Button, TextField, Box,
+  CircularProgress, Tabs, Tab, Link
 } from '@mui/material';
-
 import InstagramIcon from '@mui/icons-material/Instagram';
 import { useSnackbar } from 'notistack';
 
-import TabsMenuContainer from './components/TabsMenuContainer';
 import AccordionMenuContainer from './components/AccordionMenuContainer';
-import PagoSection from './components/PagoSection';
 import ResumenFinal from './components/ResumenFinal';
 import TartaGallery from './components/TartaGallery';
 import { tartaLabelMap } from './utils/tartaUtils';
-
 import WhatsAppButton from './components/WhatsAppButton';
-
 import { subirComprobanteCloudinary } from './utils/cloudinaryUpload';
-import { roleMap } from './utils/roles.js';
 import { getPrecios } from './utils/getPrecios';
 import CopyText from './components/CopyText';
-
+import { useMenuSemanal } from './hooks/useMenuSemanal.js';
 import api from './api/api';
+
+import utc from 'dayjs/plugin/utc';
+import tz from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(tz);
 
 const logo = '/assets/eatandrun-logo.jpg';
 
+function MainApp({ edicion = null, pedidoId = null }) {
 
-const mapearRoleIdANombre = (roleId) => {
-  if (typeof roleId === 'string') return roleId;
-  return roleMap[roleId] || null;
-};
+const modoEdicion = Boolean(pedidoId); // ✅ si hay pedidoId, estamos editando
 
-function MainApp() {
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
 
-  // ✅ ✅ ✅ CORRECTO USO DEL HOOK AQUÍ
+  const roleNombre = mapearRoleIdANombre(user?.role) || 'usuario';
+const {
+  menuPorDia,
+  semanaActual,
+  semanasDisponibles, // ✅ ahora también recibís TODAS las semanas
+  tartasDisponibles,
+  loading: loadingMenu
+} = useMenuSemanal(roleNombre);
+
+console.log('🍰 Tartas disponibles:', tartasDisponibles); 
+
   const { precios, loading: loadingPrecios } = usePreciosCompletos();
 
   const [cargandoUsuario, setCargandoUsuario] = useState(true);
-
-  const [menuFijosPorRol, setMenuFijosPorRol] = useState({ usuario: [], empresa: [] });
-  const [seleccionesUsuario, setSeleccionesUsuario] = useState({});
+const [seleccionesUsuario, setSeleccionesUsuario] = useState(edicion?.seleccionesUsuario || {});
   const [seleccionesEmpresa, setSeleccionesEmpresa] = useState({});
   const [activeTab, setActiveTab] = useState(null);
-
   const [bloqueado, setBloqueado] = useState(false);
   const [pedidoGuardado, setPedidoGuardado] = useState(false);
   const [observaciones, setObservaciones] = useState('');
   const [metodoPago, setMetodoPago] = useState('');
-  const [extras, setExtras] = useState('');
   const [comprobante, setComprobante] = useState(null);
-  const [tartasSeleccionadas, setTartasSeleccionadas] = useState({});
+  const [tartasSeleccionadas, setTartasSeleccionadas] = useState(edicion?.tartasSeleccionadas || {});
   const [extrasDetalle, setExtrasDetalle] = useState({});
   const [guardando, setGuardando] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
 
-  const [semanaActiva, setSemanaActiva] = useState(null);
-  const [semanaCargada, setSemanaCargada] = useState(false);
- const [pedidoExitoso, setPedidoExitoso] = useState(false);
- const [preciosTartaDB, setPreciosTartaDB] = useState({});
+  const [pedidoExitoso, setPedidoExitoso] = useState(false);
+  const [preciosTartaDB, setPreciosTartaDB] = useState({});
+  const [pedidoConfirmado, setPedidoConfirmado] = useState(null);
+  const [semanaTartaSeleccionada, setSemanaTartaSeleccionada] = useState(null);
+  const [yaInicializado, setYaInicializado] = useState(false);
+  
 
- const [selecciones, setSelecciones] = useState({});
- const [pedidoConfirmado, setPedidoConfirmado] = useState(null);
- const { menuData, tartasDisponibles, menuListo } = useAppData(
-  user,
-  semanaActiva,
-  menuFijosPorRol,
-  setMenuFijosPorRol
-);
+  const activeSelecciones = activeTab === 'empresa' ? seleccionesEmpresa : seleccionesUsuario;
+  const setActiveSelecciones = activeTab === 'empresa' ? setSeleccionesEmpresa : setSeleccionesUsuario;
 
+  const EXTRAS_MAP = { 1: '🍰 Postre', 2: '🥗 Ensalada', 3: '💪 Proteína' };
 
+const buscarDatosDesdeMenuPorDia = useCallback((itemId) => {
+  if (!menuPorDia || Object.keys(menuPorDia).length === 0) {
+    return { nombre: null, precio: null };
+  }
 
-
-
-
-  const activeSelecciones = activeTab === 'usuario' ? seleccionesUsuario : seleccionesEmpresa;
-  const setActiveSelecciones = activeTab === 'usuario' ? setSeleccionesUsuario : setSeleccionesEmpresa;
-
-
-
-  const EXTRAS_MAP = {
-  1: '🍰 Postre',
-  2: '🥗 Ensalada',
-  3: '💪 Proteína'
-};
-
-
-
-useEffect(() => {
-  const fetchSemanaActiva = async () => {
-    try {
-      const res = await api.get('/semana/actual'); 
-      setSemanaActiva(res.data);
-    } catch (error) {
-      console.warn("⚠️ No se pudo obtener semana activa", error);
-      setSemanaActiva(null);
-    } finally {
-      setSemanaCargada(true);
+  for (const dia in menuPorDia) {
+    const platos = menuPorDia[dia];
+    for (const tipo in platos) {
+      const lista = platos[tipo];
+      for (const plato of lista) {
+        if (plato.id === itemId || plato.item_id === itemId) {
+          return {
+            nombre: plato.nombre || plato.name || null,
+            precio: plato.precio || null
+          };
+        }
+      }
     }
-  };
+  }
+  return { nombre: null, precio: null };
+}, [menuPorDia]);
 
-  fetchSemanaActiva();
-}, []);
+// ✅ SECCIÓN DE useEffect CORRECTA PARA MainApp.jsx
 
+// 1️⃣ Efecto para redirección después de éxito (MANTENER)
+useEffect(() => {
+  if (pedidoExitoso) {
+    const timer = setTimeout(() => {
+      setPedidoExitoso(false);
+      setConfirmando(false);
+      setSeleccionesUsuario({});
+      setSeleccionesEmpresa({});
+      setTartasSeleccionadas({});
+      setObservaciones('');
+      setMetodoPago('');
+      setPedidoConfirmado(null);
+      navigate('/app');
+    }, 3000);
+    return () => clearTimeout(timer);
+  }
+}, [pedidoExitoso, navigate]);
 
-  useEffect(() => {
+// 2️⃣ ⭐ ÚNICO EFECTO PARA INICIALIZAR EDICIÓN - REEMPLAZAR las líneas 130-161
+useEffect(() => {
+  if (modoEdicion && edicion?.seleccionesUsuario && !yaInicializado && precios?.plato) {
+    const nuevasSelecciones = {};
+
+    for (const dia in edicion.seleccionesUsuario) {
+      const platos = edicion.seleccionesUsuario[dia];
+      nuevasSelecciones[dia] = {};
+
+      for (const key in platos) {
+        const p = platos[key];
+        const itemId = p?.item_id || p?.id;
+        const datosDesdeMenu = itemId ? buscarDatosDesdeMenuPorDia(itemId) : {};
+
+        nuevasSelecciones[dia][key] = {
+          ...p,
+          nombre: p.nombre || datosDesdeMenu?.nombre || `ID ${itemId || '?'}`,
+          precio:
+            p.tipo === 'extra'
+              ? p.precio ?? precios?.extras?.[p.id] ?? datosDesdeMenu?.precio ?? 0
+              : p.precio ?? datosDesdeMenu?.precio ?? precios?.plato ?? 0
+        };
+      }
+    }
+
+    setSeleccionesUsuario(nuevasSelecciones);
+    setYaInicializado(true);
+  }
+}, [modoEdicion, edicion?.seleccionesUsuario, precios, yaInicializado, buscarDatosDesdeMenuPorDia]);
+
+// 3️⃣ Resto de useEffect (MANTENER TODOS SIN CAMBIOS)
+useEffect(() => {
   if (pedidoGuardado) {
-    // Limpiar estado del pedido
-    setPedidoConfirmado({
-  platos: activeSelecciones,
-  tartas: tartasSeleccionadas
-});
-
+    setPedidoConfirmado({ platos: activeSelecciones, tartas: tartasSeleccionadas });
     setObservaciones('');
     setMetodoPago('');
     setComprobante(null);
     setTartasSeleccionadas({});
-    if (activeTab === 'usuario') setSeleccionesUsuario({});
     if (activeTab === 'empresa') setSeleccionesEmpresa({});
-    setPedidoGuardado(false); // evitar que se repita
+    else setSeleccionesUsuario({});
+    setPedidoGuardado(false);
   }
-}, [pedidoGuardado]);
-
+}, [pedidoGuardado, activeSelecciones, tartasSeleccionadas, activeTab]);
 
 useEffect(() => {
   if (user && !activeTab) {
     if (user.role === 99) setActiveTab('usuario');
-    else if (user.role === 'empleado') setActiveTab('empresa'); // 👈 esto es lo nuevo
-    else setActiveTab(mapearRoleIdANombre(user.role));
+    else if (user.role === 'empleado') setActiveTab('empresa');
+    else setActiveTab(mapearRoleIdANombre(user.role) || 'usuario');
   }
 }, [user, activeTab]);
 
-
-  useEffect(() => {
-    dispatch(loadFromStorage());
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (user) {
-      setCargandoUsuario(false);
-    } else {
-      const timer = setTimeout(() => setCargandoUsuario(false), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (!cargandoUsuario && !user) navigate('/app');
-  }, [cargandoUsuario, user, navigate])
+useEffect(() => { 
+  dispatch(loadFromStorage()); 
+}, [dispatch]);
 
 useEffect(() => {
-  const fetchTartas = async () => {
-    const precios = await getTartaPrecios();
-    setPreciosTartaDB(precios);
+  if (user) setCargandoUsuario(false);
+  else {
+    const t = setTimeout(() => setCargandoUsuario(false), 800);
+    return () => clearTimeout(t);
+  }
+}, [user]);
+
+useEffect(() => {
+  if (!cargandoUsuario && !user) navigate('/app');
+}, [cargandoUsuario, user, navigate]);
+
+useEffect(() => {
+  const fetchPreciosTarta = async () => {
+    const p = await getPrecios();
+    setPreciosTartaDB(p);
   };
-  fetchTartas();
+  fetchPreciosTarta();
 }, []);
 
+useEffect(() => {
+  const ahora = new Date();
+  const deadline = new Date();
+  deadline.setDate(ahora.getDate() + ((7 - ahora.getDay()) % 7));
+  deadline.setHours(20, 0, 0, 0);
+  if (ahora > deadline) setBloqueado(true);
+}, []);
 
-  useEffect(() => {
-    const ahora = new Date();
-    const deadline = new Date();
-    deadline.setDate(ahora.getDate() + ((7 - ahora.getDay()) % 7));
-    deadline.setHours(20, 0, 0, 0);
-    if (ahora > deadline) setBloqueado(true);
-  }, []);
+useEffect(() => {
+  if (semanasDisponibles.length > 0 && !semanaTartaSeleccionada) {
+    setSemanaTartaSeleccionada(semanasDisponibles[0].id);
+  }
+}, [semanasDisponibles, semanaTartaSeleccionada]);
 
 const semanaCerrada = useMemo(() => {
-  if (!semanaActiva || !semanaActiva.habilitado) return true;
+  if (!semanaActual) return true;
+  const habilitado = Boolean(semanaActual.habilitado);
+  if (!habilitado) return true;
 
-  const ahora = new Date();
+  const TZ = 'America/Argentina/Buenos_Aires';
 
-  return !Object.entries(semanaActiva.dias_habilitados || {}).some(([dia, habilitado]) => {
-    if (!habilitado) return false;
-    const diaIndex = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'].indexOf(dia.toLowerCase());
-    const fechaDia = new Date(semanaActiva.semana_inicio);
-    fechaDia.setDate(fechaDia.getDate() + ((diaIndex + 7 - fechaDia.getDay()) % 7));
-    return fechaDia >= ahora;
+  const ahora = dayjs().tz(TZ);
+  const cierreStr = semanaActual.cierre || semanaActual.semana_fin;
+  if (!cierreStr) return true;
+
+  const cierre = dayjs.tz(cierreStr + ' 23:59:59', 'YYYY-MM-DD HH:mm:ss', TZ);
+
+  const resultado = ahora.isAfter(cierre);
+  console.log('🔍 Comparación:', {
+    ahora: ahora.format(),
+    cierre: cierre.format(),
+    resultado
   });
-}, [semanaActiva]);
+
+  return resultado;
+}, [semanaActual]);
 
 
+  // CORREGIDO: Incluir menús especiales en el resumen
+// ✅ REEMPLAZA el useMemo de resumenDias en MainApp.jsx (línea ~193)
 
+const resumenDias = useMemo(() => {
+  const resumen = Object.entries(activeSelecciones).map(([diaClave, platos]) => {
+    let diaDisplay = diaClave;
 
- const resumenDias = useMemo(() => {
-  const resumen = Object.entries(activeSelecciones).map(([dia, platos]) => {
+    // Si tiene formato "miércoles-2025-10-23"
+    const partes = diaClave.split('-');
+    if (partes.length === 4) {
+      const nombreDia = partes[0]; // "miércoles"
+      const fechaISO = `${partes[1]}-${partes[2]}-${partes[3]}`; // "2025-10-23"
+      const fecha = dayjs(fechaISO);
+
+      if (fecha.isValid()) {
+        diaDisplay = `${nombreDia.charAt(0).toUpperCase() + nombreDia.slice(1)} (${fecha.format('DD/MM')})`;
+      }
+    } else {
+      diaDisplay = diaClave.charAt(0).toUpperCase() + diaClave.slice(1);
+    }
+
     const deseaOmitir = Object.values(platos).some(p => p.tipo === 'skip');
 
+    const platosValidos = Object.values(platos)
+      .filter(p =>
+        ['daily', 'fijo', 'especial', 'company'].includes(p.tipo) && p.cantidad > 0
+      );
+
     return {
-      dia,
+      dia: diaDisplay,
       resumen: deseaOmitir
         ? '❌ No desea menú'
-        : Object.values(platos)
-            .filter(p => (p.tipo === 'daily' || p.tipo === 'fijo') && p.cantidad > 0)
-            .map(p => {
-              const nombre = p.nombre || p.name || `ID ${p.id}`;
-              return `🍽️ ${p.cantidad} x ${nombre}`;
-            })
+        : platosValidos.map(p => `🍽️ ${p.cantidad} x ${(p.nombre || p.name || `ID ${p.id}`)}`)
             .join(', ')
     };
   });
@@ -231,224 +282,239 @@ const semanaCerrada = useMemo(() => {
     .map(([tipo, cantidad]) => `🥧 ${cantidad} tarta${cantidad > 1 ? 's' : ''} de ${tartaLabelMap[tipo] || tipo}`);
 
   if (totalTartas.length > 0) {
-    resumen.push({ dia: 'tartas', resumen: totalTartas.join(', ') });
+    resumen.push({ dia: 'Tartas', resumen: totalTartas.join(', ') });
   }
 
   return resumen;
 }, [activeSelecciones, tartasSeleccionadas]);
 
 
+  // CORREGIDO: Incluir menús especiales en el cálculo
+  const estimarTotal = () => {
+    let total = 0;
+    let totalPlatos = 0;
+    const selecciones = activeTab === 'empresa' ? seleccionesEmpresa : seleccionesUsuario;
+    const dias = Object.values(selecciones);
+    const diasConPlatos = dias.filter(dia =>
+      Object.values(dia).some(p => 
+        ['daily', 'fijo', 'especial', 'company'].includes(p.tipo) && p.cantidad > 0
+      )
+    ).length;
+
+    dias.forEach(dia => {
+      Object.values(dia).forEach(p => {
+        const cant = parseInt(p?.cantidad || 0);
+        if (['daily', 'fijo', 'especial', 'company'].includes(p.tipo) || !p.tipo) {
+          totalPlatos += cant;
+          total += cant * precios.plato;
+        }
+        if (p.tipo === 'extra') total += cant * (p.precio || 0);
+      });
+    });
+
+    total += diasConPlatos * precios.envio;
+
+    Object.entries(tartasSeleccionadas).forEach(([tipo, cantidad]) => {
+      const precio = preciosTartaDB[tipo] || 0;
+      total += cantidad * precio;
+    });
+
+    let descuentoPorCantidad = 0;
+    if (totalPlatos >= precios.umbral_descuento) {
+      descuentoPorCantidad = totalPlatos * precios.descuento_por_plato;
+      total -= descuentoPorCantidad;
+    }
+    return { total, descuento: descuentoPorCantidad, totalPlatos };
+  };
+
+ // ✅ REEMPLAZA el useEffect de extrasDetalle en MainApp.jsx (línea ~308)
 
 useEffect(() => {
   const nuevoDetalle = {};
-
-  Object.entries(activeSelecciones).forEach(([dia, items]) => {
+  
+  Object.entries(activeSelecciones).forEach(([diaClave, items]) => {
+    // 🔥 Normalizar la clave del día para el detalle
+    let diaKey = diaClave;
+    
+    const partes = diaClave.split('-');
+    if (partes.length === 4) {
+      // "jueves-2025-10-23" → "jueves"
+      const nombreDia = partes[0];
+      const fechaISO = `${partes[1]}-${partes[2]}-${partes[3]}`;
+      const fecha = dayjs(fechaISO);
+      
+      if (fecha.isValid()) {
+        // Mantener formato legible: "Jueves (23/10)"
+        diaKey = `${nombreDia.charAt(0).toUpperCase() + nombreDia.slice(1)} (${fecha.format('DD/MM')})`;
+      }
+    } else {
+      // Formato simple: capitalizar
+      diaKey = diaClave.charAt(0).toUpperCase() + diaClave.slice(1);
+    }
+    
     const extras = Object.entries(items)
       .filter(([_, p]) => p.tipo === 'extra' && p.cantidad > 0)
-      .reduce((acc, [key, p]) => {
+      .reduce((acc, [_, p]) => {
         const nombre = EXTRAS_MAP[p.id] || `Extra ${p.id}`;
-        acc[nombre] = {
-          cantidad: p.cantidad,
-          precio: p.precio
-        };
+        acc[nombre] = { cantidad: p.cantidad, precio: p.precio };
         return acc;
       }, {});
-
+      
     if (Object.keys(extras).length > 0) {
-      nuevoDetalle[dia] = extras;
+      nuevoDetalle[diaKey] = extras;
     }
   });
-
+  
   setExtrasDetalle(nuevoDetalle);
 }, [activeSelecciones]);
 
+// 🔄 Transforma selecciones para backend
+const transformarParaBackend = (selecciones, tartas, semanasDisponibles, semanaTartaSeleccionada) => {
+  const items = [];
 
+  Object.entries(selecciones).forEach(([diaClave, platos]) => {
+    const partes = diaClave.split('-');
+    const fechaISO = partes.length === 4 ? `${partes[1]}-${partes[2]}-${partes[3]}` : null;
 
-const estimarTotal = () => {
-  let total = 0;
-  let totalPlatos = 0;
-
-
-  const selecciones = activeTab === 'usuario' ? seleccionesUsuario : seleccionesEmpresa;
-  const dias = Object.values(selecciones);
-
-  const diasConPlatos = dias.filter(dia =>
-    Object.values(dia).some(p => ['daily', 'fijo'].includes(p.tipo) && p.cantidad > 0)
-  ).length;
-
-  dias.forEach(dia => {
-    Object.values(dia).forEach(p => {
-      const cant = parseInt(p?.cantidad || 0);
-      if (['daily', 'fijo'].includes(p.tipo) || !p.tipo) {
-        totalPlatos += cant;
-        total += cant * precios.plato;
-      }
-      if (p.tipo === 'extra') {
-        total += cant * (p.precio || 0);
+    Object.values(platos).forEach(p => {
+      if (parseInt(p.cantidad || 0) > 0) {
+        items.push({
+          item_type: p.tipo || 'daily',
+          item_id: p.id || p.item_id,
+          quantity: p.cantidad,
+          dia: diaClave,
+          fecha_dia: fechaISO,
+        });
       }
     });
   });
 
-  total += diasConPlatos * precios.envio;
+  Object.entries(tartas || {}).forEach(([tipo, cantidad]) => {
+    if (parseInt(cantidad || 0) > 0) {
+      const semana = semanasDisponibles.find(s => s.id === semanaTartaSeleccionada);
+      items.push({
+        item_type: 'tarta',
+        item_id: tipo,
+        quantity: cantidad,
+        dia: `tarta-${semanaTartaSeleccionada}`,
+        fecha_dia: semana?.semana_inicio || null,
+      });
+    }
+  });
 
-  const totalTartas = Object.values(tartasSeleccionadas).reduce((sum, val) => sum + val, 0);
-Object.entries(tartasSeleccionadas).forEach(([tipo, cantidad]) => {
-  const precio = preciosTartaDB[tipo] || 0;
-  total += cantidad * precio;
-});
-
-
-  // 💸 Aplicar descuento configurable
-  let descuentoPorCantidad = 0;
-  if (totalPlatos >= precios.umbral_descuento) {
-    descuentoPorCantidad = totalPlatos * precios.descuento_por_plato;
-    total -= descuentoPorCantidad;
-  }
-
-  return {
-    total,
-    descuento: descuentoPorCantidad,
-    totalPlatos
-  };
+  return items;
 };
 
 
-
 const handleGuardarPedido = async () => {
-  if (!semanaActiva?.habilitado) {
-    enqueueSnackbar('🚫 Semana no habilitada', { variant: 'error' });
-    return;
-  }
+  try {
+    setGuardando(true);
 
-  if (semanaCerrada) {
-    enqueueSnackbar('⏰ El plazo ya cerró', { variant: 'error' });
-    return;
-  }
+    const hayPlatos = Object.values(activeSelecciones || {}).some(dia =>
+      Object.values(dia || {}).some(p =>
+        ['daily', 'fijo', 'especial', 'company'].includes(p.tipo) &&
+        parseInt(p.cantidad || 0) > 0
+      )
+    );
 
-  const items = [];
+    const hayTartas = Object.values(tartasSeleccionadas || {}).some(c => parseInt(c || 0) > 0);
 
-  const parseItemId = (key, p) => {
-    if (typeof p?.id === 'number') return p.id;
-    if (!p?.id && key.startsWith('extra-')) {
-      return Number(key.replace('extra-', ''));
-    }
-    const parsed = Number(p?.id || key);
-    return isNaN(parsed) ? null : parsed;
-  };
-Object.entries(activeSelecciones).forEach(([dia, platos]) => {
-  if (!semanaActiva?.dias_habilitados?.[dia]) return; // ❌ Día deshabilitado, ignorar
-
-  Object.entries(platos).forEach(([key, p]) => {
-    if (!p || parseInt(p.cantidad) <= 0) return;
-
-    const cantidad = parseInt(p.cantidad);
-    const tipo = p.tipo || 'daily';
-
-    if (tipo === 'skip') {
-      items.push({
-        item_type: 'skip',
-        item_id: null,
-        quantity: 1,
-        dia
-      });
+    if (!hayPlatos && !hayTartas) {
+      enqueueSnackbar('⚠️ No seleccionaste ningún plato ni tarta', { variant: 'warning' });
+      setGuardando(false);
       return;
     }
 
-    if (tipo === 'extra') {
-      const itemId = parseItemId(key, p);
-      if (itemId === null) return;
+    const items = transformarParaBackend(
+      activeSelecciones,
+      tartasSeleccionadas,
+      semanasDisponibles,
+      semanaTartaSeleccionada
+    );
 
-      items.push({
-        item_type: 'extra',
-        item_id: itemId,
-        quantity: cantidad,
-        precio: p.precio,
-        dia
-      });
+    const primerItemConFecha = items.find(i => i.fecha_dia);
+    if (!primerItemConFecha) {
+      enqueueSnackbar('❌ No se pudo determinar la fecha de entrega', { variant: 'error' });
+      setGuardando(false);
       return;
     }
 
-    items.push({
-      item_type: tipo,
-      item_id: p.id || key,
-      quantity: cantidad,
-      dia
-    });
-  });
-});
 
 
-  Object.entries(tartasSeleccionadas).forEach(([tipo, cantidad]) => {
-    if (cantidad > 0) {
-      items.push({
-        item_type: 'tarta',
-        item_id: tartaLabelMap[tipo] || tipo,
-        quantity: cantidad
-      });
-    }
-  });
+    const body = {
+      items,
+      total,
+      fecha_entrega: primerItemConFecha.fecha_dia,
+      observaciones: observaciones || '',
+      metodoPago: metodoPago || 'efectivo',
+      tipoMenu: roleNombre,
+      comprobanteUrl: null,
+    };
 
-  const hayItemsValidos = items.some(i => i.quantity > 0 && i.item_type !== 'skip');
-  if (!hayItemsValidos) {
-    enqueueSnackbar('❌ No seleccionaste nada válido para guardar', { variant: 'warning' });
-    return;
-  }
+    console.log('✅ Enviando pedido:', body);
+    const res = await api.post('/orders', body);
 
-  const diasValidos = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
-
-const hayDiasInvalidos = items.some(item =>
-  item.dia && !diasValidos.includes(item.dia.toLowerCase())
-);
-
-if (hayDiasInvalidos) {
-  enqueueSnackbar('❌ Uno o más ítems tienen un día inválido', { variant: 'error' });
-  return;
-}
-
-
-
-setGuardando(true);
-try {
-  const fechaEntregaFinal = semanaActiva?.semana_inicio;
-const { total } = estimarTotal(); // usa el valor con descuento
-
-
-  const res = await api.post('/orders', {
-    items,
-    total,
-    fecha_entrega: fechaEntregaFinal,
-    observaciones,
-    metodoPago
-  });
-
-
-    const orderId = res.data.id;
-
-    if (metodoPago === 'transferencia' && comprobante) {
-      const imageUrl = await subirComprobanteCloudinary(comprobante);
- await api.post(`/orders/${orderId}/comprobante`, { comprobanteUrl: imageUrl });
+    if (res.data?.id) {
+      enqueueSnackbar('✅ Pedido confirmado correctamente', { variant: 'success' });
+      setPedidoExitoso(true);
     }
 
-    enqueueSnackbar('✅ Pedido guardado con éxito', { variant: 'success' });
-    setPedidoGuardado(true);
-    setConfirmando(false);
-    setPedidoExitoso(true);
-  } catch (err) {
-    console.error('❌ Error al guardar pedido:', err?.response?.data || err);
-    enqueueSnackbar('❌ Error al enviar el pedido', { variant: 'error' });
+  } catch (error) {
+    console.error('❌ Error al guardar pedido:', error);
+    enqueueSnackbar('⚠️ Error al guardar pedido', { variant: 'error' });
   } finally {
     setGuardando(false);
   }
 };
 
-if (loadingPrecios || !precios) {
-  return (
-    <Container maxWidth="sm" sx={{ mt: 6 }}>
-      <Typography align="center">Cargando precios desde servidor...</Typography>
-      <CircularProgress sx={{ display: 'block', mx: 'auto', mt: 2 }} />
-    </Container>
-  );
-}
+const handleActualizarPedido = async () => {
+  try {
+    setGuardando(true);
+
+    const items = transformarParaBackend(
+      activeSelecciones,
+      tartasSeleccionadas,
+      semanasDisponibles,
+      semanaTartaSeleccionada
+    );
+
+    const { total } = estimarTotal();
+
+    const body = {
+      items,
+      total,
+      observaciones: observaciones || '',
+      metodoPago: metodoPago || 'efectivo'
+    };
+
+    console.log('✏️ Actualizando pedido:', body);
+
+    // ⛔ NO: await api.put(`/orders/${pedidoId}`, body);
+    // ✅ SÍ:
+    const res = await api.put(`/orders/${pedidoId}/update-items`, body);
+
+    if (res.data?.success) {
+      enqueueSnackbar('✅ Pedido actualizado correctamente', { variant: 'success' });
+      setPedidoExitoso(true);
+    }
+
+  } catch (error) {
+    console.error('❌ Error al actualizar pedido:', error);
+    enqueueSnackbar('⚠️ Error al actualizar pedido', { variant: 'error' });
+  } finally {
+    setGuardando(false);
+  }
+};
+
+
+  if (loadingPrecios || !precios || loadingMenu) {
+    return (
+      <Container maxWidth="sm" sx={{ mt: 6 }}>
+        <Typography align="center">Cargando datos...</Typography>
+        <CircularProgress sx={{ display: 'block', mx: 'auto', mt: 2 }} />
+      </Container>
+    );
+  }
 
   if (cargandoUsuario) {
     return (
@@ -460,21 +526,18 @@ if (loadingPrecios || !precios) {
   }
 
   if (!user) return null;
-if (confirmando) {
-  const { total, descuento, totalPlatos } = estimarTotal(); // ✅ 👈 AGREGAMOS ESTO
+// ⏳ Mostrar pantalla de carga mientras se guarda el pedido
 
-  const preciosActualizados = getPrecios();
 
-            // DEBUG - Confirmar Pedido
-const tienePlatosSeleccionados = Object.values(activeSelecciones).some(dia =>
-  Object.values(dia).some(p => parseInt(p.cantidad) > 0)
+// ✅ Esto va ANTES de todos los return
+const { total, totalPlatos } = estimarTotal();
+const totalTartas = Object.values(tartasSeleccionadas || {}).reduce(
+  (sum, cant) => sum + (parseInt(cant) || 0), 0
 );
 
-const tieneTartasSeleccionadas = Object.values(tartasSeleccionadas).some(q => q > 0);
-
-const botonDeshabilitado =
-  semanaCerrada || !(tienePlatosSeleccionados || tieneTartasSeleccionadas);
-
+if (confirmando) {
+  const { descuento } = estimarTotal();
+  const preciosActualizados = getPrecios();
 
   return (
     <Container maxWidth="sm" sx={{ mt: 4 }}>
@@ -488,24 +551,22 @@ const botonDeshabilitado =
         observaciones={observaciones}
         descuento={descuento}
         tartasSeleccionadas={tartasSeleccionadas}
+        semanaTartas={semanasDisponibles.find(s => s.id === semanaTartaSeleccionada)}
         extrasDetalle={extrasDetalle}
-         loading={loadingPrecios} 
+        loading={loadingPrecios}
         isEmpresa={activeTab === 'empresa'}
         onEditar={() => setConfirmando(false)}
-        onConfirmarFinal={handleGuardarPedido}
-         guardando={guardando}
-
-        // 👇 AGREGAR ESTOS CUATRO
+        onConfirmarFinal={modoEdicion ? handleActualizarPedido : handleGuardarPedido}
+        guardando={guardando}
         subtotalPlatos={totalPlatos * preciosActualizados.plato}
-        subtotalExtras={Object.values(extrasDetalle)
-          .flatMap(d => Object.values(d))
-          .reduce((sum, e) => sum + e.precio * e.cantidad, 0)}
-        subtotalEnvio={Object.values(activeSelecciones)
-          .filter(dia =>
-            Object.values(dia).some(p => ['daily', 'fijo'].includes(p.tipo) && p.cantidad > 0)
-          ).length * preciosActualizados.envio}
-        subtotalTartas={Object.values(tartasSeleccionadas)
-          .reduce((sum, cant) => sum + cant * preciosActualizados.tarta, 0)}
+        subtotalExtras={Object.values(extrasDetalle).flatMap(d => Object.values(d)).reduce((sum, e) => sum + e.cantidad * e.precio, 0)}
+        subtotalEnvio={Object.values(activeSelecciones).filter(dia =>
+          Object.values(dia).some(p => ['daily','fijo','especial','company'].includes(p.tipo) && p.cantidad > 0)
+        ).length * preciosActualizados.envio}
+        subtotalTartas={Object.entries(tartasSeleccionadas).reduce((sum, [tipo, cant]) => {
+          const precio = Number(preciosTartaDB[tipo]) || 0;
+          return sum + precio * (Number(cant) || 0);
+        }, 0)}
       />
     </Container>
   );
@@ -515,56 +576,26 @@ const botonDeshabilitado =
 if (pedidoExitoso) {
   return (
     <Container maxWidth="sm" sx={{ mt: 4 }}>
-     <PedidoConfirmado
-  pedido={pedidoConfirmado?.platos}
-  tartas={pedidoConfirmado?.tartas}
-  metodoPago={metodoPago}
-/>
-
-
-      {metodoPago === 'transferencia' && (
-        <Box
-          sx={{
-            backgroundColor: '#f4f6f8',
-            mt: 3,
-            p: 2,
-            border: '1px dashed #999',
-            borderRadius: 2
-          }}
-        >
-          <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-            🏦 Datos para Transferencia
-          </Typography>
-          <Typography variant="body2">Banco: <strong>Santander</strong></Typography>
-          <Typography variant="body2">Tipo de cuenta: <strong>Caja de Ahorro en Pesos</strong></Typography>
-          <Typography variant="body2">Titular: <strong>Molina Guerra Matias Mauricio</strong></Typography>
-          <Typography variant="body2">DNI: <strong>32224452</strong></Typography>
-
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="body2">
-              <strong>CBU:</strong>{' '}
-              <CopyText text="0720068788000038359572" />
-            </Typography>
-            <Typography variant="body2">
-              <strong>Alias:</strong>{' '}
-              <CopyText text="MOLINAGUERRA" />
-            </Typography>
-          </Box>
-
-          <Typography variant="body2" sx={{ mt: 2, fontStyle: 'italic' }}>
-            📎 Recordá enviar el comprobante si aún no lo hiciste.
-          </Typography>
-        </Box>
-      )}
-
+   <PedidoConfirmado modoEdicion={modoEdicion} />
+   
       <Button
         variant="contained"
         color="primary"
         fullWidth
-        onClick={() => setPedidoExitoso(false)}
         sx={{ mt: 4 }}
+        onClick={() => {
+          setPedidoExitoso(false);
+          setConfirmando(false);
+          setSeleccionesUsuario({});
+          setSeleccionesEmpresa({});
+          setTartasSeleccionadas({});
+          setObservaciones('');
+          setMetodoPago('');
+          setPedidoConfirmado(null);
+          navigate('/app'); // cambia si tu ruta de inicio es otra
+        }}
       >
-        Hacer otro pedido
+        🛒 Hacer otro pedido
       </Button>
     </Container>
   );
@@ -572,176 +603,205 @@ if (pedidoExitoso) {
 
 
 
-return (
-  
-  <>
-    <Container maxWidth="sm" sx={{ mt: 4, pb: 10 }}>
-      {/* HEADER */}
-      <Box sx={{ textAlign: 'center', mb: 4 }}>
-        <LogoAnimado />
-        <Typography variant="h5" fontWeight="bold">¡Hola {user.name}! 🌱</Typography>
-        <Typography variant="h6" fontWeight="bold" sx={{ my: 2 }}>
-          🥗 Aquí podrás elegir tu comida semanal
-        </Typography>
-      </Box>
 
-      {/* BLOQUEO DE PEDIDO */}
-      {bloqueado ? (
-        <Typography color="error" sx={{ mb: 2 }}>
-          🚫 Ya no se pueden modificar los pedidos.
-        </Typography>
-      ) : (
-        <>
-          {/* TABS (si es admin) */}
-          {user.role === 99 && (
-            <Tabs value={activeTab} onChange={(e, val) => setActiveTab(val)} centered sx={{ mb: 2 }}>
-              <Tab label="🧍 Usuario" value="usuario" />
-              <Tab label="🏢 Empresa" value="empresa" />
-            </Tabs>
-          )}
-
-          {/* SEMANA ACTIVA */}
-          {semanaCargada && semanaActiva?.habilitado && (
-            <>
-              <Typography variant="body2" sx={{ mb: 2 }}>
-                📅 Pedidos habilitados del{' '}
-                <strong>{new Date(semanaActiva.semana_inicio).toLocaleDateString('es-AR')}</strong> al{' '}
-                <strong>{new Date(semanaActiva.semana_fin).toLocaleDateString('es-AR')}</strong>
-              </Typography>
-
-              {/* DÍAS BLOQUEADOS */}
-              {Object.entries(semanaActiva.dias_habilitados)
-                .filter(([_, habilitado]) => !habilitado)
-                .map(([dia]) => (
-                  <Typography key={dia} variant="body2" color="error" sx={{ mb: 1 }}>
-                    🚫 El día {dia.charAt(0).toUpperCase() + dia.slice(1)} está deshabilitado para pedidos.
-                  </Typography>
-                ))}
-            </>
-          )}
-
-          {/* 1. MENÚ POR DÍA */}
-          <AccordionMenuContainer
-            menuData={menuData}
-            selecciones={activeSelecciones}
-            onSelect={setActiveSelecciones}
-            diasHabilitados={Object.fromEntries(
-              Object.entries(menuData).map(([dia, datos]) => [dia, datos.habilitado])
-            )}
-            semanaCerrada={semanaCerrada}
-          />
-
-          {/* 2. TARTAS */}
-          <TartaGallery
-            seleccionadas={tartasSeleccionadas}
-            onChange={setTartasSeleccionadas}
-            tartasDisponibles={tartasDisponibles}
-          />
-          
-
-          {/* 3. OBSERVACIONES */}
-          <Typography variant="h6" sx={{ mt: 3 }}>📝 Observaciones</Typography>
-          <TextField
-            multiline
-            rows={3}
-            fullWidth
-            value={observaciones}
-            onChange={(e) => setObservaciones(e.target.value)}
-            sx={{ mt: 1, mb: 2 }}
-          />
-
-          {/* 4. MÉTODO DE PAGO */}
-          {/* <PagoSection
-            metodoPago={metodoPago}
-            onMetodoPagoChange={setMetodoPago}
-            onExtrasChange={(data) => {
-              setExtras(data);
-              setExtrasDetalle(data);
-            }}
-            onComprobanteChange={setComprobante}
-          /> */}
-
-          {/* 5. RESUMEN Y TOTAL */}
-          {/* <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>📋 Resumen de selección</Typography>
-         {resumenDias.map(({ dia, resumen }, idx) => {
-  if (!dia || typeof dia !== 'string') return null; // 🔐 Protección
 
   return (
-    <Typography key={idx} variant="body2" sx={{ mb: 0.5 }}>
-      📅 <strong>{dia.charAt(0).toUpperCase() + dia.slice(1)}:</strong> {resumen}
-    </Typography>
-  );
-})} */}
+    <>
+      <Container maxWidth="sm" sx={{ mt: 4, pb: 10 }}>
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <LogoAnimado />
+          {modoEdicion && (
+  <Alert severity="info" sx={{ mb: 2 }}>
+    Estás editando un pedido existente. Recordá guardar los cambios para que se actualicen.
+  </Alert>
+)}
 
+          <Typography variant="h5" fontWeight="bold">
+  {modoEdicion ? '✏️ Editar pedido' : `¡Hola ${user.name}! 🌱`}
+</Typography>
+          <Typography variant="h6" fontWeight="bold" sx={{ my: 2 }}>🥗 Elegí tu comida semanal</Typography>
+          {semanasDisponibles.length > 1 && (
+  <Box sx={{ mb: 2 }}>
+    <Typography variant="body2" fontWeight="bold">🗓️ Semanas disponibles:</Typography>
+    {semanasDisponibles.map((s, i) => (
+      <Typography key={s.id} variant="body2">
+        Semana {i + 1}: {dayjs(s.semana_inicio).format('DD/MM')} al {dayjs(s.semana_fin).format('DD/MM')}
+      </Typography>
+    ))}
+  </Box>
+)}
 
-          {/* TOTAL */}
-          {/* {activeTab !== 'empresa' && (() => {
-            const { total, descuento } = estimarTotal();
-            return (
-              <>
-                {descuento > 0 && (
-                  <Typography variant="body2" color="success.main" sx={{ mb: 1 }}>
-                    🎉 ¡Descuento aplicado por superar 5 platos! Ahorro: <strong>${descuento.toLocaleString('es-AR')}</strong>
-                  </Typography>
-                )}
-                <Typography variant="h6" sx={{ mt: 1 }}>
-                  💰 Total estimado: <strong>${total.toLocaleString('es-AR')}</strong>
+        </Box>
+
+        {user.role === 99 && (
+          <Tabs value={activeTab} onChange={(e, val) => setActiveTab(val)} centered sx={{ mb: 2 }}>
+            <Tab label="🧍 Usuario" value="usuario" />
+            <Tab label="🏢 Empresa" value="empresa" />
+          </Tabs>
+        )}
+
+        {semanaActual?.habilitado && (
+          <>
+            <Typography variant="body2" sx={{ mb: 2 }}>
+              📅 Pedidos habilitados del <strong>{dayjs(semanaActual.semana_inicio).format('DD/MM/YYYY')}</strong> al{' '}
+              <strong>{dayjs(semanaActual.semana_fin).format('DD/MM/YYYY')}</strong>
+            </Typography>
+            {Object.entries(semanaActual.dias_habilitados || {})
+              .filter(([_, habilitado]) => !habilitado)
+              .map(([dia]) => (
+                <Typography key={dia} variant="body2" color="error" sx={{ mb: 1 }}>
+                  🚫 {dia.charAt(0).toUpperCase() + dia.slice(1)} deshabilitado para pedidos.
                 </Typography>
-              </>
-            );
-          })()} */}
-          
-          
-          {/* 6. BOTÓN DE CONFIRMACIÓN */}
+              ))}
+          </>
+        )}
 
+        <AccordionMenuContainer
+          menuData={menuPorDia}
+          selecciones={activeSelecciones}
+          onSelect={setActiveSelecciones}
+          diasHabilitados={semanaActual?.dias_habilitados || {}}
+          semanaCerrada={semanaCerrada}
+        />
+<TartaGallery
+  seleccionadas={tartasSeleccionadas}
+  onChange={setTartasSeleccionadas}
+  tartasDisponibles={tartasDisponibles}
+  semanasDisponibles={semanasDisponibles}
+  semanaSeleccionada={semanaTartaSeleccionada}
+  onSemanaChange={setSemanaTartaSeleccionada}
+/>
 
-        <Button
-  id="confirmar-pedido-btn"
-  variant="contained"
-  color="success"
-  fullWidth
-  disabled={
-    semanaCerrada ||
-    !(
-      Object.values(activeSelecciones).some(dia =>
-        Object.values(dia).some(p => parseInt(p.cantidad) > 0)
-      ) ||
-      Object.values(tartasSeleccionadas).some(q => q > 0)
-    )
-  }
-  onClick={() => setConfirmando(true)}
-  sx={{ mt: 2 }}
+        <Typography variant="h6" sx={{ mt: 3 }}>📝 Observaciones</Typography>
+        <TextField multiline rows={3} fullWidth value={observaciones} onChange={(e) => setObservaciones(e.target.value)} sx={{ mt: 1, mb: 2 }} />
+
+<Box
+  sx={{
+    position: 'fixed',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    bgcolor: '#fff',
+    p: 2,
+    borderTop: '1px solid #ddd',
+    zIndex: 1200, // por encima del contenido
+  }}
 >
-  
-  Confirmar pedido
-</Button>
+  <Box sx={{ mb: 1, textAlign: 'center' }}>
+  <Typography variant="body2" fontWeight="bold">
+    🍽️ {totalPlatos} plato{totalPlatos !== 1 ? 's' : ''} + 🥧 {totalTartas} tarta{totalTartas !== 1 ? 's' : ''} = ${total.toLocaleString()}
+  </Typography>
+</Box>
+
+  <Button
+    id="confirmar-pedido-btn"
+    variant="contained"
+    color="success"
+    fullWidth
+    disabled={
+      semanaCerrada ||
+      !(
+        Object.values(activeSelecciones || {}).some(dia =>
+          Object.values(dia || {}).some(plato =>
+            plato &&
+            ['daily', 'fijo', 'especial', 'company', 'extra'].includes(plato.tipo) &&
+            parseInt(plato.cantidad || 0) > 0
+          )
+        ) ||
+        Object.values(tartasSeleccionadas || {}).some(cant => parseInt(cant || 0) > 0)
+      )
+    }
+    onClick={() => {
+      if (!semanaActual?.semana_inicio) {
+        enqueueSnackbar('❌ Semana inválida', { variant: 'error' });
+        return;
+      }
+
+      const fechasEntregaPlatos = Object.keys(activeSelecciones)
+        .filter(clave =>
+          Object.values(activeSelecciones[clave]).some(p => parseInt(p.cantidad) > 0)
+        )
+        .map(clave => {
+          const partes = clave.split('-');
+          const dia = partes[0];
+
+          if (partes.length === 4) {
+            const fechaCompleta = `${partes[1]}-${partes[2]}-${partes[3]}`;
+            return {
+              tipo: 'plato',
+              dia,
+              fecha: dayjs(fechaCompleta).format('DD/MM/YYYY'),
+              fechaISO: fechaCompleta
+            };
+          }
+
+          const diasSemana = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
+          const indiceDia = diasSemana.indexOf(dia);
+          if (indiceDia !== -1) {
+            const inicio = dayjs(semanaActual.semana_inicio);
+            const fechaCalculada = inicio.add(indiceDia, 'day');
+            return {
+              tipo: 'plato',
+              dia,
+              fecha: fechaCalculada.format('DD/MM/YYYY'),
+              fechaISO: fechaCalculada.format('YYYY-MM-DD')
+            };
+          }
+
+          return null;
+        })
+        .filter(Boolean);
+
+      let fechasEntrega = [...fechasEntregaPlatos];
+
+      if (Object.values(tartasSeleccionadas || {}).some(c => parseInt(c) > 0)) {
+        const semanaTartas = semanasDisponibles.find(s => s.id === semanaTartaSeleccionada);
+        if (semanaTartas) {
+          fechasEntrega.push({
+            tipo: 'tarta',
+            dia: 'tartas',
+            fecha: dayjs(semanaTartas.semana_inicio).format('DD/MM/YYYY'),
+            fechaISO: dayjs(semanaTartas.semana_inicio).format('YYYY-MM-DD')
+          });
+        }
+      }
+
+      console.log('📦 Pedido confirmado:', {
+        fechasEntrega,
+        detalleCompleto: fechasEntrega
+          .map(item => `${item.tipo === 'tarta' ? '🥧 Tarta' : '🍽️'} ${item.dia} (${item.fecha})`)
+          .join(', '),
+        confirmadoEl: new Date().toLocaleString('es-AR')
+      });
+
+      setConfirmando(true);
+    }}
+  >
+    {modoEdicion ? '💾 Guardar cambios' : 'Confirmar pedido'}
+  </Button>
+</Box>
 
 
-          {/* CERRAR SESIÓN */}
-          <Button onClick={() => dispatch(logout())} variant="outlined" fullWidth sx={{ mt: 3 }}>
-            Cerrar sesión
-          </Button>
-        </>
-      )}
-    </Container>
 
-    {/* FOOTER */}
-    <Box sx={{ textAlign: 'center', py: 3, backgroundColor: '#f9f9f9' }}>
-      <img src={logo} alt="Logo Footer" style={{ width: '60px', borderRadius: '50%' }} />
-      <Typography variant="body2" color="text.secondary">Eat & Run - Healthy Food 🍃</Typography>
-      <Box sx={{ mt: 1, display: 'flex', justifyContent: 'center', gap: 1 }}>
-        <InstagramIcon sx={{ color: '#E1306C' }} />
-        <Link href="https://www.instagram.com/eatandrun.mza/" target="_blank" rel="noopener noreferrer" underline="hover" variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-          @eatandrun.mza
-        </Link>
+        <Button onClick={() => dispatch(logout())} variant="outlined" fullWidth sx={{ mt: 3 }}>
+          Cerrar sesión
+        </Button>
+      </Container>
+
+      <Box sx={{ textAlign: 'center', py: 3, backgroundColor: '#f9f9f9' }}>
+        <img src={logo} alt="Logo Footer" style={{ width: '60px', borderRadius: '50%' }} />
+        <Typography variant="body2" color="text.secondary">Eat & Run - Healthy Food 🍃</Typography>
+        <Box sx={{ mt: 1, display: 'flex', justifyContent: 'center', gap: 1 }}>
+          <InstagramIcon sx={{ color: '#E1306C' }} />
+          <Link href="https://www.instagram.com/eatandrun.mza/" target="_blank" rel="noopener noreferrer" underline="hover" variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+            @eatandrun.mza
+          </Link>
+        </Box>
       </Box>
-    </Box>
 
-    {/* WHATSAPP */}
-    <WhatsAppButton />
-  </>
-);
-
+      <WhatsAppButton />
+    </>
+  );
 }
 
 export default MainApp;

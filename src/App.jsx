@@ -1,11 +1,13 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
+import RutaPrivada from './routes/RutaPrivada';
+import RutaSoloAdmin from './components/RutaSoloAdmin';
+import RutaAdminOModerador from './components/RutaAdminModerador';
 
 import LandingAuth from './pages/LandingAuth';
 import Login from './pages/Login';
 import Registro from './pages/Registro';
 import RecuperarClave from './pages/RecuperarClave';
-import ResetPassword from './components/ResetPassword';
 import MainApp from './MainApp';
 import QuienesSomos from './pages/QuienesSomos';
 
@@ -24,6 +26,7 @@ import EditarTartas from './pages/AdminTartas';
 import AdminMenuPreview from './components/AdminMenuPreview';
 import PerfilUsuario from './components/PerfilUsuario';
 import MisPedidos from './components/MisPedidos';
+import EditarPedido from './components/EditarPedido';
 import PedidoDetalle from './components/PedidoDetalle';
 
 import EmpleadosEmpresa from './pages/EmpleadoEmpresa';
@@ -36,69 +39,68 @@ import PedidosEmpresa from './pages/PedidosEmpresa';
 import DeliveryDashboard from './pages/DeliveryDashboard';
 
 import EmpresaOnlyRoute from './components/EmpresaOnlyRoute';
+import Unauthorized from './pages/Unauthorized';
 
 const App = () => (
   <Routes>
 
-    {/* 🌐 Página pública */}
+    {/* 🌐 Rutas públicas */}
     <Route path="/" element={<LandingAuth />} />
     <Route path="/quienes-somos" element={<QuienesSomos />} />
-
-    {/* 🔐 Login y registro */}
     <Route path="/login" element={<Login />} />
     <Route path="/registro" element={<Registro />} />
     <Route path="/recuperar-clave" element={<RecuperarClave />} />
-    <Route path="/reset-password/:token" element={<ResetPassword />} />
+    <Route path="/unauthorized" element={<Unauthorized />} />
 
-    {/* 🔄 Layout común */}
-    <Route element={<Layout />}>
-      <Route path="/app" element={<MainApp />} />
-      <Route path="/perfil" element={<PerfilUsuario />} />
+    {/* 🔐 Rutas privadas protegidas por login */}
+    <Route element={<RutaPrivada />}>
+
+      {/* 🌐 Layout general con barra y navegación */}
+      <Route element={<Layout />}>
+
+        {/* ✅ Rutas disponibles para todos los logueados */}
+        <Route path="/app" element={<MainApp />} />
+        <Route path="/perfil" element={<PerfilUsuario />} />
+        <Route path="/mis-pedidos" element={<MisPedidos />} />
+        <Route path="/mis-pedidos/:id" element={<PedidoDetalle />} />
+        <Route path="/editar-pedido/:id" element={<EditarPedido />} />
+
+        {/* 🛠️ Panel ADMIN (solo admin) */}
+        <Route path="/admin" element={<RutaAdminOModerador><AdminHome /></RutaAdminOModerador>} />
+        <Route path="/admin/dashboard" element={<RutaAdminOModerador><DashboardAdmin /></RutaAdminOModerador>} />
+        <Route path="/admin/ver-pedidos" element={<RutaSoloAdmin><AdminPedidos /></RutaSoloAdmin>} />
+        <Route path="/admin/editar-menu" element={<RutaSoloAdmin><EditarMenu /></RutaSoloAdmin>} />
+        <Route path="/admin/historial" element={<RutaSoloAdmin><HistorialAdmin /></RutaSoloAdmin>} />
+        <Route path="/admin/editar-precios" element={<RutaSoloAdmin><EditarPrecios /></RutaSoloAdmin>} />
+        <Route path="/admin/menu-del-dia" element={<RutaSoloAdmin><VerMenuDelDia /></RutaSoloAdmin>} />
+        <Route path="/admin/crear-dia" element={<RutaSoloAdmin><CrearMenuDelDia /></RutaSoloAdmin>} />
+        <Route path="/admin/editar-platos" element={<RutaSoloAdmin><EditarMenuDelDia /></RutaSoloAdmin>} />
+        <Route path="/admin/editar-tartas" element={<RutaSoloAdmin><EditarTartas /></RutaSoloAdmin>} />
+        <Route path="/admin/ver-menu" element={<RutaSoloAdmin><AdminMenuPreview /></RutaSoloAdmin>} />
+        <Route path="/admin/empresas" element={<RutaSoloAdmin><EmpresasList /></RutaSoloAdmin>} />
+        <Route path="/admin/empresa/:id" element={<RutaSoloAdmin><AdminEmpresaDetalle /></RutaSoloAdmin>} />
+        <Route path="/admin/empleados" element={<RutaSoloAdmin><EmpleadosEmpresa /></RutaSoloAdmin>} />
+        <Route path="/admin/empresa" element={<RutaSoloAdmin><AdminEmpresa /></RutaSoloAdmin>} />
+
+        {/* 🛠️ Producción (admin + moderador) */}
+        <Route path="/admin/produccion" element={<RutaAdminOModerador><ProduccionResumen /></RutaAdminOModerador>} />
+
+        {/* 🧑‍💼 Empleados de empresa */}
+        <Route path="/empresa/empleados" element={<EmpleadosEmpresa />} />
+        <Route path="/empresa/empleados/nuevo" element={<CrearEmpleado />} />
+
+        {/* 🧾 Pedidos Empresa */}
+        <Route path="/empresa/pedidos" element={<PedidosEmpresa />} />
+
+        {/* 🚚 Dashboard Delivery */}
+        <Route path="/delivery" element={<DeliveryDashboard />} />
+
+      </Route>
     </Route>
 
-    {/* 🛠️ Panel Admin */}
-    <Route path="/admin" element={<AdminHome />} />
-    <Route path="/admin/dashboard" element={<DashboardAdmin />} />
-    <Route path="/admin/ver-pedidos" element={<AdminPedidos />} />
-    <Route path="/admin/editar-menu" element={<EditarMenu />} />
-    <Route path="/admin/historial" element={<HistorialAdmin />} />
-    <Route path="/admin/produccion" element={<ProduccionResumen />} />
-    <Route path="/admin/editar-precios" element={<EditarPrecios />} />
-    <Route path="/admin/menu-del-dia" element={<VerMenuDelDia />} />
-    <Route path="/admin/crear-dia" element={<CrearMenuDelDia />} />
-    <Route path="/admin/editar-platos" element={<EditarMenuDelDia />} />
-    <Route path="/admin/editar-tartas" element={<EditarTartas />} />
-    <Route path="/admin/ver-menu" element={<AdminMenuPreview />} />
+    {/* 🧭 Redirección si no existe ruta */}
+    <Route path="*" element={<Navigate to="/login" replace />} />
 
-    {/* 🏢 Empresas Admin */}
-    <Route path="/admin/empresas" element={<EmpresasList />} /> {/* ✅ Lista de todas las empresas */}
-    <Route path="/admin/empresa/:id" element={<AdminEmpresaDetalle />} /> 
-
-    {/* 🧑‍💼 Empleados */}
-    <Route path="/admin/empleados" element={<EmpleadosEmpresa />} /> {/* Admin ve empleados */}
-    <Route path="/empresa/empleados" element={<EmpleadosEmpresa />} /> {/* Empresa ve sus empleados */}
-    <Route path="/empresa/empleados/nuevo" element={<CrearEmpleado />} />
-
-    {/* 🧾 Pedidos Empresa */}
-    <Route path="/empresa/pedidos" element={<PedidosEmpresa />} />
-
-    {/* 🏢 Panel empresa (solo su empresa logueada) */}
-    <Route
-      path="/admin/empresa"
-      element={
-        <EmpresaOnlyRoute>
-          <AdminEmpresa />
-        </EmpresaOnlyRoute>
-      }
-    />
-
-    {/* 📦 Mis pedidos (usuario normal) */}
-    <Route path="/mis-pedidos" element={<MisPedidos />} />
-    <Route path="/mis-pedidos/:id" element={<PedidoDetalle />} />
-
-    {/* 🚚 Delivery */}
-    <Route path="/delivery" element={<DeliveryDashboard />} />
-    
   </Routes>
 );
 

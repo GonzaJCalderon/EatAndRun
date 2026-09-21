@@ -4,6 +4,9 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
 
 const UserCard = ({ usuario, onVer, onEliminar, onRolChange, onEditar }) => {
+  const nombreCompleto = [usuario.nombre, usuario.apellido].filter(Boolean).join(' ') || usuario.email;
+  const dirAlt = usuario.direccion_secundaria || usuario.direccion_alternativa || '';
+
   return (
     <Box
       key={usuario.id}
@@ -18,8 +21,11 @@ const UserCard = ({ usuario, onVer, onEliminar, onRolChange, onEditar }) => {
       }}
     >
       <Box>
-        <Typography><strong>{usuario.nombre || usuario.email}</strong></Typography>
+        <Typography><strong>{nombreCompleto}</strong></Typography>
         <Typography variant="body2" color="textSecondary">Email: {usuario.email}</Typography>
+        {usuario.telefono && <Typography variant="body2">Tel: {usuario.telefono}</Typography>}
+        {usuario.direccion_principal && <Typography variant="body2">Dir. principal: {usuario.direccion_principal}</Typography>}
+        {dirAlt && <Typography variant="body2">Dir. alternativa: {dirAlt}</Typography>}
         <Typography variant="body2">Rol: {usuario.rol}</Typography>
       </Box>
 
@@ -34,7 +40,7 @@ const UserCard = ({ usuario, onVer, onEliminar, onRolChange, onEditar }) => {
           <MenuItem value="delivery">Delivery</MenuItem>
           <MenuItem value="admin">Admin</MenuItem>
           <MenuItem value="empleado">Empleado</MenuItem>
-          <MenuItem value="moderador">Moderador</MenuItem> {/* ✅ AÑADIDO */}
+          <MenuItem value="moderador">Moderador</MenuItem>
         </Select>
 
         <IconButton
@@ -47,7 +53,8 @@ const UserCard = ({ usuario, onVer, onEliminar, onRolChange, onEditar }) => {
               rol: usuario.rol,
               telefono: usuario.telefono,
               direccion_principal: usuario.direccion_principal,
-              direccion_secundaria: usuario.direccion_secundaria
+              // 👇 enviamos ambos nombres de campo por compatibilidad
+              direccion_secundaria: usuario.direccion_secundaria || usuario.direccion_alternativa || ''
             })
           }
           color="primary"

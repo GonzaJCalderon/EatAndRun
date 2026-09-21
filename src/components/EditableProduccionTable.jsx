@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Accordion, AccordionSummary, AccordionDetails,
   Typography, Box, TextField, Button, Table, TableHead,
@@ -8,64 +8,187 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 const diasOrdenados = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
 
-const ProduccionEditablePorDia = ({ pedidos, onGuardarCambios }) => {
+const normalize = (str = '') =>
+  String(str).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
+const findDiaKey = (obj = {}, diaUI = '') => {
+  if (!obj) return null;
+  if (Object.prototype.hasOwnProperty.call(obj, diaUI)) return diaUI;
+  const target = normalize(diaUI);
+  for (const k of Object.keys(obj)) {
+    const base = normalize(k).split(' ')[0];
+    if (base === target) return k;
+  }
+  return null;
+};
+
+// No depende de variables externas
+const getLegible = (mapping, cat, key) => mapping?.[cat]?.[key] ?? key;
+
+const  ProduccionEditablePorDiaOld = (props = {}) => {
+  const {
+    pedidos = [],
+    // ⚠️ renombrado: ahora el padre debe pasar `mapping`
+    mapping: mappingProp = {},
+    onGuardarCambios
+  } = props;
+
+  const mapping = useMemo(() => mappingProp ?? {}, [mappingProp]);
+
   const [ediciones, setEdiciones] = useState({});
 
-  const getNombreConEmpresa = (usuario = {}, empresa_nombre = null) => {
-    const nombre = `${usuario?.nombre || ''} ${usuario?.apellido || ''}`.trim();
-    const empresa = empresa_nombre || usuario?.empresa_nombre || usuario?.empresa?.nombre || null;
-    return empresa ? `${nombre} (${empresa})` : nombre;
+  const getNombreConEmpresa = (p = {}) => {
+    const u = p.usuario || {};
+    const nombre = u.nombre || p.nombre || '';
+    const apellido = u.apellido || p.apellido || '';
+    const empresa = p.empresa_nombre || u.empresa_nombre || u.empresa?.nombre || null;
+    const nom = `${nombre} ${apellido}`.trim();
+    return empresa ? `${nom} (${empresa})` : nom || '—';
+  };
+
+  const getDireccionSecundaria = (p = {}) => {
+    const u = p.usuario || {};
+    return u.direccion_alternativa || p.direccion_alternativa || '—';
   };
 
   const handleChange = (pedidoId, path, value) => {
     setEdiciones(prev => ({
       ...prev,
-      [pedidoId]: {
-        ...prev[pedidoId],
-        [path]: value
-      }
+      [pedidoId]: { ...prev[pedidoId], [path]: value }
     }));
   };
 
   const handleGuardar = (pedidoId) => {
     const cambios = ediciones[pedidoId];
-    if (cambios) {
-      onGuardarCambios(pedidoId, cambios);
-    }
+    if (cambios && typeof onGuardarCambios === 'function') onGuardarCambios(pedidoId, cambios);
   };
 
-  const pedidosPorDia = diasOrdenados.reduce((acc, dia) => {
-    acc[dia] = [];
-    return acc;
-  }, {});
-
-  pedidos.forEach(p => {
-    const diarios = p.pedido?.diarios || {};
-    diasOrdenados.forEach(dia => {
-      if (diarios[dia]) {
-        pedidosPorDia[dia].push(p);
-      }
+  const pedidosPorDia = useMemo(() => {
+    const base = diasOrdenados.reduce((acc, dia) => ({ ...acc, [dia]: [] }), {});
+    pedidos.forEach(p => {
+      const diarios = p?.pedido?.diarios || {};
+      diasOrdenados.forEach(dia => {
+        const key = findDiaKey(diarios, dia);
+        if (key) base[dia].push(p);
+      });
     });
-  });
+    return base;
+  }, [pedidos]);
+
+  const renderFilaPedido = (p, dia) => {
+    const id = p.id ?? p._id ?? Math.random().toString(36).slice(2);
+    const nombre = getNombreConEmpresa(p);
+
+    const diarios = p?.pedido?.diarios || {};
+    const extrasObj = p?.pedido?.extras || {};
+    const tartas = p?.pedido?.tartas || {};
+
+    const diaKeyDiarios = findDiaKey(diarios, dia);
+    const diaKeyExtras = findDiaKey(extrasObj, dia);
+
+    const platos = (diaKeyDiarios && typeof diarios[diaKeyDiarios] === 'object') ? diarios[diaKeyDiarios] : {};
+    const extras  = (diaKeyExtras  && typeof extrasObj[diaKeyExtras] === 'object') ? extrasObj[diaKeyExtras] : {};
+
+    return (
+      <TableRow key={id}>
+        <TableCell>{nombre}</TableCell>
+        <TableCell>{getDireccionSecundaria(p)}</TableCell>
+
+        <TableCell>
+          {Object.entries(platos).map(([nombrePlato, cantidad]) => {
+            const legible = getLegible(mapping, 'diarios', nombrePlato);
+            return (
+              <Box key={nombrePlato} sx={{ mb: 1 }}>
+                <Typography variant="body2" sx={{ mb: 0.5 }}>{legible}</Typography>
+                <TextField
+                  size="small"
+                  type="number"
+                  inputProps={{ min: 0 }}
+                  defaultValue={Number(cantidad) || 0}
+                  onChange={(e) =>
+                    handleChange(id, `diarios.${diaKeyDiarios}.${nombrePlato}`, Number(e.target.value))
+                  }
+                />
+              </Box>
+            );
+          })}
+        </TableCell>
+
+        <TableCell>
+          {Object.entries(extras).map(([extraId, cantidad]) => {
+            const legible = getLegible(mapping, 'extras', extraId);
+            return (
+              <Box key={extraId} sx={{ mb: 1 }}>
+                <Typography variant="body2" sx={{ mb: 0.5 }}>{legible}</Typography>
+                <TextField
+                  size="small"
+                  type="number"
+                  inputProps={{ min: 0 }}
+                  defaultValue={Number(cantidad) || 0}
+                  onChange={(e) =>
+                    handleChange(id, `extras.${diaKeyExtras}.${extraId}`, Number(e.target.value))
+                  }
+                />
+              </Box>
+            );
+          })}
+        </TableCell>
+
+        <TableCell>
+          {Object.entries(tartas).map(([tarta, cantidad]) => {
+            const legible = getLegible(mapping, 'tartas', tarta);
+            return (
+              <Box key={tarta} sx={{ mb: 1 }}>
+                <Typography variant="body2" sx={{ mb: 0.5 }}>{legible}</Typography>
+                <TextField
+                  size="small"
+                  type="number"
+                  inputProps={{ min: 0 }}
+                  defaultValue={Number(cantidad) || 0}
+                  onChange={(e) =>
+                    handleChange(id, `tartas.${tarta}`, Number(e.target.value))
+                  }
+                />
+              </Box>
+            );
+          })}
+        </TableCell>
+
+        <TableCell>
+          <TextField
+            fullWidth
+            multiline
+            minRows={2}
+            defaultValue={p?.nota_admin || ''}
+            onChange={(e) => handleChange(id, 'nota_admin', e.target.value)}
+          />
+        </TableCell>
+
+        <TableCell>
+          <Typography variant="body2">{p?.observaciones || '—'}</Typography>
+        </TableCell>
+
+        <TableCell>
+          <Button variant="contained" onClick={() => handleGuardar(id)}>Guardar</Button>
+        </TableCell>
+      </TableRow>
+    );
+  };
 
   const renderTablaPorDia = (dia, listaPedidos) => {
     const pedidosEmpresa = {};
     const pedidosUsuarios = [];
 
     listaPedidos.forEach(p => {
-      const usuario = p.usuario || {};
-      const rol = usuario.rol;
-      const empresa = usuario.empresa_nombre || usuario.empresa?.nombre;
-
-      // Empresa/admin empresa/empleado (rol 2 o 6) → agrupar por empresa
+      const usuario = p?.usuario || {};
+      const rol = usuario?.rol;
+      const empresa = usuario?.empresa_nombre || usuario?.empresa?.nombre;
       if ((rol === 2 || rol === 6) && empresa) {
         if (!pedidosEmpresa[empresa]) pedidosEmpresa[empresa] = [];
         pedidosEmpresa[empresa].push(p);
-      } else if (rol === 1) {
-        // Usuario común
+      } else {
         pedidosUsuarios.push(p);
       }
-      // Moderador (5) no debe tener pedidos, si viene: ignorar
     });
 
     return (
@@ -73,6 +196,7 @@ const ProduccionEditablePorDia = ({ pedidos, onGuardarCambios }) => {
         <TableHead>
           <TableRow>
             <TableCell><strong>Nombre y Apellido</strong></TableCell>
+            <TableCell><strong>Dir. Secundaria</strong></TableCell>
             <TableCell><strong>Platos</strong></TableCell>
             <TableCell><strong>Extras</strong></TableCell>
             <TableCell><strong>Tartas</strong></TableCell>
@@ -82,35 +206,23 @@ const ProduccionEditablePorDia = ({ pedidos, onGuardarCambios }) => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {/* EMPRESAS */}
           {Object.entries(pedidosEmpresa)
             .sort(([a], [b]) => a.localeCompare(b))
-            .map(([empresa, pedidos]) => (
+            .map(([empresa, pedidosEmpresaLista]) => (
               <React.Fragment key={empresa}>
                 <TableRow>
-                  <TableCell colSpan={7} sx={{
-                    backgroundColor: '#e0f7fa',
-                    fontWeight: 'bold',
-                    fontSize: '1rem',
-                    borderBottom: '2px solid #ccc'
-                  }}>
+                  <TableCell colSpan={8} sx={{ backgroundColor: '#e0f7fa', fontWeight: 'bold', fontSize: '1rem', borderBottom: '2px solid #ccc' }}>
                     🏢 {empresa}
                   </TableCell>
                 </TableRow>
-                {pedidos.map(p => renderFilaPedido(p, dia))}
+                {pedidosEmpresaLista.map(p => renderFilaPedido(p, dia))}
               </React.Fragment>
             ))}
 
-          {/* USUARIOS INDIVIDUALES */}
           {pedidosUsuarios.length > 0 && (
             <>
               <TableRow>
-                <TableCell colSpan={7} sx={{
-                  backgroundColor: '#fff8e1',
-                  fontWeight: 'bold',
-                  fontSize: '1rem',
-                  borderBottom: '2px solid #ccc'
-                }}>
+                <TableCell colSpan={8} sx={{ backgroundColor: '#fff8e1', fontWeight: 'bold', fontSize: '1rem', borderBottom: '2px solid #ccc' }}>
                   👤 Usuarios individuales
                 </TableCell>
               </TableRow>
@@ -122,83 +234,8 @@ const ProduccionEditablePorDia = ({ pedidos, onGuardarCambios }) => {
     );
   };
 
-  const renderFilaPedido = (p, dia) => {
-    const id = p.id || p._id;
-    const nombre = getNombreConEmpresa(p.usuario, p.empresa_nombre);
-    const platos = p.pedido?.diarios?.[dia] || {};
-    const extras = p.pedido?.extras?.[dia] || {};
-    const tartas = p.pedido?.tartas || {};
-
-    return (
-      <TableRow key={id}>
-        <TableCell>{nombre}</TableCell>
-        <TableCell>
-          {Object.entries(platos).map(([nombrePlato, cantidad]) => (
-            <Box key={nombrePlato} sx={{ mb: 1 }}>
-              <Typography>{nombrePlato}</Typography>
-              <TextField
-                size="small"
-                type="number"
-                defaultValue={cantidad}
-                onChange={(e) =>
-                  handleChange(id, `diarios.${dia}.${nombrePlato}`, Number(e.target.value))
-                }
-              />
-            </Box>
-          ))}
-        </TableCell>
-        <TableCell>
-          {Object.entries(extras).map(([extraId, cantidad]) => (
-            <Box key={extraId} sx={{ mb: 1 }}>
-              <Typography>{`Extra ${extraId}`}</Typography>
-              <TextField
-                size="small"
-                type="number"
-                defaultValue={cantidad}
-                onChange={(e) =>
-                  handleChange(id, `extras.${dia}.${extraId}`, Number(e.target.value))
-                }
-              />
-            </Box>
-          ))}
-        </TableCell>
-        <TableCell>
-          {Object.entries(tartas).map(([tarta, cantidad]) => (
-            <Box key={tarta} sx={{ mb: 1 }}>
-              <Typography>{tarta}</Typography>
-              <TextField
-                size="small"
-                type="number"
-                defaultValue={cantidad}
-                onChange={(e) =>
-                  handleChange(id, `tartas.${tarta}`, Number(e.target.value))
-                }
-              />
-            </Box>
-          ))}
-        </TableCell>
-        <TableCell>
-          <TextField
-            fullWidth
-            multiline
-            defaultValue={p.nota_admin || ''}
-            onChange={(e) => handleChange(id, 'nota_admin', e.target.value)}
-          />
-        </TableCell>
-        <TableCell>
-          <Typography variant="body2">{p.observaciones || '—'}</Typography>
-        </TableCell>
-        <TableCell>
-          <Button variant="contained" onClick={() => handleGuardar(id)}>
-            Guardar
-          </Button>
-        </TableCell>
-      </TableRow>
-    );
-  };
-
   const renderTartas = () => {
-    const conTartas = pedidos.filter(p => Object.keys(p.pedido?.tartas || {}).length > 0);
+    const conTartas = pedidos.filter(p => Object.keys(p?.pedido?.tartas || {}).length > 0);
     if (conTartas.length === 0) return null;
 
     return (
@@ -218,29 +255,32 @@ const ProduccionEditablePorDia = ({ pedidos, onGuardarCambios }) => {
             </TableHead>
             <TableBody>
               {conTartas.map(p => {
-                const id = p.id || p._id;
-                const nombre = getNombreConEmpresa(p.usuario, p.empresa_nombre);
-                return Object.entries(p.pedido?.tartas || {}).map(([tarta, cantidad]) => (
-                  <TableRow key={`${id}-${tarta}`}>
-                    <TableCell>{nombre}</TableCell>
-                    <TableCell>{tarta}</TableCell>
-                    <TableCell>
-                      <TextField
-                        type="number"
-                        size="small"
-                        defaultValue={cantidad}
-                        onChange={(e) =>
-                          handleChange(id, `tartas.${tarta}`, Number(e.target.value))
-                        }
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="contained" onClick={() => handleGuardar(id)}>
-                        Guardar
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ));
+                const id = p.id ?? p._id ?? Math.random().toString(36).slice(2);
+                const nombre = getNombreConEmpresa(p);
+                return Object.entries(p?.pedido?.tartas || {}).map(([tarta, cantidad]) => {
+                  const legible = getLegible(mapping, 'tartas', tarta);
+                  const rowKey = `${id}-${tarta}`;
+                  return (
+                    <TableRow key={rowKey}>
+                      <TableCell>{nombre}</TableCell>
+                      <TableCell>{legible}</TableCell>
+                      <TableCell>
+                        <TextField
+                          type="number"
+                          size="small"
+                          inputProps={{ min: 0 }}
+                          defaultValue={Number(cantidad) || 0}
+                          onChange={(e) =>
+                            handleChange(id, `tartas.${tarta}`, Number(e.target.value))
+                          }
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="contained" onClick={() => handleGuardar(id)}>Guardar</Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                });
               })}
             </TableBody>
           </Table>
@@ -255,11 +295,32 @@ const ProduccionEditablePorDia = ({ pedidos, onGuardarCambios }) => {
         <Accordion key={dia} defaultExpanded>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Typography sx={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 1 }}>
-              📅 {dia.toUpperCase()}
-            </Typography>
+  📅 {(() => {
+    const pedidosDelDia = pedidosPorDia[dia] || [];
+    let fechaStr = null;
+
+    for (const pedido of pedidosDelDia) {
+      const fechaPorDia = pedido?.pedido?.fecha_dia_por_dia || {};
+      const f =
+        fechaPorDia[dia] ||
+        fechaPorDia[normalize(dia)];
+      if (f) {
+        fechaStr = f;
+        break;
+      }
+    }
+
+    const fecha = fechaStr ? dayjs(fechaStr) : null;
+    const nombreDia = dia.charAt(0).toUpperCase() + dia.slice(1);
+    const fechaLegible = fecha?.isValid() ? fecha.format("DD/MM") : null;
+
+    return fechaLegible ? `${nombreDia} ${fechaLegible}` : nombreDia;
+  })()}
+</Typography>
+
           </AccordionSummary>
           <AccordionDetails>
-            {pedidosPorDia[dia].length > 0 ? (
+            {pedidosPorDia[dia]?.length > 0 ? (
               <Paper elevation={1}>{renderTablaPorDia(dia, pedidosPorDia[dia])}</Paper>
             ) : (
               <Typography sx={{ p: 2 }}>Sin pedidos para {dia}</Typography>
@@ -272,4 +333,6 @@ const ProduccionEditablePorDia = ({ pedidos, onGuardarCambios }) => {
   );
 };
 
-export default ProduccionEditablePorDia;
+// ProduccionEditablePorDiaOld.jsx
+export const ProduccionEditablePorDiaOld
+

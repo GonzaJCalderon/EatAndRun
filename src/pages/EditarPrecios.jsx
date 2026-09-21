@@ -23,7 +23,7 @@ const EditarPrecios = () => {
     umbral_descuento: 5
   });
 
-  const [preciosTarta, setPreciosTarta] = useState({});
+  const [preciosTarta, setPreciosTarta] = useState([]); // ahora es un array
 
   useEffect(() => {
     const fetchData = async () => {
@@ -32,7 +32,7 @@ const EditarPrecios = () => {
         setPreciosBase(configRes.data);
         localStorage.setItem('precios_eatandrun', JSON.stringify(configRes.data));
 
-        const tartas = await getTartaPrecios();
+        const tartas = await getTartaPrecios(); // debe incluir id, nombre, precio
         setPreciosTarta(tartas);
       } catch (err) {
         console.error("❌ Error al cargar datos:", err);
@@ -49,11 +49,13 @@ const EditarPrecios = () => {
     }));
   };
 
-  const handleTartaChange = (key, valor) => {
-    setPreciosTarta((prev) => ({
-      ...prev,
-      [key]: parseInt(valor) || 0
-    }));
+  const handleTartaChange = (index, valor) => {
+    const nuevoPrecio = parseInt(valor) || 0;
+    setPreciosTarta(prev => {
+      const copia = [...prev];
+      copia[index].precio = nuevoPrecio;
+      return copia;
+    });
   };
 
   const guardar = async () => {
@@ -63,8 +65,8 @@ const EditarPrecios = () => {
       localStorage.setItem("precios_eatandrun", JSON.stringify(preciosBase));
 
       // Guardar precios de tartas
-      for (const key in preciosTarta) {
-        await api.put(`/tartas/${key}`, { precio: preciosTarta[key] });
+      for (const tarta of preciosTarta) {
+        await api.put(`/tartas/${tarta.id}`, { precio: tarta.precio });
       }
 
       alert("✅ Datos actualizados correctamente");
@@ -137,14 +139,14 @@ const EditarPrecios = () => {
         🥧 Precios por Tarta
       </Typography>
 
-      {Object.entries(preciosTarta).map(([key, precio]) => (
-        <Box key={key} sx={{ mb: 2 }}>
+      {preciosTarta.map((tarta, index) => (
+        <Box key={tarta.id} sx={{ mb: 2 }}>
           <TextField
             fullWidth
-            label={`Tarta: ${key}`}
+            label={`Tarta: ${tarta.nombre}`}
             type="number"
-            value={precio}
-            onChange={(e) => handleTartaChange(key, e.target.value)}
+            value={tarta.precio}
+            onChange={(e) => handleTartaChange(index, e.target.value)}
           />
         </Box>
       ))}

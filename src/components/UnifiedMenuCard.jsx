@@ -15,15 +15,17 @@ const UnifiedMenuCard = ({ plato, cantidad = 0, onChange }) => {
   const aumentar = () => onChange(plato, cantidad + 1);
   const disminuir = () => onChange(plato, Math.max(0, cantidad - 1));
 
-  const esEspecial = plato?.tipo === 'daily';
+const esEspecial = !!plato?.descripcion?.toLowerCase?.().includes('almuerzo') || !!plato?.descripcion?.toLowerCase?.().includes('cena');
+
 
   const imagenEspecial = 'https://res.cloudinary.com/dwiga4jg8/image/upload/v1752866539/menu_especial_wqo6fw.png';
 
   // ✅ Usar imagen propia si existe, si no la especial
   const imagenFinal =
-    typeof plato?.img === 'string' && plato.img.trim().length > 10
-      ? plato.img
-      : (esEspecial ? imagenEspecial : null);
+  typeof plato?.img === 'string' && plato.img.trim().length > 10
+    ? plato.img
+    : (esEspecial ? imagenEspecial : null);
+
 
   return (
     <Card

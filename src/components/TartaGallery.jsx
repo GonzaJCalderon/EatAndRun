@@ -1,4 +1,3 @@
-import React, { useState, useEffect, useRef } from 'react';
 import {
   Accordion,
   AccordionSummary,
@@ -7,67 +6,72 @@ import {
   Box,
   IconButton,
   Card,
-  Divider
+  Divider,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
-import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import api from '../api/api';
-import { setTartaLabelMap } from '../utils/tartaUtils';
+import { useState, useRef } from 'react';
+import dayjs from '../utils/day';
 
-const TartaGallery = ({ seleccionadas = {}, onChange }) => {
-  const [tartas, setTartas] = useState([]);
+const TartaGallery = ({
+  seleccionadas = {},
+  onChange,
+  tartasDisponibles = [],
+  semanasDisponibles = [],
+  semanaSeleccionada,
+  onSemanaChange
+}) => {
   const [expanded, setExpanded] = useState(false);
-  const scrollRef = useRef(null); // 👈 ref para scroll manual con flechas
+  const scrollRef = useRef(null);
 
-  useEffect(() => {
-    const fetchTartas = async () => {
-      try {
-        const res = await api.get('/tartas');
-        const data = Array.isArray(res.data) ? res.data : [];
-        setTartas(data);
-        setTartaLabelMap(data);
-
-        console.log(`🥧 Tartas cargadas desde el backend: ${data.length}`, data);
-      } catch (err) {
-        console.error('❌ Error al cargar tartas:', err);
-      }
-    };
-
-    fetchTartas();
-  }, []);
-
-  const handleCantidadChange = (key, cantidad) => {
+  const handleCantidadChange = (tarta, cantidad) => {
     if (cantidad < 0) return;
-    onChange({ ...seleccionadas, [key]: cantidad });
-  };
 
-  const tartasValidas = tartas.filter(t => t.key && t.nombre);
-  console.log("🔎 Todas las tartas:", tartas);
-  console.log("✅ Tartas válidas:", tartasValidas);
+    const clave = `tarta-${tarta.id || tarta.nombre?.toLowerCase().replace(/\s+/g, '-')}`;
+    const nuevas = { ...seleccionadas };
 
-  const scrollBy = (offset) => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: offset, behavior: 'smooth' });
+    if (cantidad === 0) {
+      delete nuevas[clave];
+    } else {
+      nuevas[clave] = cantidad;
     }
+
+    onChange(nuevas);
   };
 
-  if (!tartasValidas.length) return null;
+  if (!tartasDisponibles.length) return null;
 
   return (
-    <Accordion
-      expanded={expanded}
-      onChange={() => setExpanded(prev => !prev)}
-      sx={{ mt: 4 }}
-    >
+    <Accordion expanded={expanded} onChange={() => setExpanded(prev => !prev)} sx={{ mt: 4 }}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Typography variant="h6" fontWeight="bold">🥧 Tartas (8 porciones)</Typography>
       </AccordionSummary>
 
       <AccordionDetails>
-        {/* Contenedor scroll horizontal */}
+        {semanasDisponibles.length > 1 && (
+          <Box sx={{ mb: 2 }}>
+            <FormControl fullWidth>
+              <InputLabel>Semana para recibir las tartas</InputLabel>
+              <Select
+                value={semanaSeleccionada || ''}
+                onChange={(e) => onSemanaChange(e.target.value)}
+                label="Semana para recibir las tartas"
+              >
+                {semanasDisponibles.map((semana) => (
+                  <MenuItem key={semana.id} value={semana.id}>
+                    {dayjs(semana.semana_inicio).format('DD/MM')} al {dayjs(semana.semana_fin).format('DD/MM')}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+        )}
+
         <Box
           ref={scrollRef}
           sx={{
@@ -76,25 +80,16 @@ const TartaGallery = ({ seleccionadas = {}, onChange }) => {
             gap: 2,
             pb: 1,
             px: 1,
-            scrollSnapType: 'x mandatory',
-            scrollBehavior: 'smooth',
-            '&::-webkit-scrollbar': {
-              height: 8
-            },
-            '&::-webkit-scrollbar-thumb': {
-              backgroundColor: '#aaa',
-              borderRadius: 4
-            },
-            '&::-webkit-scrollbar-track': {
-              backgroundColor: '#f0f0f0'
-            }
+            scrollSnapType: 'x mandatory'
           }}
         >
-          {tartasValidas.map((tarta) => {
-            const cantidad = seleccionadas[tarta.key] || 0;
+          {tartasDisponibles.map((tarta) => {
+            const clave = `tarta-${tarta.id || tarta.nombre?.toLowerCase().replace(/\s+/g, '-')}`;
+            const cantidad = seleccionadas[clave] || 0;
+
             return (
               <Box
-                key={tarta.key}
+                key={clave}
                 sx={{
                   scrollSnapAlign: 'start',
                   minWidth: { xs: 220, sm: 240 },
@@ -106,13 +101,7 @@ const TartaGallery = ({ seleccionadas = {}, onChange }) => {
                     component="img"
                     src={tarta.img}
                     alt={tarta.nombre}
-                    sx={{
-                      width: '100%',
-                      height: 130,
-                      objectFit: 'cover',
-                      borderRadius: 2,
-                      mb: 1
-                    }}
+                    sx={{ width: '100%', height: 130, objectFit: 'cover', borderRadius: 2, mb: 1 }}
                   />
                   <Typography variant="subtitle1" fontWeight="bold">{tarta.nombre}</Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
@@ -120,11 +109,11 @@ const TartaGallery = ({ seleccionadas = {}, onChange }) => {
                   </Typography>
                   <Divider sx={{ my: 1 }} />
                   <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <IconButton onClick={() => handleCantidadChange(tarta.key, cantidad - 1)} size="small">
+                    <IconButton onClick={() => handleCantidadChange(tarta, cantidad - 1)} size="small">
                       <RemoveIcon />
                     </IconButton>
                     <Typography variant="body1" sx={{ mx: 2 }}>{cantidad}</Typography>
-                    <IconButton onClick={() => handleCantidadChange(tarta.key, cantidad + 1)} size="small">
+                    <IconButton onClick={() => handleCantidadChange(tarta, cantidad + 1)} size="small">
                       <AddIcon />
                     </IconButton>
                   </Box>
@@ -132,16 +121,6 @@ const TartaGallery = ({ seleccionadas = {}, onChange }) => {
               </Box>
             );
           })}
-        </Box>
-
-        {/* Flechas de scroll */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
-          <IconButton onClick={() => scrollBy(-250)} size="small">
-            <ArrowBackIosNewIcon fontSize="small" />
-          </IconButton>
-          <IconButton onClick={() => scrollBy(250)} size="small">
-            <ArrowForwardIosIcon fontSize="small" />
-          </IconButton>
         </Box>
       </AccordionDetails>
     </Accordion>

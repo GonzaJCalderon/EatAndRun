@@ -13,7 +13,8 @@ import {
   IconButton
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
-import dayjs from 'dayjs';
+import dayjs from '../utils/day' // o la ruta correcta
+
 
 const PedidosEmpresa = () => {
   const [pedidos, setPedidos] = useState([]);
